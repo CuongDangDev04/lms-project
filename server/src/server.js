@@ -20,6 +20,8 @@ app.use(express.json());
 app.use(
   cors({
     exposedHeaders: ["Content-Disposition"],
+    origin: "https://lmsclient-nine.vercel.app",
+    credentials: true,
   })
 );
 
