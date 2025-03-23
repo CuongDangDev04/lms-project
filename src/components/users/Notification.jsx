@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { toast, ToastContainer } from "react-toastify"; // Thêm toast
 import "react-toastify/dist/ReactToastify.css"; // Thêm CSS cho toast
-import NotificationService from "../../services/NotificationService";
+import NotificationService from "../../services/notificationService";
 import { Bell, Tag, Users, Settings } from "lucide-react";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -160,10 +160,9 @@ const Notifications = () => {
             <li
               key={notif.notification_id}
               className={`p-3 flex items-start gap-3 rounded-lg transition relative cursor-pointer 
-                ${
-                  notif.is_read || notif.status
-                    ? "bg-white"
-                    : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
+                ${notif.is_read || notif.status
+                  ? "bg-white"
+                  : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
                 }`}
               onClick={() => {
                 if (!notif.is_read && !notif.status) {
