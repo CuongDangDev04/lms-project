@@ -3,7 +3,7 @@ import axios from "axios";
 import { getUserById } from "../../services/userServices";
 import { useParams, useNavigate } from "react-router-dom";
 
-export const Classroom = () => {
+const Classroom = () => {
   const { classroomId } = useParams();
   const navigate = useNavigate();
   const jitsiContainerRef = useRef(null);
@@ -179,3 +179,4 @@ export const Classroom = () => {
   );
 };
 
+export default Classroom;

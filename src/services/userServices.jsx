@@ -1,6 +1,9 @@
 import api from "./api";
 const API_URL = "/api/admin";
 
+
+
+
 export const getUsers = async () => {
     try {
         const response = await api.get(`${API_URL}/users`);
@@ -10,6 +13,7 @@ export const getUsers = async () => {
         throw error;
     }
 };
+
 
 export const getUserById = async (id) => {
     try {

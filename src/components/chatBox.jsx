@@ -58,6 +58,8 @@ const ChatBox = ({ userId }) => {
           const formattedUsers = res.data.students.map((student) => ({
             username: student.username,
             user_id: student.Classrooms[0]?.user_participation?.user_id,
+            fullname: student.fullname,
+            avt: student.avt
           }));
           setUsers(formattedUsers);
         }
@@ -99,7 +101,9 @@ const ChatBox = ({ userId }) => {
     const tagNotificationData = { classroomId, taggedUserIds };
     try {
       await sendMessage(messageData);
-      await NotificationService.sendTagNotification(tagNotificationData);
+      if (taggedUserIds.length > 0) {
+        await NotificationService.sendTagNotification(tagNotificationData);
+      }
       setNewMessage("");
       setMentionSuggestions([]);
     } catch (error) {
@@ -176,9 +180,7 @@ const ChatBox = ({ userId }) => {
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4  flex items-center justify-between">
         <h2 className="text-xl font-bold text-white">Chat Nhóm</h2>
-        <span className="text-sm text-indigo-100 opacity-80">
-          #{classroomId}
-        </span>
+        
       </div>
 
       {/* Messages */}
@@ -194,36 +196,57 @@ const ChatBox = ({ userId }) => {
               msg.user_id === userId ||
               msg.User?.userId === userId;
 
+            // Tìm thông tin user từ danh sách users để lấy avatar
+            const sender = users.find(
+              (u) =>
+                u.user_id === msg.userId ||
+                u.user_id === msg.user_id ||
+                u.user_id === msg.User?.userId
+            );
+
             return (
               <div
                 key={msg.message_id}
-                className={`flex ${
-                  isCurrentUser ? "justify-end" : "justify-start"
-                } mb-4`}
+                className={`flex ${isCurrentUser ? "justify-end" : "justify-start"
+                  } mb-4`}
                 onContextMenu={(e) =>
                   isCurrentUser && handleContextMenu(e, msg.message_id)
                 }
               >
                 <div className="flex items-end gap-2 max-w-[70%]">
                   {!isCurrentUser && (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-medium shadow-md">
-                      {msg.username?.charAt(0).toUpperCase() || "?"}
+                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                      {sender?.avt ? (
+                        <img
+                          src={sender.avt}
+                          alt={sender?.username || "User"}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = "none"; // Ẩn ảnh nếu lỗi
+                            e.target.nextSibling.style.display = "flex"; // Hiển thị fallback
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className={`w-full h-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-medium shadow-md ${sender?.avt ? "hidden" : "flex"
+                          }`}
+                      >
+                        {msg.username?.charAt(0).toUpperCase() || "?"}
+                      </div>
                     </div>
                   )}
                   <div
-                    className={`relative p-3 rounded-2xl ${
-                      isCurrentUser
+                    className={`relative p-3 rounded-2xl ${isCurrentUser
                         ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
                         : "bg-white text-gray-800 border border-gray-200"
-                    } shadow-md`}
+                      } shadow-md`}
                   >
                     <div className="flex flex-col">
                       <span
-                        className={`text-sm font-semibold ${
-                          isCurrentUser ? "text-indigo-100" : "text-indigo-600"
-                        }`}
+                        className={`text-sm font-semibold ${isCurrentUser ? "text-indigo-100" : "text-indigo-600"
+                          }`}
                       >
-                        {msg.username || msg.User?.username}
+                        {!isCurrentUser && (msg.User?.fullname || msg.fullname)}
                       </span>
 
                       <div className="flex items-center">
@@ -234,14 +257,11 @@ const ChatBox = ({ userId }) => {
                             ))}
                           </span>
                         )}
-                        <span className="text-sm break-words">
-                          {msg.message}
-                        </span>
+                        <span className="text-sm break-words">{msg.message}</span>
                       </div>
                       <span
-                        className={`text-xs ${
-                          isCurrentUser ? "text-indigo-200" : "text-gray-500"
-                        }`}
+                        className={`text-xs ${isCurrentUser ? "text-indigo-200" : "text-gray-500"
+                          }`}
                       >
                         {formatTimestamp(msg.timestamp)}
                       </span>
@@ -300,11 +320,10 @@ const ChatBox = ({ userId }) => {
                 <li
                   key={user.user_id}
                   onClick={() => handleSelectUser(user.username)}
-                  className={`px-4 py-2 text-sm cursor-pointer transition-all ${
-                    index === selectedIndex
+                  className={`px-4 py-2 text-sm cursor-pointer transition-all ${index === selectedIndex
                       ? "bg-indigo-50 text-indigo-700"
                       : "hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <span className="font-medium text-indigo-600">
                     @{user.username}

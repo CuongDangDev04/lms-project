@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { fetchTeacherInformation } from "../../services/courseServices";
+import { fetchTeacherInformation, getCourseById } from "../../services/courseServices";
 
 const SidebarCourseDetail_left = ({
   isSidebarOpen,
@@ -20,6 +20,7 @@ const SidebarCourseDetail_left = ({
   const { classroomId } = useParams();
   const [activePath, setActivePath] = useState("messages");
   const [teacherData, setTeacherData] = useState(null);
+  const [courseName, setCourseName] = useState("Không xác định"); // State để lưu tên khóa học
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const location = useLocation();
@@ -61,20 +62,28 @@ const SidebarCourseDetail_left = ({
   ];
 
   useEffect(() => {
-    const getTeacherInfo = async () => {
+    const getTeacherInfoAndCourse = async () => {
       if (!classroomId) return;
       try {
         setLoading(true);
-        const data = await fetchTeacherInformation(classroomId);
-        setTeacherData(data);
+        // Lấy thông tin teacher
+        const teacherInfo = await fetchTeacherInformation(classroomId);
+        setTeacherData(teacherInfo);
+
+        // Lấy course_id từ teacherData và gọi API để lấy tên khóa học
+        const courseId = teacherInfo?.course_id; // Giả sử course_id nằm trực tiếp trong teacherInfo
+        if (courseId) {
+          const courseData = await getCourseById(courseId);
+          setCourseName(courseData?.course_name || "Không xác định"); // Giả sử API trả về course_name
+        }
       } catch (err) {
-        console.error("Error fetching teacher information:", err);
-        setError("Không thể tải thông tin giảng viên");
+        console.error("Error fetching data:", err);
+        setError("Không thể tải thông tin");
       } finally {
         setLoading(false);
       }
     };
-    getTeacherInfo();
+    getTeacherInfoAndCourse();
   }, [classroomId]);
 
   useEffect(() => {
@@ -99,13 +108,15 @@ const SidebarCourseDetail_left = ({
   }, [setIsCollapsed, setIsSidebarOpen]);
 
   const teachers = teacherData?.Users || [];
-  const teacherName =
-    teachers.length > 0 ? teachers[0].username : "Không xác định";
+  const teacherName = teachers.length > 0 ? teachers[0].username : "Không xác định";
   const className = teacherData?.Class?.class_name || "Không xác định";
+
+  console.log("teacherData", teacherData);
+  console.log("courseName", courseName);
 
   return (
     <motion.div
-      className="h-[calc(100vh-4rem)] mt-2  bg-white shadow-xl flex flex-col overflow-y-auto md:max-w-xs sm:pt-12"
+      className="h-[calc(100vh-4rem)] mt-2 bg-white shadow-xl flex flex-col overflow-y-auto md:max-w-xs sm:pt-12"
       variants={sidebarVariants}
       animate={isCollapsed ? "collapsed" : "expanded"}
       transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -124,13 +135,16 @@ const SidebarCourseDetail_left = ({
         >
           {isCollapsed ? (
             <h2 className="text-sm font-semibold truncate">
-              {loading ? "Đang tải..." : teacherName}
+              {loading ? "Đang tải..." : courseName}
             </h2>
           ) : (
             <>
               <h2 className="text-base md:text-lg font-semibold truncate">
-                {loading ? "Đang tải..." : teacherName}
+                {loading ? "Đang tải..." : courseName}
               </h2>
+              <p className="text-xs md:text-sm text-gray-600 truncate">
+                Giảng viên: {teacherName}
+              </p>
               <p className="text-xs md:text-sm text-gray-600 truncate">
                 Mã lớp: {className}
               </p>
@@ -210,7 +224,7 @@ const SidebarCourseDetail_left = ({
                w-full py-2 md:py-3 rounded-md hover:bg-blue-700 transition 
                text-sm md:text-base"
         >
-          Vào lớp{" "}
+          Vào lớp
         </Link>
       </div>
     </motion.div>

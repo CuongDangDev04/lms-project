@@ -3,7 +3,15 @@ const API_URL = "/api/admin";
 
 const FETCH_LIST_COURSES = "/api";
 
-
+export const getCourseById = async (id) => {  
+  try {
+    const response = await api.get(`/api/admin/courses/${id}`);  
+    return response.data.data;    
+  } catch (error) {   
+    console.error(`Lỗi khi lấy khóa học ID ${id}:`, error);   
+    throw error;
+  } 
+};
 
 export const fetchTeacherInformation = async (classroomId) => {
   try {

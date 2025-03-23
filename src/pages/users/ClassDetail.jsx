@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ClassService from "../../services/ClassService";
 import ChatBox from "../../components/chatBox";
-import Classroom from "../../components/users/Classroom";
+import Classroom from "../../components/users/classroom";
 import Notifications from "../../components/users/Notification";
 
 const ClassDetail = () => {

@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
+
 import { toast, ToastContainer } from "react-toastify"; // Thêm toast
 import "react-toastify/dist/ReactToastify.css"; // Thêm CSS cho toast
-import NotificationService from "../../services/notificationService";
+import NotificationService from "../../services/NotificationService";
 import { Bell, Tag, Users, Settings } from "lucide-react";
+import { connectSocket, socket } from "../../hooks/useSocket";
+import { fetchStudentCourses } from "../../services/courseServices";
+import { useNavigate } from "react-router-dom";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-const socket = io(BASE_URL);
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [userId, setUserId] = useState(null);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user || !user.id) return;
     setUserId(user.id);
+    connectSocket();
     socket.emit("registerUser", user.id);
 
     fetchNotifications(user);
@@ -71,6 +74,7 @@ const Notifications = () => {
 
   // Hàm xử lý toast notification từ socket
   const handleToastNotification = ({ notificationType, message }) => {
+    console.log("Toast notification:", notificationType, message);
     toast.info(message, {
       position: "top-right",
       autoClose: 5000, // Tự đóng sau 5 giây
@@ -92,9 +96,23 @@ const Notifications = () => {
             : notif
         )
       );
-      socket.emit("markNotificationAsRead", notificationId);
+      socket.emit("notificationRead", notificationId);
     } catch (error) {
       console.error("Lỗi khi đánh dấu đã đọc:", error);
+    }
+  };
+  const markAllAsRead = async () => {
+    try {
+      const response = await NotificationService.markAllAsRead(userId);
+      console.log("markAllAsRead response:", response.data);
+
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, is_read: true }))
+      );
+
+      socket.emit("allNotificationsRead");
+    } catch (error) {
+      console.error("Lỗi khi đánh dấu tất cả đã đọc:", error);
     }
   };
 
@@ -138,7 +156,26 @@ const Notifications = () => {
         return <Bell className="text-gray-500 w-5 h-5" />;
     }
   };
-
+  const tagNavigate = async (message) => {
+    try {
+      if (!message) {
+        console.error("Message is undefined, cannot navigate.");
+        return;
+      }
+      let courseName = message.replace("Bạn đang được tag trong lớp ", "");
+      let courses = await fetchStudentCourses();
+      let course = courses.find(
+        (c) => c.Classroom.Course.course_name === courseName
+      );
+      if (course) {
+        navigate(`/courseDetail/${course.classroom_id}/messages`);
+      } else {
+        console.error(`Không tìm thấy khóa học với tên: ${courseName}`);
+      }
+    } catch (error) {
+      console.error("Lỗi khi chuyển hướng:", error);
+    }
+  };
   return (
     <div className="w-96 p-4 bg-white shadow-lg rounded-lg">
       <div className="flex justify-between items-center mb-3">
@@ -146,12 +183,20 @@ const Notifications = () => {
           <Bell className="text-indigo-500 w-6 h-6" /> Thông báo
         </h2>
         {notifications.length > 0 && (
-          <button
-            onClick={deleteAllNotifications}
-            className="text-red-500 text-sm hover:underline"
-          >
-            Xóa tất cả
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={markAllAsRead}
+              className="text-blue-500 text-sm hover:underline"
+            >
+              Đọc tất cả
+            </button>
+            <button
+              onClick={deleteAllNotifications}
+              className="text-red-500 text-sm hover:underline"
+            >
+              Xóa tất cả
+            </button>
+          </div>
         )}
       </div>
       <ul className="space-y-2 max-h-80 overflow-y-auto">
@@ -160,13 +205,27 @@ const Notifications = () => {
             <li
               key={notif.notification_id}
               className={`p-3 flex items-start gap-3 rounded-lg transition relative cursor-pointer 
-                ${notif.is_read || notif.status
-                  ? "bg-white"
-                  : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
+                ${
+                  notif.is_read || notif.status
+                    ? "bg-white"
+                    : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
                 }`}
               onClick={() => {
                 if (!notif.is_read && !notif.status) {
                   markAsRead(notif.notification_id);
+                  console.log(
+                    "Mark as read:",
+                    notif.notification_type ||
+                      notif.notificationType ||
+                      notif.Notification.notification_type
+                  );
+                }
+                if (
+                  notif.notification_type === "tag" ||
+                  notif.notificationType === "tag" ||
+                  notif.Notification.notification_type === "tag"
+                ) {
+                  tagNavigate(notif.Notification.message || notif.message);
                 }
               }}
             >

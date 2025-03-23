@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import PrivateRoute from "./privateRoute";
+import PrivateRoute from "./PrivateRoute"; // Import PrivateRoute
 import AdminLayout from "../layouts/AdminLayout";
 import UserLayout from "../layouts/UserLayout";
 import { Login } from "../pages/auth/Login";
@@ -16,7 +16,7 @@ import Message from "../pages/users/Message";
 import Lectures from "../pages/users/Lectures";
 import Member from "../pages/users/Member";
 import Assigments from "../pages/users/Assigments";
-import GradeSubmission from "../pages/instructor/GradeSubmission";
+import GradeSubmission from "../pages/instructor/GradeSubmission"; // Import component mới
 
 import { StudentsManager } from "../pages/admin/StudentsManager";
 import { InstructorsManager } from "../pages/admin/InstructorsManager";
@@ -28,8 +28,8 @@ import AssignedClassroomManager from "../pages/admin/AssignedClassroomManager";
 import AssignedCourse from "../pages/users/AssignedCourse";
 import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
+import Classroom from "../components/users/classroom";
 import Subject from "../pages/instructor/Subjects";
-import { Classroom } from "../components/users/Classroom";
 
 const AppRoutes = () => {
   return (

@@ -6,7 +6,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import img_login from "../../assets/user/img_login.png";
-import img_login2 from "../../assets/user/img_Login2.png";
+import img_login2 from "../../assets/user/img_login2.png";
 import img_login3 from "../../assets/user/img_login3.png";
 import img_login4 from "../../assets/user/img_login4.png";
 import LoadingBar from "../../components/users/LoadingBar";

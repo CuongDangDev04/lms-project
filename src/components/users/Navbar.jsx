@@ -4,12 +4,7 @@ import { logout } from "../../services/authServices";
 import { getProfile } from "../../services/userServices";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import {
-  Bell,
-  ChevronDown,
-  LogOut,
-  User,
-} from "lucide-react";
+import { Bell, ChevronDown, LogOut, User } from "lucide-react";
 import Notifications from "./Notification";
 
 const Navbar = () => {
@@ -17,7 +12,11 @@ const Navbar = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notificationsCount, setNotificationsCount] = useState(3);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [userProfile, setUserProfile] = useState({ name: "User", avatar: null, role_id: null });
+  const [userProfile, setUserProfile] = useState({
+    name: "User",
+    avatar: null,
+    role_id: null,
+  });
   const location = useLocation();
   const dropdownRef = useRef(null);
   const notificationsRef = useRef(null);
@@ -111,7 +110,6 @@ const Navbar = () => {
 
   return (
     <>
-      <ToastContainer />
       <nav
         className={`fixed top-0 left-0 w-full  bg-white shadow-md z-50 transition-all duration-300 ${
           isScrolled ? "shadow-lg" : ""
@@ -119,7 +117,10 @@ const Navbar = () => {
       >
         <div className="relative flex items-center px-4 sm:px-6 py-4 lg:px-14 lg:py-6">
           {/* Logo ở giữa cho mobile, trái cho desktop */}
-          <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 lg:static lg:transform-none">
+          <Link
+            to="/"
+            className="absolute left-1/2 transform -translate-x-1/2 lg:static lg:transform-none"
+          >
             <img
               src="/logo.png"
               alt="logo"
@@ -157,7 +158,9 @@ const Navbar = () => {
               >
                 <Bell
                   className={`text-gray-600 ${
-                    window.innerWidth < 1024 ? "w-4 h-4 sm:w-5 sm:h-5" : "w-6 h-6"
+                    window.innerWidth < 1024
+                      ? "w-4 h-4 sm:w-5 sm:h-5"
+                      : "w-6 h-6"
                   }`}
                 />
                 {notificationsCount > 0 && (
@@ -171,7 +174,9 @@ const Navbar = () => {
                   onMouseLeave={() => setIsNotificationsOpen(false)}
                   onClick={(event) => event.stopPropagation()}
                 >
-                  <Notifications setNotificationsCount={setNotificationsCount} />
+                  <Notifications
+                    setNotificationsCount={setNotificationsCount}
+                  />
                 </div>
               )}
             </div>
@@ -193,7 +198,9 @@ const Navbar = () => {
                     {userProfile.name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="text-gray-700 font-medium">{userProfile.name}</span>
+                <span className="text-gray-700 font-medium">
+                  {userProfile.name}
+                </span>
                 <ChevronDown
                   className={`w-4 h-4 text-gray-600 transition-transform ${
                     isDropdownOpen ? "rotate-180" : ""
