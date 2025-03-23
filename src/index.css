@@ -1,0 +1,33 @@
+/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+  
+
+/* Thanh progress */
+#nprogress .bar {
+    background: #007bff !important;
+    height: 4px !important;
+  }
+  
+  #nprogress .peg {
+    box-shadow: 0 0 10px #007bff, 0 0 5px #007bff;
+  }
+  
+  /* Hiệu ứng fade-out */
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      visibility: visible;
+    }
+    to {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+  
+  .loading-screen {
+    animation: fadeOut 0.5s ease-out 0.3s forwards;
+  }
+  
+  
