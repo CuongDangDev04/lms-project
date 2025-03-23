@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(
   cors({
     exposedHeaders: ["Content-Disposition"],
-    origin: PROD || DEV,
+    origin: DEV || PROD,
     credentials: true,
   })
 );
