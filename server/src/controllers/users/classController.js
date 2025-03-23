@@ -34,7 +34,7 @@ const getStudentsInClassCourse = async (req, res) => {
           where: { classroom_id: classroom.classroom_id },
         },
       ],
-      attributes: ["username"],
+      attributes: ["username", "fullname", "avt"],
     });
 
     res.status(200).json({ students });
@@ -117,10 +117,25 @@ const createRoomOnline = async (req, res) => {
   res.json({ roomName });
 };
 
+const getClassroomOfCourse = async (req, res) => {
+  try {
+    const { courseId } = req.query;
+
+    const classrooms = await Classroom.findAll({
+      where: { course_id: courseId },
+    });
+
+    res.status(200).json({ classrooms });
+  } catch (error) {
+    console.error("Lỗi lấy danh sách lớp học:", error);
+    res.status(500).json({ message: "Lỗi server!" });
+  }
+};
 
 module.exports = {
   getStudentsInClassCourse,
   getClassInCourse,
   getUserClassCourse,
   createRoomOnline,
+  getClassroomOfCourse,
 };

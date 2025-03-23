@@ -1,4 +1,11 @@
-const { User, UserNotification, Notification, Classroom, UserParticipation, Course } = require("../../models");
+const {
+  User,
+  UserNotification,
+  Notification,
+  Classroom,
+  UserParticipation,
+  Course,
+} = require("../../models");
 const { getIO, onlineUsers } = require("../../config/socket");
 const { Op } = require("sequelize");
 const jwt = require("jsonwebtoken");
@@ -21,7 +28,7 @@ const sendNotificationToSpecificUser = async (req, res) => {
     // Kiểm tra user nhận có tồn tại không
     const targetUser = await User.findOne({
       where: { user_id: target_user_id },
-      attributes: ['user_id']
+      attributes: ["user_id"],
     });
 
     if (!targetUser) {
@@ -38,32 +45,34 @@ const sendNotificationToSpecificUser = async (req, res) => {
     const userNotification = await UserNotification.create({
       user_id: target_user_id,
       notification_id: notification.notification_id,
-      status: 0 // Trạng thái mặc định: chưa đọc
+      status: 0, // Trạng thái mặc định: chưa đọc
     });
-
     // Gửi thông báo qua Socket.IO nếu user đang online
     const io = getIO();
+
     const receiverSocketId = onlineUsers[target_user_id];
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("receiveNotification", {
-        notification_id: notification.notification_id,
+        notification_id: userNotification.notification_id,
         message,
         timestamp: new Date().toISOString(),
-        status: 0
+        status: 0,
       });
 
       io.to(receiverSocketId).emit("toastNotification", {
         notificationType,
-        message
+        message,
       });
 
       console.log(`📩 Đã gửi thông báo đến user ${target_user_id}`);
     } else {
-      console.log(`⚠️ User ${target_user_id} không online, chỉ lưu vào database.`);
+      console.log(
+        `⚠️ User ${target_user_id} không online, chỉ lưu vào database.`
+      );
     }
 
     res.status(201).json({
-      message: `Đã gửi thông báo đến user ${target_user_id}!`
+      message: `Đã gửi thông báo đến user ${target_user_id}!`,
     });
   } catch (error) {
     console.error("Lỗi khi gửi thông báo cho user cụ thể:", error);
@@ -95,7 +104,9 @@ const sendNotificationToClassroomUsers = async (req, res) => {
     });
 
     if (!participations || participations.length === 0) {
-      return res.status(404).json({ error: "Không tìm thấy người dùng nào trong lớp học này!" });
+      return res
+        .status(404)
+        .json({ error: "Không tìm thấy người dùng nào trong lớp học này!" });
     }
 
     const userIds = [...new Set(participations.map((p) => p.user_id))]; // Loại bỏ trùng lặp
@@ -110,7 +121,9 @@ const sendNotificationToClassroomUsers = async (req, res) => {
     });
 
     if (!users || users.length === 0) {
-      return res.status(404).json({ error: "Không tìm thấy sinh viên nào trong lớp học này!" });
+      return res
+        .status(404)
+        .json({ error: "Không tìm thấy sinh viên nào trong lớp học này!" });
     }
 
     // Tạo notification
@@ -150,7 +163,9 @@ const sendNotificationToClassroomUsers = async (req, res) => {
           classroom_id, // Gửi classroom_id thay vì course_id
         });
 
-        console.log(`📩 Đã gửi thông báo đến sinh viên ${user.user_id} trong lớp học ${classroom_id}`);
+        console.log(
+          `📩 Đã gửi thông báo đến sinh viên ${user.user_id} trong lớp học ${classroom_id}`
+        );
       } else {
         console.log(
           `⚠️ Sinh viên ${user.user_id} không online, chỉ lưu vào database.`
@@ -263,7 +278,9 @@ const sendNotificationToClassroomTeachers = async (req, res) => {
     });
 
     if (!participations || participations.length === 0) {
-      return res.status(404).json({ error: "Không tìm thấy người dùng nào trong lớp học này!" });
+      return res
+        .status(404)
+        .json({ error: "Không tìm thấy người dùng nào trong lớp học này!" });
     }
 
     const userIds = [...new Set(participations.map((p) => p.user_id))]; // Loại bỏ trùng lặp
@@ -278,7 +295,9 @@ const sendNotificationToClassroomTeachers = async (req, res) => {
     });
 
     if (!teachers || teachers.length === 0) {
-      return res.status(404).json({ error: "Không tìm thấy giảng viên nào trong lớp học này!" });
+      return res
+        .status(404)
+        .json({ error: "Không tìm thấy giảng viên nào trong lớp học này!" });
     }
 
     // Tạo notification
@@ -313,12 +332,15 @@ const sendNotificationToClassroomTeachers = async (req, res) => {
 
         // Gửi toast notification
         io.to(receiverSocketId).emit("toastNotification", {
+          notification_id: notification.notification_id,
           notificationType,
           message,
           classroom_id,
         });
 
-        console.log(`📩 Đã gửi thông báo đến giảng viên ${teacher.user_id} trong lớp học ${classroom_id}`);
+        console.log(
+          `📩 Đã gửi thông báo đến giảng viên ${teacher.user_id} trong lớp học ${classroom_id}`
+        );
       } else {
         console.log(
           `⚠️ Giảng viên ${teacher.user_id} không online, chỉ lưu vào database.`
@@ -335,8 +357,7 @@ const sendNotificationToClassroomTeachers = async (req, res) => {
   }
 };
 
-
-//cmt phần nhận thông báo bằng header request 
+//cmt phần nhận thông báo bằng header request
 const getNotifications = async (req, res) => {
   let userId;
   try {
@@ -351,12 +372,16 @@ const getNotifications = async (req, res) => {
       return res.status(400).json({ error: "Thiếu thông tin người dùng!" });
     }
 
-
     const userNotifications = await UserNotification.findAll({
       where: { user_id: userId },
       include: {
         model: Notification,
-        attributes: ["notification_id", "message", "timestamp"],
+        attributes: [
+          "notification_id",
+          "notification_type",
+          "message",
+          "timestamp",
+        ],
       },
     });
 
@@ -512,12 +537,14 @@ const sendTagNotification = async (req, res) => {
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("receiveNotification", {
           notification_id: notification.notification_id,
+          notification_type: notification.notification_type,
           message,
           timestamp: new Date().toISOString(),
           status: 0,
         });
 
         io.to(receiverSocketId).emit("toastNotification", {
+          notificationId: notification.notification_id,
           notificationType: "tag",
           message,
         });
@@ -547,5 +574,5 @@ module.exports = {
   sendNotificationToClassroomUsers,
   sendNotificationToSpecificUser,
   sendNotificationToClassroomTeachers,
-  sendTagNotification
+  sendTagNotification,
 };

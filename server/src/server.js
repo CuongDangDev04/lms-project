@@ -14,13 +14,15 @@ const { initSocket } = require("./config/socket");
 const app = express();
 const server = http.createServer(app);
 
+const PROD = process.env.API_FRONTEND_PROD;
+const DEV = process.env.API_FRONTEND_DEV;
 // Cấu hình middleware
 app.use("/assets", express.static("assets"));
 app.use(express.json());
 app.use(
   cors({
     exposedHeaders: ["Content-Disposition"],
-    origin: "https://lmsclient-nine.vercel.app",
+    origin: PROD || DEV,
     credentials: true,
   })
 );

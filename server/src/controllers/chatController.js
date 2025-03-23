@@ -61,7 +61,7 @@ const sendMessage = async (req, res) => {
       attributes: ["participate_id"],
       include: {
         model: User,
-        attributes: ["user_id", "username"],
+        attributes: ["user_id", "username", "fullname"],
       },
     });
 
@@ -90,13 +90,14 @@ const sendMessage = async (req, res) => {
       message: userMessage.message,
       userId: isParticipate.User.user_id,
       username: isParticipate.User.username, // Thêm username vào tin nhắn
+      fullname: isParticipate.User.fullname,
       taggedUsers,
       timestamp: userMessage.timestamp,
     });
 
     for (const user of taggedUsers) {
       getIO().emit("tagNotification", {
-        message,
+        messageId: userMessage.message_id,
         sender: userId,
         sendTo: user.user_id,
         classroomId,
