@@ -49,7 +49,9 @@ const sendNotificationToSpecificUser = async (req, res) => {
     });
     // Gửi thông báo qua Socket.IO nếu user đang online
     const io = getIO();
-
+    const unreadNotificationCount = await UserNotification.count({
+      where: { user_id: target_user_id, status: 0 },
+    });
     const receiverSocketId = onlineUsers[target_user_id];
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("receiveNotification", {
@@ -62,6 +64,9 @@ const sendNotificationToSpecificUser = async (req, res) => {
       io.to(receiverSocketId).emit("toastNotification", {
         notificationType,
         message,
+      });
+      io.to(receiverSocketId).emit("unreadNotificationCount", {
+        unreadNotificationCount,
       });
 
       console.log(`📩 Đã gửi thông báo đến user ${target_user_id}`);
@@ -144,7 +149,10 @@ const sendNotificationToClassroomUsers = async (req, res) => {
 
     // Gửi thông báo qua Socket.IO
     const io = getIO();
-    users.forEach((user) => {
+    for (const user of users) {
+      const unreadNotificationCount = await UserNotification.count({
+        where: { user_id: user.user_id, status: 0 },
+      });
       const receiverSocketId = onlineUsers[user.user_id];
       if (receiverSocketId) {
         // Gửi thông báo chi tiết
@@ -162,16 +170,15 @@ const sendNotificationToClassroomUsers = async (req, res) => {
           message,
           classroom_id, // Gửi classroom_id thay vì course_id
         });
-
-        console.log(
-          `📩 Đã gửi thông báo đến sinh viên ${user.user_id} trong lớp học ${classroom_id}`
-        );
+        io.to(receiverSocketId).emit("unreadNotificationCount", {
+          unreadNotificationCount,
+        });
       } else {
         console.log(
           `⚠️ Sinh viên ${user.user_id} không online, chỉ lưu vào database.`
         );
       }
-    });
+    }
 
     res.status(201).json({
       message: `Đã gửi thông báo đến ${users.length} sinh viên trong lớp học ${classroom_id}!`,
@@ -221,8 +228,11 @@ const sendNotificationAllUser = async (req, res) => {
 
     // Gửi thông báo qua Socket.IO cho tất cả client
     const io = getIO();
-    users.forEach((user) => {
+    for (const user of users) {
       // 🆕 Lấy từng user object
+      const unreadNotificationCount = await UserNotification.count({
+        where: { user_id: user.user_id, status: 0 },
+      });
       const receiverSocketId = onlineUsers[user.user_id]; // 🆕 Truy cập đúng user_id
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("receiveNotification", {
@@ -236,6 +246,9 @@ const sendNotificationAllUser = async (req, res) => {
           notificationType,
           message,
         });
+        io.to(receiverSocketId).emit("unreadNotificationCount", {
+          unreadNotificationCount,
+        });
         console.log(
           `📢 Đã gửi toastNotification: ${message} đến user ${user.user_id}`
         );
@@ -244,7 +257,7 @@ const sendNotificationAllUser = async (req, res) => {
           `⚠️ User ${user.user_id} không online, chỉ lưu vào database.`
         );
       }
-    });
+    }
 
     res.status(201).json({
       message: `Đã gửi thông báo đến ${users.length} người dùng!`,
@@ -318,7 +331,10 @@ const sendNotificationToClassroomTeachers = async (req, res) => {
 
     // Gửi thông báo qua Socket.IO
     const io = getIO();
-    teachers.forEach((teacher) => {
+    for (const teacher of teachers) {
+      const unreadNotificationCount = await UserNotification.count({
+        where: { user_id: teacher.user_id, status: 0 },
+      });
       const receiverSocketId = onlineUsers[teacher.user_id];
       if (receiverSocketId) {
         // Gửi thông báo chi tiết
@@ -337,7 +353,9 @@ const sendNotificationToClassroomTeachers = async (req, res) => {
           message,
           classroom_id,
         });
-
+        io.to(receiverSocketId).emit("unreadNotificationCount", {
+          unreadNotificationCount,
+        });
         console.log(
           `📩 Đã gửi thông báo đến giảng viên ${teacher.user_id} trong lớp học ${classroom_id}`
         );
@@ -346,7 +364,7 @@ const sendNotificationToClassroomTeachers = async (req, res) => {
           `⚠️ Giảng viên ${teacher.user_id} không online, chỉ lưu vào database.`
         );
       }
-    });
+    }
 
     res.status(201).json({
       message: `Đã gửi thông báo đến ${teachers.length} giảng viên trong lớp học ${classroom_id}!`,
@@ -359,17 +377,11 @@ const sendNotificationToClassroomTeachers = async (req, res) => {
 
 //cmt phần nhận thông báo bằng header request
 const getNotifications = async (req, res) => {
-  let userId;
-  try {
-    const user = JSON.parse(req.headers.user);
-    userId = user.id;
-  } catch (error) {
-    return res.status(400).json({ error: "Thông tin user không hợp lệ!" });
-  }
+  const { userId } = req.query;
 
   try {
     if (!userId) {
-      return res.status(400).json({ error: "Thiếu thông tin người dùng!" });
+      return res.status(404).json({ error: "Thiếu thông tin người dùng!" });
     }
 
     const userNotifications = await UserNotification.findAll({
@@ -406,8 +418,15 @@ const deleteNotification = async (req, res) => {
     if (!notification) {
       return res.status(404).json({ error: "Không tìm thấy thông báo!" });
     }
-    getIO().emit("notificationDeleted", notificationId);
-
+    const io = getIO();
+    const receiverSocketId = onlineUsers[userId];
+    io.to(receiverSocketId).emit("notificationDeleted", notificationId);
+    const unreadNotificationCount = await UserNotification.count({
+      where: { user_id: userId, status: 0 },
+    });
+    io.to(receiverSocketId).emit("unreadNotificationCount", {
+      unreadNotificationCount: unreadNotificationCount,
+    });
     res.status(200).json({ message: "Đã xóa thông báo!" });
   } catch (error) {
     console.error("Lỗi khi xóa thông báo:", error);
@@ -425,7 +444,12 @@ const deleteAllNotification = async (req, res) => {
     if (!notification) {
       return res.status(404).json({ error: "Không tìm thấy thông báo!" });
     }
-    getIO().emit("AllNotificationDeleted", userId);
+    const io = getIO();
+    const receiverSocketId = onlineUsers[userId];
+    io.to(receiverSocketId).emit("AllNotificationDeleted", userId);
+    io.to(receiverSocketId).emit("unreadNotificationCount", {
+      unreadNotificationCount: 0,
+    });
 
     res.status(200).json({ message: "Đã xóa thông báo!" });
   } catch (error) {
@@ -445,9 +469,15 @@ const markAsRead = async (req, res) => {
     if (updated[0] === 0) {
       return res.status(404).json({ error: "Thông báo không tồn tại!" });
     }
-
-    getIO().emit("notificationRead", notificationId);
-
+    const io = getIO();
+    const receiverSocketId = onlineUsers[userId];
+    io.to(receiverSocketId).emit("notificationRead", notificationId);
+    const unreadNotificationCount = await UserNotification.count({
+      where: { user_id: userId, status: 0 },
+    });
+    io.to(receiverSocketId).emit("unreadNotificationCount", {
+      unreadNotificationCount: unreadNotificationCount,
+    });
     res.status(200).json({ message: "Đã đọc thông báo!" });
   } catch (error) {
     console.error("Lỗi khi cập nhật trạng thái thông báo:", error);
@@ -462,8 +492,13 @@ const markAllAsRead = async (req, res) => {
       { status: 1 },
       { where: { user_id: userId, status: 0 } }
     );
+    const io = getIO();
+    const receiverSocketId = onlineUsers[userId];
 
-    getIO().emit("allNotificationsRead", userId);
+    io.to(receiverSocketId).emit("allNotificationsRead", userId);
+    io.to(receiverSocketId).emit("unreadNotificationCount", {
+      unreadNotificationCount: 0,
+    });
 
     res
       .status(200)
@@ -563,7 +598,20 @@ const sendTagNotification = async (req, res) => {
     res.status(500).json({ error: "Lỗi khi gửi thông báo!" });
   }
 };
+const getUnreadNotificationCount = async (req, res) => {
+  try {
+    const { userId } = req.query;
 
+    const unreadNotificationCount = await UserNotification.count({
+      where: { user_id: userId, status: 0 },
+    });
+
+    res.status(200).json({ unreadNotificationCount });
+  } catch (error) {
+    console.error("Lỗi khi lấy số lượng thông báo chưa đọc:", error);
+    res.status(500).json({ error: "Lỗi khi lấy số lượng thông báo chưa đọc!" });
+  }
+};
 module.exports = {
   sendNotificationAllUser,
   getNotifications,
@@ -575,4 +623,5 @@ module.exports = {
   sendNotificationToSpecificUser,
   sendNotificationToClassroomTeachers,
   sendTagNotification,
+  getUnreadNotificationCount,
 };

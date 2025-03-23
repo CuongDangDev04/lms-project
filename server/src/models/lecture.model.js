@@ -2,37 +2,37 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const Lecture = sequelize.define(
-  "Lecture",
+  "lecture",
   {
     lecture_id: {
       type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false,
+      primaryKey: true,  
+      autoIncrement: true, 
+      allowNull: false, 
     },
     user_participation_id: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: true,  
     },
     title: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
+      type: DataTypes.STRING(255),  
+      allowNull: true,  
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: true,  
     },
     lecture_date: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: DataTypes.DATE,  
+      allowNull: true, 
     },
     created_date: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: DataTypes.DATE,  
+      allowNull: true, 
     },
     user_id: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: true,  
     },
     file_path: {
       type: DataTypes.TEXT,
@@ -44,7 +44,7 @@ const Lecture = sequelize.define(
     }
   },
   {
-    timestamps: false,
+    timestamps: false, 
   }
 );
 

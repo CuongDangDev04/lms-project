@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const ClassStatus = sequelize.define(
-    "Class_statuses",
+    "class_status",
     {
         status_id: {
             type: DataTypes.INTEGER,
@@ -15,7 +15,8 @@ const ClassStatus = sequelize.define(
         },
     },
     {
-        timestamps: false
+        timestamps: false,
+        tableName: "class_status",
     }
 );
 module.exports = ClassStatus;

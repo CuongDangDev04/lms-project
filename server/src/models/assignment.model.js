@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const Assignment = sequelize.define(
-  "Assignment",
+  "assignment",
   {
     assignment_id: {
       type: DataTypes.INTEGER,
@@ -12,10 +12,10 @@ const Assignment = sequelize.define(
     },
     user_participation_id: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: true,  
     },
     title: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING(255),  
       allowNull: true,
     },
     description: {
@@ -23,11 +23,11 @@ const Assignment = sequelize.define(
       allowNull: true,
     },
     start_assignment: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATE, 
       allowNull: true,
     },
     end_assignment: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATE,  
       allowNull: true,
     },
     user_id: {
@@ -35,12 +35,12 @@ const Assignment = sequelize.define(
       allowNull: true,
     },
     file_path: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.STRING(500), 
       allowNull: true,
     }
   },
   {
-    timestamps: false,
+    timestamps: false, 
   }
 );
 

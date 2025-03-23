@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const Grade = sequelize.define(
-  "Grade",
+  "grade",
   {
     grade_id: {
       type: DataTypes.INTEGER,
@@ -19,7 +19,7 @@ const Grade = sequelize.define(
       allowNull: false, // Liên kết với bài tập (để dễ tra cứu)
     },
     score: {
-      type: DataTypes.DECIMAL(3, 1),
+      type: DataTypes.DECIMAL(3,1), 
       allowNull: true,
     },
     feedback: {
@@ -29,7 +29,6 @@ const Grade = sequelize.define(
   },
   {
     timestamps: false,
-    tableName: "Grades",
   }
 );
 
