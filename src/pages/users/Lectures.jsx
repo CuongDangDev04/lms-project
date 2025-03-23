@@ -28,7 +28,7 @@ import {
   FaPlay,
   FaDownload,
 } from 'react-icons/fa';
-import NotificationService from '../../services/notificationService';
+import NotificationService from ''../../services / notificationService'';
 
 // Utility functions for file handling
 const getCleanFileName = (filePath) => {
