@@ -7,7 +7,7 @@ import {
   deleteSubmission,
 } from "../../services/SubmissionService";
 import { ModalCustom } from "../../components/admin/ui/ModalCustom";
-import NotificationService from "'../../services/notificationService'";
+import NotificationService from '../../services/notificationService';
 import { useParams } from "react-router-dom";
 const Submission = ({ assignmentId, userId, userRole = "student", deadline, assignmentTitle }) => {
   const [files, setFiles] = useState([]);
