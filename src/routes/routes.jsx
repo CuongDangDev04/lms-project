@@ -29,7 +29,7 @@ import AssignedCourse from "../pages/users/AssignedCourse";
 import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
 import Subject from "../pages/instructor/Subjects";
-import { Classroom } from "../components/users/classroom";
+import { Classroom } from "../components/users/Classroom";
 
 const AppRoutes = () => {
   return (
