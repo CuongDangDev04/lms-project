@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const UserNotification = sequelize.define(
-  "user_notification",
+  "User_notifications",
   {
     user_id: {
       type: DataTypes.INTEGER,

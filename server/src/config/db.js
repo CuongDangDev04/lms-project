@@ -1,14 +1,21 @@
 const { Sequelize } = require("sequelize");
+const fs = require("fs");
 require("dotenv").config();
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASS,
+  process.env.PRODUCTION_DB_USER,
+  process.env.PRODUCTION_DB_PASS,
   {
-    host: process.env.DB_HOST,
+    host: process.env.PRODUCTION_DB_HOST,
+    port: process.env.PRODUCTION_DB_PORT,
     dialect: "mysql",
-    logging: false,
+    dialectOptions: {
+      ssl: {
+        ca: fs.readFileSync("./ca.pem"),
+        rejectUnauthorized: true,
+      },
+    },
   }
 );
 

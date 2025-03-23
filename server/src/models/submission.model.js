@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const Submission = sequelize.define(
-  "submission",
+  "Submission",
   {
     submission_id: {
       type: DataTypes.INTEGER,

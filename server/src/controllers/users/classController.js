@@ -34,7 +34,7 @@ const getStudentsInClassCourse = async (req, res) => {
           where: { classroom_id: classroom.classroom_id },
         },
       ],
-      attributes: ["username", "fullname"],
+      attributes: ["username", "fullname", "avt"],
     });
 
     res.status(200).json({ students });
