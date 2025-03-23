@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 let io;
-const API_FE = process.env.API_FRONTEND;
+const API_FE = process.env.API_FRONTEND || process.env.API_FRONTEND_PROD;
 let onlineUsers = {};
 
 const initSocket = (server) => {
