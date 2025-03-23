@@ -19,7 +19,7 @@ import {
     postponeAndMakeupSchedule,
     updateTeacherAssignment
 } from '../../services/classRoomServices';
-import NotificationService from '../../services/NotificationService';
+import NotificationService from '../../services/notificationService';
 
 const AssignedClassroomManager = () => {
     const [isAssignOpen, setIsAssignOpen] = useState(false);
@@ -89,14 +89,14 @@ const AssignedClassroomManager = () => {
             await updateTeacherAssignment(currentClassroom.classroom_id, assignFormData.user_id);
             fetchData();
             setIsAssignOpen(false);
-            
+
             const notificationData = {
                 target_user_id: assignFormData.user_id, // Sử dụng user_id của học sinh
                 notificationType: "system",
                 message: `Bạn đã đượcphân công giảng dạy lớp học này`,
-              };
-              console.log(notificationData);
-              await NotificationService.sendNotificationToSpecificUser(notificationData);
+            };
+            console.log(notificationData);
+            await NotificationService.sendNotificationToSpecificUser(notificationData);
             toast.success('Cập nhật phân công giảng viên thành công!');
         } catch (error) {
             toast.warning('Giảng viên đã có lịch dạy bị trùng!');

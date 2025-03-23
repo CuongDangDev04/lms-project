@@ -17,7 +17,7 @@ import { ModalCustom } from '../../components/admin/ui/ModalCustom';
 import useClassroomData from '../../hooks/useClassroomData';
 import ClassroomTable from '../../components/admin/ClassroomTable';
 import Pagination from '../../components/admin/Pagination';
-import NotificationService from '../../services/NotificationService';
+import NotificationService from '../../services/notificationService';
 
 registerLocale('vi', vi);
 
@@ -80,9 +80,9 @@ const UnAssigmentManager = () => {
                 target_user_id: assignFormData.user_id, // Sử dụng user_id của học sinh
                 notificationType: "system",
                 message: `Bạn đã được phân công giảng dạy lớp học này`,
-              };
-              console.log(notificationData);
-              await NotificationService.sendNotificationToSpecificUser(notificationData);
+            };
+            console.log(notificationData);
+            await NotificationService.sendNotificationToSpecificUser(notificationData);
             toast.success('Phân công giảng viên thành công!');
         } catch (error) {
             toast.error('Lỗi khi phân công giảng viên!');

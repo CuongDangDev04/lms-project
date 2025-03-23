@@ -7,7 +7,7 @@ import { FaCheck, FaTimes, FaInfoCircle, FaEye, FaSearch } from 'react-icons/fa'
 import { format, isWithinInterval, parse, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import AssignedClassService from '../../services/assignedClass';
-import NotificationService from '../../services/NotificationService';
+import NotificationService from '../../services/notificationService';
 
 // Định nghĩa tên ngày trong tuần (1-7: Chủ Nhật - Thứ Bảy)
 const daysOfWeek = [
@@ -144,16 +144,16 @@ const AssignedCourse = () => {
 
     const handleRegisterCourse = async () => {
         if (!selectedCourse) return;
-    
+
         if (hasScheduleConflict(selectedCourse, registeredCourses)) {
             toast.error('Xung đột giờ học! Vui lòng chọn học phần khác.');
             return;
         }
-    
+
         try {
             // Đăng ký khóa học
             await AssignedClassService.registerClass(selectedCourse.classroom_id);
-    
+
             // Cập nhật dữ liệu local
             const updatedCourse = {
                 ...selectedCourse,
@@ -174,62 +174,62 @@ const AssignedCourse = () => {
                 message: "sinh viên đã  đăng ký khóa học thành công",
                 classroom_id: selectedCourse.classroom_id,
                 notificationType: "classroom",
-              };
-          
-              await NotificationService.sendNotificationToClassroomTeachers(notificationData);
-                toast.success('Đăng ký khóa học thành công!');
-    
-    
+            };
+
+            await NotificationService.sendNotificationToClassroomTeachers(notificationData);
+            toast.success('Đăng ký khóa học thành công!');
+
+
         } catch (error) {
             toast.error(`Đăng ký thất bại: ${error.message}`);
         }
     };
     const handleCancelRegistration = async (classroomId) => {
         try {
-          const enrollment = registeredCourses.find((c) => c.classroom_id === classroomId);
-      
-          // Danh sách các trạng thái không cho phép hủy đăng ký
-          const restrictedStatuses = ['Bắt Đầu Học', 'Khóa Đăng Ký', 'Kết Thúc'];
-      
-          // Kiểm tra trạng thái của khóa học
-          if (restrictedStatuses.includes(enrollment.status)) {
-            toast.error('Không thể hủy đăng ký học phần do trạng thái hiện tại là: ' + enrollment.status);
-            return;
-          }
-      
-          // Tiến hành hủy đăng ký nếu trạng thái hợp lệ
-          await AssignedClassService.unregisterClass(classroomId);
-      
-          // Cập nhật dữ liệu local
-          const updatedEnrollment = {
-            ...enrollment,
-            current_enrollment: (enrollment.current_enrollment || 0) - 1,
-          };
-          setRegisteredCourses(registeredCourses.filter((c) => c.classroom_id !== classroomId));
-          setAvailableCourses(
-            availableCourses
-              .map((c) =>
-                c.classroom_id === classroomId
-                  ? { ...c, current_enrollment: (c.current_enrollment || 0) - 1 }
-                  : c
-              )
-              .concat(updatedEnrollment)
-          );
-      
-          // Gửi thông báo sau khi hủy đăng ký thành công
-          const notificationData = {
-            message: "sinh viên đã hủy đăng ký khóa học",
-            classroom_id: selectedCourse.classroom_id,
-            notificationType: "classroom",
-          };
-      
-          await NotificationService.sendNotificationToClassroomTeachers(notificationData);
-          
-          toast.success('Hủy đăng ký thành công!');
+            const enrollment = registeredCourses.find((c) => c.classroom_id === classroomId);
+
+            // Danh sách các trạng thái không cho phép hủy đăng ký
+            const restrictedStatuses = ['Bắt Đầu Học', 'Khóa Đăng Ký', 'Kết Thúc'];
+
+            // Kiểm tra trạng thái của khóa học
+            if (restrictedStatuses.includes(enrollment.status)) {
+                toast.error('Không thể hủy đăng ký học phần do trạng thái hiện tại là: ' + enrollment.status);
+                return;
+            }
+
+            // Tiến hành hủy đăng ký nếu trạng thái hợp lệ
+            await AssignedClassService.unregisterClass(classroomId);
+
+            // Cập nhật dữ liệu local
+            const updatedEnrollment = {
+                ...enrollment,
+                current_enrollment: (enrollment.current_enrollment || 0) - 1,
+            };
+            setRegisteredCourses(registeredCourses.filter((c) => c.classroom_id !== classroomId));
+            setAvailableCourses(
+                availableCourses
+                    .map((c) =>
+                        c.classroom_id === classroomId
+                            ? { ...c, current_enrollment: (c.current_enrollment || 0) - 1 }
+                            : c
+                    )
+                    .concat(updatedEnrollment)
+            );
+
+            // Gửi thông báo sau khi hủy đăng ký thành công
+            const notificationData = {
+                message: "sinh viên đã hủy đăng ký khóa học",
+                classroom_id: selectedCourse.classroom_id,
+                notificationType: "classroom",
+            };
+
+            await NotificationService.sendNotificationToClassroomTeachers(notificationData);
+
+            toast.success('Hủy đăng ký thành công!');
         } catch (error) {
-          toast.error(`Hủy đăng ký thất bại: ${error.message}`);
+            toast.error(`Hủy đăng ký thất bại: ${error.message}`);
         }
-      };
+    };
     const columns = [
         { label: 'Mã Lớp', key: 'classroom_id', render: (c) => c.classroom_id || 'N/A' },
         { label: 'Tên Lớp', key: 'class_name', render: (c) => c.class_name || 'Không xác định' },
@@ -319,7 +319,7 @@ const AssignedCourse = () => {
             render: (c) => {
                 const restrictedStatuses = ['Bắt Đầu Học', 'Khóa Đăng Ký', 'Kết Thúc'];
                 const canCancel = !restrictedStatuses.includes(c.status);
-    
+
                 return (
                     <div className="flex space-x-3">
                         <button
