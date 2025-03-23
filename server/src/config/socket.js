@@ -3,13 +3,17 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 let io;
-const API_FE = [process.env.API_FRONTEND_DEV, process.env.API_FRONTEND_PROD];;
+const API_FE = process.env.API_FRONTEND;
 let onlineUsers = {};
 
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: API_FE,
+      origin: [
+        API_FE,
+        "http://localhost:5173",
+        "https://lmsclient-nine.vercel.app"
+      ],
       methods: ["GET", "POST"],
     },
   });
