@@ -7,7 +7,7 @@ import { FaCheck, FaTimes, FaInfoCircle, FaEye, FaSearch } from 'react-icons/fa'
 import { format, isWithinInterval, parse, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import AssignedClassService from '../../services/assignedClass';
-import NotificationService from ''../../services / notificationService'';
+import NotificationService from '../../services/notificationService';
 
 // Định nghĩa tên ngày trong tuần (1-7: Chủ Nhật - Thứ Bảy)
 const daysOfWeek = [
