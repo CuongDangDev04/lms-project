@@ -43,7 +43,7 @@ const getCourses = async (req, res) => {
         const formattedCourses = classrooms.map((classroom) => {
             const currentEnrollment = enrollmentMap[classroom.classroom_id] || 0;
 
-            const classStatus = classroom.ClassStatus || { status_name: 'Không xác định' };
+            const classStatus = classroom.class_status || { status_name: 'Không xác định' };
 
             return {
                 classroom_id: classroom.classroom_id,
