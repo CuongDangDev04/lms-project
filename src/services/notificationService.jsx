@@ -20,9 +20,9 @@ const NotificationService = {
     return api.post(`${API_URL}/sendNoToUser`, notificationData);
   },
 
-  getNotifications: async (user) => {
+  getNotifications: async (userId) => {
     return api.get(`${API_URL}/getNo`, {
-      headers: { user: JSON.stringify(user) },
+      params: { userId },
     });
   },
 
@@ -45,6 +45,11 @@ const NotificationService = {
 
   deleteAllNotifications: async (userId) => {
     return api.delete(`${API_URL}/deleteAllNo`, {
+      params: { userId },
+    });
+  },
+  getUnreadNotificationCount: async (userId) => {
+    return api.get(`${API_URL}/getUnreadNotificationCount`, {
       params: { userId },
     });
   },

@@ -19,7 +19,7 @@ import {
     postponeAndMakeupSchedule,
     updateTeacherAssignment
 } from '../../services/classRoomServices';
-import NotificationService from '../../services/notificationService';
+import NotificationService from '../../services/NotificationService';
 
 const AssignedClassroomManager = () => {
     const [isAssignOpen, setIsAssignOpen] = useState(false);
@@ -84,7 +84,6 @@ const AssignedClassroomManager = () => {
     const handleAssignTeacher = async (e) => {
         e.preventDefault();
         if (!assignFormData.user_id) return toast.error('Vui lòng chọn giảng viên!');
-        console.log(assignFormData);
         try {
             await updateTeacherAssignment(currentClassroom.classroom_id, assignFormData.user_id);
             fetchData();
@@ -95,7 +94,6 @@ const AssignedClassroomManager = () => {
                 notificationType: "system",
                 message: `Bạn đã đượcphân công giảng dạy lớp học này`,
             };
-            console.log(notificationData);
             await NotificationService.sendNotificationToSpecificUser(notificationData);
             toast.success('Cập nhật phân công giảng viên thành công!');
         } catch (error) {
@@ -249,7 +247,7 @@ const AssignedClassroomManager = () => {
         { label: 'Tên Lớp Học Phần', key: 'class_id', render: (c) => c.Class?.class_name || 'N/A' },
         { label: 'Khóa Học', key: 'course_id', render: (c) => c.Course?.course_name || 'N/A' },
         { label: 'Giảng Viên', key: 'assignedTeacherName', render: (c) => c.assignedTeacherName || 'N/A' },
-        { label: 'Trạng Thái', key: 'status_id', render: (c) => c.ClassStatus?.status_name || 'N/A' },
+        { label: 'Trạng Thái', key: 'status_id', render: (c) => c.class_status?.status_name || 'N/A' },
     ];
 
     const actions = [

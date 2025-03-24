@@ -28,7 +28,7 @@ import {
   FaPlay,
   FaDownload,
 } from 'react-icons/fa';
-import NotificationService from '../../services/notificationService';
+import NotificationService from '../../services/NotificationService';
 
 // Utility functions for file handling
 const getCleanFileName = (filePath) => {
@@ -445,12 +445,7 @@ export default function Lectures() {
   };
 
   const handlePlay = async (lecture, fileIndex) => {
-    console.log("Playing video:", {
-      lecture,
-      fileIndex,
-      filePath: lecture.file_path[fileIndex],
-      isPlayable: isPlayableFile(lecture.file_path[fileIndex])
-    });
+    
 
     if (!isPlayableFile(lecture.file_path[fileIndex])) {
       toast.error("This file format is not playable");
@@ -472,7 +467,7 @@ export default function Lectures() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-6xl mx-auto  mt-4 p-6 bg-gray-50 min-h-screen">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover />
 
       <h1 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-500 to-teal-500 text-transparent bg-clip-text">

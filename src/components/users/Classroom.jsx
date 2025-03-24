@@ -19,7 +19,6 @@ const Classroom = () => {
 
   const handleConferenceLeft = useCallback(() => {
     if (!hasLeft) {
-      console.log("🚪 Người dùng rời khỏi phòng.");
       setHasLeft(true);
       navigate(`/class/${classroomId}`);
     }
@@ -124,18 +123,15 @@ const Classroom = () => {
       });
 
       jitsiApiRef.current.addEventListener("videoConferenceJoined", () => {
-        console.log("✅ Đã vào phòng họp.");
         setHasLeft(false);
       });
 
       jitsiApiRef.current.addEventListener("readyToClose", () => {
-        console.log("🚪 Cuộc họp đóng.");
         handleConferenceLeft();
       });
 
       // Xử lý khi người dùng đóng tab hoặc tải lại trang
       const handleBeforeUnload = () => {
-        console.log("🔄 Trang đang tải lại hoặc tab đóng!");
         handleConferenceLeft();
       };
 

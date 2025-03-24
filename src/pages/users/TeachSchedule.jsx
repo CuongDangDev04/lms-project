@@ -58,7 +58,7 @@ const TeachSchedule = () => {
         <div className="p-4 sm:p-8 bg-gray-50 min-h-screen mt-16 font-sans antialiased">
             {/* Header */}
             <div className="flex flex-col items-center mb-6 sm:mb-10 gap-4">
-                <h2 className="text-2xl font-bold text-gray-900 text-center">
+                <h2 className="text-xl sm:text-xl md:text-sm font-bold text-gray-900 text-center">
                     Lịch Dạy Theo Tuần
                 </h2>
                 <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 w-full sm:w-auto">

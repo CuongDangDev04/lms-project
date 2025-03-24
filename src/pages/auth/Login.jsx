@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import logo from "../../assets/user/logo.jpg";
-import { forgotPassword, login, resetPassword } from "../../services/authServices";
+import {
+  forgotPassword,
+  login,
+  resetPassword,
+} from "../../services/authServices";
 import { ToastContainer, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import img_login from "../../assets/user/img_login.png";
-import img_login2 from "../../assets/user/img_Login2.png";
+import img_login2 from "../../assets/user/img_login2.png";
 import img_login3 from "../../assets/user/img_login3.png";
 import img_login4 from "../../assets/user/img_login4.png";
 import LoadingBar from "../../components/users/LoadingBar";
@@ -67,6 +71,7 @@ export const Login = () => {
         if (roleId === 1) navigate("/");
         else if (roleId === 3) navigate("/admin");
         else navigate("/");
+
       }, 1000);
     } catch (error) {
       toast.error(error.message || "Đăng nhập thất bại");
@@ -120,7 +125,6 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-red-50 p-4">
-      <ToastContainer />
       <LoadingBar isLoading={isLoading} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -137,7 +141,7 @@ export const Login = () => {
             className="text-center mb-8"
           >
             <img alt="logo" className="w-32 mx-auto mb-4" src={logo} />
-            <h2 className="text-4xl h-16 font-bold text-gray-800 bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">
+            <h2 className="text-4xl h-16 font-bold text-gray-800 bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
               Đăng Nhập
             </h2>
           </motion.div>
@@ -156,7 +160,11 @@ export const Login = () => {
               <label
                 htmlFor="username"
                 className={`absolute left-4 text-gray-500 transition-all duration-300 
-                  ${username ? "-top-2 text-sm text-gray-500 bg-white px-1" : "top-1/2 -translate-y-1/2"}
+                  ${
+                    username
+                      ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                      : "top-1/2 -translate-y-1/2"
+                  }
                   peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
               >
                 MSSV
@@ -176,7 +184,11 @@ export const Login = () => {
               <label
                 htmlFor="password"
                 className={`absolute left-4 text-gray-500 transition-all duration-300 
-                  ${password ? "-top-2 text-sm text-gray-500 bg-white px-1" : "top-1/2 -translate-y-1/2"}
+                  ${
+                    password
+                      ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                      : "top-1/2 -translate-y-1/2"
+                  }
                   peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
               >
                 Mật khẩu
@@ -203,7 +215,7 @@ export const Login = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-semibold text-lg shadow-md hover:shadow-lg transition-all duration-300"
+              className="w-full py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg font-semibold text-lg shadow-md hover:shadow-lg transition-all duration-300"
             >
               Đăng Nhập
             </motion.button>
@@ -211,7 +223,7 @@ export const Login = () => {
         </div>
 
         {/* Ảnh minh họa */}
-        <div className="hidden md:block w-1/2 bg-gradient-to-r from-teal-500 to-cyan-500 p-8 relative overflow-hidden">
+        <div className="hidden md:block w-1/2 bg-gradient-to-r from-blue-400 to-blue-600 p-8 relative overflow-hidden">
           <div className="relative w-full h-full flex items-center justify-center">
             <AnimatePresence mode="wait">
               <motion.img
@@ -243,7 +255,9 @@ export const Login = () => {
               {images.map((_, index) => (
                 <span
                   key={index}
-                  className={`w-3 h-3 rounded-full ${currentImageIndex === index ? "bg-white" : "bg-white/50"} transition-all duration-300`}
+                  className={`w-3 h-3 rounded-full ${
+                    currentImageIndex === index ? "bg-white" : "bg-white/50"
+                  } transition-all duration-300`}
                 />
               ))}
             </div>
@@ -293,7 +307,11 @@ export const Login = () => {
                     <label
                       htmlFor="forgotEmail"
                       className={`absolute left-4 text-gray-500 transition-all duration-300 
-                        ${forgotEmail ? "-top-2 text-sm text-gray-500 bg-white px-1" : "top-1/2 -translate-y-1/2"}
+                        ${
+                          forgotEmail
+                            ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                            : "top-1/2 -translate-y-1/2"
+                        }
                         peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
                     >
                       Email
@@ -304,7 +322,7 @@ export const Login = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-semibold text-lg shadow-md hover:shadow-lg transition-all duration-300"
+                    className="w-full py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg font-semibold text-lg shadow-md hover:shadow-lg transition-all duration-300"
                   >
                     Gửi Mã Xác Nhận
                   </motion.button>
@@ -340,7 +358,11 @@ export const Login = () => {
                     <label
                       htmlFor="resetCode"
                       className={`absolute left-4 text-gray-500 transition-all duration-300 
-                        ${resetCode ? "-top-2 text-sm text-gray-500 bg-white px-1" : "top-1/2 -translate-y-1/2"}
+                        ${
+                          resetCode
+                            ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                            : "top-1/2 -translate-y-1/2"
+                        }
                         peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
                     >
                       Mã Xác Nhận
@@ -360,7 +382,11 @@ export const Login = () => {
                     <label
                       htmlFor="newPassword"
                       className={`absolute left-4 text-gray-500 transition-all duration-300 
-                        ${newPassword ? "-top-2 text-sm text-gray-500 bg-white px-1" : "top-1/2 -translate-y-1/2"}
+                        ${
+                          newPassword
+                            ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                            : "top-1/2 -translate-y-1/2"
+                        }
                         peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
                     >
                       Mật Khẩu Mới
@@ -369,7 +395,11 @@ export const Login = () => {
                       onClick={() => setShowNewPassword(!showNewPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500 cursor-pointer transition-colors"
                     >
-                      {showNewPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                      {showNewPassword ? (
+                        <FaEyeSlash size={20} />
+                      ) : (
+                        <FaEye size={20} />
+                      )}
                     </span>
                   </div>
 
@@ -386,16 +416,26 @@ export const Login = () => {
                     <label
                       htmlFor="confirmPassword"
                       className={`absolute left-4 text-gray-500 transition-all duration-300 
-                        ${confirmPassword ? "-top-2 text-sm text-gray-500 bg-white px-1" : "top-1/2 -translate-y-1/2"}
+                        ${
+                          confirmPassword
+                            ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                            : "top-1/2 -translate-y-1/2"
+                        }
                         peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
                     >
                       Nhập Lại Mật Khẩu
                     </label>
                     <span
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500 cursor-pointer transition-colors"
                     >
-                      {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                      {showConfirmPassword ? (
+                        <FaEyeSlash size={20} />
+                      ) : (
+                        <FaEye size={20} />
+                      )}
                     </span>
                   </div>
 
@@ -403,7 +443,7 @@ export const Login = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-semibold text-lg shadow-md hover:shadow-lg transition-all duration-300"
+                    className="w-full py-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg font-semibold text-lg shadow-md hover:shadow-lg transition-all duration-300"
                   >
                     Đặt Lại Mật Khẩu
                   </motion.button>

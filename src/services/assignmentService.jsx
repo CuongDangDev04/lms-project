@@ -7,7 +7,6 @@ const URL_API = "/api/assignments";
 export const getAssignments = async () => {
   try {
     const response = await api.get(`${URL_API}/all`);
-    console.log("Dữ liệu từ /api/assignments/all:", response.data);
     return response.data;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách bài tập:", error);
@@ -21,9 +20,6 @@ export const downloadAssignment = async (assignmentId, fileIndex = null) => {
     const response = await api.get(`${URL_API}/download/${assignmentId}${fileIndex !== null ? `?fileIndex=${fileIndex}` : ""}`, {
       responseType: "blob",
     });
-    console.log("Response headers:", response.headers);
-    console.log("Response data type:", typeof response.data, response.data instanceof Blob);
-    console.log("Response data:", response.data);
 
     const fileUrl = window.URL.createObjectURL(new Blob([response.data]));
     const contentDisposition = response.headers["content-disposition"];
@@ -34,7 +30,6 @@ export const downloadAssignment = async (assignmentId, fileIndex = null) => {
         filename = filenameMatch[1];
       }
     }
-    console.log("Filename:", filename);
     return { fileUrl, filename };
   } catch (error) {
     console.error("Lỗi khi tải file:", error);
@@ -81,7 +76,6 @@ export const uploadAssignment = async (userParticipationId, userId, files, title
 export const getUserParticipationId = async (userId, classroomId) => {
   try {
     const response = await api.get(`/api/assignments/user-participation/${userId}/${classroomId}`);
-    console.log(response.data)
     return response.data.user_participation_id;
 
   } catch (error) {

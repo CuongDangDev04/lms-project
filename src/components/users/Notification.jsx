@@ -3,25 +3,46 @@ import React, { useEffect, useState } from "react";
 
 import { toast, ToastContainer } from "react-toastify"; // Thêm toast
 import "react-toastify/dist/ReactToastify.css"; // Thêm CSS cho toast
-import NotificationService from '../../services/notificationService';
+import NotificationService from "../../services/NotificationService";
 import { Bell, Tag, Users, Settings } from "lucide-react";
 import { connectSocket, socket } from "../../hooks/useSocket";
 import { fetchStudentCourses } from "../../services/courseServices";
 import { useNavigate } from "react-router-dom";
+import useUserId from "../../hooks/useUserId";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
-  const [userId, setUserId] = useState(null);
+  const userId = useUserId();
+
   const navigate = useNavigate();
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || !user.id) return;
-    setUserId(user.id);
+    if (!userId) return;
     connectSocket();
-    socket.emit("registerUser", user.id);
+    socket.emit("registerUser", userId);
+    const fetchNotifications = async () => {
+      if (!userId) return;
+      try {
+        console.log("🔔 Lấy thông báo cho userId:", userId);
+        const response = await NotificationService.getNotifications(userId);
+        const sortedNotifications = response.data.sort((a, b) => {
+          const statusA = a.status;
+          const statusB = b.status;
+          const timeA = new Date(a.Notification.timestamp);
+          const timeB = new Date(b.Notification.timestamp);
 
-    fetchNotifications(user);
+          if (statusA !== statusB) {
+            return statusA === false ? -1 : 1;
+          }
+
+          return timeB - timeA;
+        });
+        setNotifications(sortedNotifications);
+      } catch (error) {
+        console.error("Lỗi khi lấy thông báo:", error);
+      }
+    };
+    fetchNotifications();
 
     socket.on("receiveNotification", handleNotification);
     socket.on("notificationDeleted", handleDeleteNotification);
@@ -34,28 +55,7 @@ const Notifications = () => {
       socket.off("notificationDeleted", handleDeleteNotification);
       socket.off("toastNotification", handleToastNotification);
     };
-  }, []);
-
-  const fetchNotifications = async (user) => {
-    try {
-      const response = await NotificationService.getNotifications(user);
-      const sortedNotifications = response.data.sort((a, b) => {
-        const statusA = a.status;
-        const statusB = b.status;
-        const timeA = new Date(a.Notification.timestamp);
-        const timeB = new Date(b.Notification.timestamp);
-
-        if (statusA !== statusB) {
-          return statusA === false ? -1 : 1;
-        }
-
-        return timeB - timeA;
-      });
-      setNotifications(sortedNotifications);
-    } catch (error) {
-      console.error("Lỗi khi lấy thông báo:", error);
-    }
-  };
+  }, [userId]);
 
   const handleNotification = (notification) => {
     setNotifications((prev) => [
@@ -67,6 +67,7 @@ const Notifications = () => {
           message: notification.message,
           timestamp: notification.timestamp,
         },
+        classroomId: notification.classroomId,
       },
       ...prev,
     ]);
@@ -176,6 +177,29 @@ const Notifications = () => {
       console.error("Lỗi khi chuyển hướng:", error);
     }
   };
+  const tagNavigate2 = async (message) => {
+    try {
+      if (!message) {
+        console.error("Message is undefined, cannot navigate.");
+        return;
+      }
+      const regex = /^Lớp (.+) của bạn có tin nhắn mới!$/;
+      if (regex.test(message)) {
+        let courseName = message.match(regex)[1];
+        let courses = await fetchStudentCourses();
+        let course = courses.find(
+          (c) => c.Classroom.Course.course_name === courseName
+        );
+        if (course) {
+          navigate(`/courseDetail/${course.classroom_id}/messages`);
+        } else {
+          console.error(`Không tìm thấy khóa học với tên: ${courseName}`);
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi chuyển hướng:", error);
+    }
+  };
   return (
     <div className="w-96 p-4 bg-white shadow-lg rounded-lg">
       <div className="flex justify-between items-center mb-3">
@@ -205,19 +229,15 @@ const Notifications = () => {
             <li
               key={notif.notification_id}
               className={`p-3 flex items-start gap-3 rounded-lg transition relative cursor-pointer 
-                ${notif.is_read || notif.status
-                  ? "bg-white"
-                  : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
+                ${
+                  notif.is_read || notif.status
+                    ? "bg-white"
+                    : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
                 }`}
               onClick={() => {
+                tagNavigate2(notif.Notification.message);
                 if (!notif.is_read && !notif.status) {
                   markAsRead(notif.notification_id);
-                  console.log(
-                    "Mark as read:",
-                    notif.notification_type ||
-                    notif.notificationType ||
-                    notif.Notification.notification_type
-                  );
                 }
                 if (
                   notif.notification_type === "tag" ||
@@ -225,6 +245,9 @@ const Notifications = () => {
                   notif.Notification.notification_type === "tag"
                 ) {
                   tagNavigate(notif.Notification.message || notif.message);
+                }
+                if (notif.classroomId) {
+                  navigate(`/courseDetail/${notif.classroomId}/messages`);
                 }
               }}
             >
@@ -252,7 +275,6 @@ const Notifications = () => {
           </p>
         )}
       </ul>
-      <ToastContainer /> {/* Thêm ToastContainer để hiển thị toast */}
     </div>
   );
 };

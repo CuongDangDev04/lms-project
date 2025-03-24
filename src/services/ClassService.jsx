@@ -29,7 +29,6 @@ const ClassService = {
       const response = await api.get(`${API_BASE_URL}/getClassOfCourse`, {
         params: { courseId },
       });
-      console.log("Response from getClassOfCourse:", response.data);
       return response.data; // Trả về dữ liệu thực tế
     } catch (error) {
       console.error("Lỗi khi gọi getClassOfCourse:", error);

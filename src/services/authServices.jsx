@@ -69,7 +69,6 @@ export const resetPassword = async (email, code, newPassword) => {
 };
 export const deactivateAccount = async (userId, userStatus) => {  
   try {
-    console.log("Gửi request với user_id:", userId, "và user_status:", userStatus); // Debug
     const response = await api.post("/api/auth/deactivate", { user_id: userId, user_status: userStatus });
     return response.data;
   } catch (error) {

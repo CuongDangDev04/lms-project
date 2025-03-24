@@ -7,7 +7,8 @@ import {
   deleteMessage,
 } from "../services/chatService";
 import ClassService from "../services/ClassService";
-import NotificationService from "../services/notificationService";
+import NotificationService from "../services/NotificationService";
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const socket = io(BASE_URL);
 const ChatBox = ({ userId }) => {
@@ -22,6 +23,7 @@ const ChatBox = ({ userId }) => {
   const [showDeleteId, setShowDeleteId] = useState(null);
 
   // Format thời gian
+
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], {
@@ -44,6 +46,7 @@ const ChatBox = ({ userId }) => {
       .catch((err) => console.error("Lỗi tải tin nhắn:", err));
 
     socket.on("receiveMessage", (message) => {
+      if (classroomId !== message.classroomId) return;
       setMessages((prev) =>
         [...prev, message].sort(
           (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
@@ -59,7 +62,7 @@ const ChatBox = ({ userId }) => {
             username: student.username,
             user_id: student.Classrooms[0]?.user_participation?.user_id,
             fullname: student.fullname,
-            avt: student.avt
+            avt: student.avt,
           }));
           setUsers(formattedUsers);
         }
@@ -130,7 +133,8 @@ const ChatBox = ({ userId }) => {
       setMentionSuggestions(
         users.filter(
           (u) =>
-            u.username.toLowerCase().startsWith(match[1].toLowerCase()) &&
+            (u.fullname.toLowerCase().startsWith(match[1].toLowerCase()) ||
+              u.username.toLowerCase().startsWith(match[1].toLowerCase())) &&
             u.user_id !== userId
         )
       );
@@ -177,12 +181,6 @@ const ChatBox = ({ userId }) => {
 
   return (
     <div className="flex flex-col  h-[90vh] w-full max-w-full   mx-auto bg-white shadow-xl border border-gray-100">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4  flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Chat Nhóm</h2>
-        
-      </div>
-
       {/* Messages */}
       <div className="flex-1 p-5 bg-gradient-to-b from-gray-50 to-gray-100 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent">
         {messages.length === 0 ? (
@@ -237,8 +235,8 @@ const ChatBox = ({ userId }) => {
                   )}
                   <div
                     className={`relative p-3 rounded-2xl ${isCurrentUser
-                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                        : "bg-white text-gray-800 border border-gray-200"
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                      : "bg-white text-gray-800 border border-gray-200"
                       } shadow-md`}
                   >
                     <div className="flex flex-col">
@@ -257,7 +255,9 @@ const ChatBox = ({ userId }) => {
                             ))}
                           </span>
                         )}
-                        <span className="text-sm break-words">{msg.message}</span>
+                        <span className="text-sm break-words">
+                          {msg.message}
+                        </span>
                       </div>
                       <span
                         className={`text-xs ${isCurrentUser ? "text-indigo-200" : "text-gray-500"
@@ -321,12 +321,12 @@ const ChatBox = ({ userId }) => {
                   key={user.user_id}
                   onClick={() => handleSelectUser(user.username)}
                   className={`px-4 py-2 text-sm cursor-pointer transition-all ${index === selectedIndex
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "hover:bg-gray-50"
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "hover:bg-gray-50"
                     }`}
                 >
                   <span className="font-medium text-indigo-600">
-                    @{user.username}
+                    @{user.fullname}
                   </span>
                 </li>
               ))}

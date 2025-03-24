@@ -17,7 +17,7 @@ import { ModalCustom } from '../../components/admin/ui/ModalCustom';
 import useClassroomData from '../../hooks/useClassroomData';
 import ClassroomTable from '../../components/admin/ClassroomTable';
 import Pagination from '../../components/admin/Pagination';
-import NotificationService from '../../services/notificationService';
+import NotificationService from '../../services/NotificationService';
 
 registerLocale('vi', vi);
 
@@ -81,7 +81,6 @@ const UnAssigmentManager = () => {
                 notificationType: "system",
                 message: `Bạn đã được phân công giảng dạy lớp học này`,
             };
-            console.log(notificationData);
             await NotificationService.sendNotificationToSpecificUser(notificationData);
             toast.success('Phân công giảng viên thành công!');
         } catch (error) {
@@ -138,7 +137,7 @@ const UnAssigmentManager = () => {
         { label: 'ID', key: 'classroom_id', render: (c) => c.classroom_id },
         { label: 'Tên Lớp Học Phần', key: 'class_id', render: (c) => c.Class?.class_name || 'N/A' },
         { label: 'Khóa Học', key: 'course_id', render: (c) => c.Course?.course_name || 'N/A' },
-        { label: 'Trạng Thái', key: 'status_id', render: (c) => c.ClassStatus?.status_name || 'N/A' },
+        { label: 'Trạng Thái', key: 'status_id', render: (c) => c.class_status?.status_name || 'N/A' },
         { label: 'Ngày Bắt Đầu', key: 'start_date', render: (c) => c.start_date ? format(new Date(c.start_date), "EEEE, dd 'tháng' MM, yyyy", { locale: vi }) : 'N/A' },
         { label: 'Ngày Kết Thúc', key: 'end_date', render: (c) => c.end_date ? format(new Date(c.end_date), "EEEE, dd 'tháng' MM, yyyy", { locale: vi }) : 'N/A' },
     ];

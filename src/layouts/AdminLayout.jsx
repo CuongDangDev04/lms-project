@@ -19,7 +19,6 @@ const AdminLayout = () => {
     return (
         <div className="flex flex-col min-h-screen">
             {/* Header cố định trên cùng */}
-            <ToastContainer />
 
 
             <Header toggleSidebar={toggleMobileSidebar} />

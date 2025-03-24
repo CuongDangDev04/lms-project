@@ -7,8 +7,9 @@ import {
   deleteSubmission,
 } from "../../services/SubmissionService";
 import { ModalCustom } from "../../components/admin/ui/ModalCustom";
-import NotificationService from '../../services/notificationService';
+import NotificationService from "../../services/NotificationService";
 import { useParams } from "react-router-dom";
+
 const Submission = ({ assignmentId, userId, userRole = "student", deadline, assignmentTitle }) => {
   const [files, setFiles] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -61,7 +62,6 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
         notificationType: "classroom",
         message: `Giảng viên chấm điểm thành công cho bạn`,
       };
-      console.log(notificationData);
       await NotificationService.sendNotificationToSpecificUser(notificationData);
       setMessage("Chấm điểm thành công!");
     } catch (error) {
@@ -104,7 +104,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
       };
       setSubmissions((prev) => [...prev, newSubmission]); // Cập nhật danh sách ngay lập tức
       setFiles([]); // Xóa danh sách file đã chọn
-
+      
       const notificationData = {
         classroom_id: classRoomId.classroomId, // Sử dụng user_id của học sinh
         notificationType: "classroom",
@@ -207,10 +207,10 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
               {userSubmission.status === "graded" && (
                 <div className="mt-4">
                   <p className="text-sm text-gray-600">
-                    Điểm: <span className="font-bold text-blue-500 text-lg">{userSubmission.Grade.score}/10</span>
+                    Điểm: <span className="font-bold text-blue-500 text-lg">{userSubmission.grade.score}/10</span>
                   </p>
                   <p className="text-sm text-gray-600 mt-2">
-                    Nhận xét: <span className="italic text-gray-700">{userSubmission.Grade.feedback || "Không có"}</span>
+                    Nhận xét: <span className="italic text-gray-700">{userSubmission.grade.feedback || "Không có"}</span>
                   </p>
                 </div>
               )}
@@ -325,7 +325,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-700">
                         {sub.status === "graded" ? (
-                          <span className="font-bold text-blue-500">{sub.Grade?.score}/10</span>
+                          <span className="font-bold text-blue-500">{sub.grade.score}/10</span>
                         ) : gradingSubmissionId === sub.submission_id ? (
                           <input
                             type="number"
@@ -343,7 +343,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-700">
                         {sub.status === "graded" ? (
-                          <span className="italic text-gray-600">{sub.Grade?.feedback || "Không có"}</span>
+                          <span className="italic text-gray-600">{sub.grade.feedback || "Không có"}</span>
                         ) : gradingSubmissionId === sub.submission_id ? (
                           <input
                             type="text"

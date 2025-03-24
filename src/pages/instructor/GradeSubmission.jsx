@@ -182,7 +182,6 @@ const GradeSubmission = () => {
 
   return (
     <div className="max-w-5xl my-10 mx-auto p-8 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
-      <ToastContainer />
 
       <h1 className="text-4xl font-bold text-center mb-10 bg-gradient-to-r from-teal-600 to-blue-600 text-transparent bg-clip-text drop-shadow-lg">
         Chấm Điểm Bài Nộp - Assignment {assignmentId}

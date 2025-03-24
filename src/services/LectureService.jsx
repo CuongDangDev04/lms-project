@@ -96,13 +96,7 @@ export const updateLecture = async (lectureId, files, title, description, remove
         files.forEach(file => formData.append('files', file));
     }
     
-    console.log('Sending update request:', {
-        lectureId,
-        title,
-        description,
-        removeFileIndices,
-        filesCount: files?.length || 0
-    });
+    
     
     const response = await api.put(`${API_URL}/lectures/${lectureId}`, formData, {
         headers: { 

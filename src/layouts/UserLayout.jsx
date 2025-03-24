@@ -1,48 +1,33 @@
-// Thư viện bên ngoài
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
-
-// Hooks/tiện ích nội bộ
-import { connectSocket, socket } from "../hooks/useSocket";
-
-// Components nội bộ
+// import { io } from "socket.io-client";
 import LoadingBar from "../components/users/LoadingBar";
 import Navbar from "../components/users/Navbar";
+import NotificationService from "../services/NotificationService";
 
-// Khai báo biến toàn cục
-const BASE_URL = import.meta.env.VITE_API_BASE_URL; 
-
+import { connectSocket, socket } from "../hooks/useSocket";
 
 import SideBarMobile from "../components/users/SideBarMobile";
-import NotificationService from "../services/notificationService";
+import useUserId from "../hooks/useUserId";
 const UserLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isInMessagePage = /^\/courseDetail\/\d+(\/messages)?$/.test(
     location.pathname
   );
-  const [userId, setUserId] = useState(null);
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUserId(parsedUser?.id);
-    }
-  }, []);
+  const userId = useUserId();
 
   useEffect(() => {
     if (!userId) return;
     connectSocket();
     socket.emit("registerUser", userId);
-    console.log("🔗 Đã đăng ký userId:", userId);
 
     socket.on("disconnect", () => {
       console.warn("⚠️ Socket bị mất kết nối. Đang thử kết nối lại...");
     });
 
     socket.on("connect", () => {
-      console.log("✅ Đã kết nối lại Socket!");
       socket.emit("registerUser", userId);
     });
 
@@ -51,18 +36,11 @@ const UserLayout = () => {
       socket.off("connect");
     };
   }, [userId]);
-  const markAsRead = async (notificationId) => {
-    try {
-      await NotificationService.markAsRead(notificationId, userId);
-    } catch (error) {
-      console.error("Lỗi khi đánh dấu đã đọc thông báo:", error);
-    }
-  };
+
   useEffect(() => {
     socket
       .off("tagNotification")
       .on("tagNotification", ({ sender, sendTo, classroomId }) => {
-        console.log("🏷️ Tag notification:", sender, sendTo, classroomId);
         if (!isInMessagePage && sender !== userId && sendTo == userId) {
           toast.info(`Bạn được tag trong lớp học!`, {
             position: "top-right",
@@ -75,7 +53,31 @@ const UserLayout = () => {
           });
         }
       });
-
+    socket
+      .off("receiveMessageNotification")
+      .on(
+        "receiveMessageNotification",
+        ({ sender, sendTo, classroomId, courseName }) => {
+          if (!isInMessagePage && sender !== userId && sendTo == userId) {
+            toast.info(`Lớp ${courseName} của bạn có tin nhắn mới!`, {
+              position: "top-right",
+              autoClose: 20000,
+              className: "cursor-pointer",
+              onClick: () => {
+                navigate(`/courseDetail/${classroomId}/messages`);
+                toast.dismiss();
+              },
+            });
+          }
+        }
+      );
+    const markAsRead = async (notificationId) => {
+      try {
+        await NotificationService.markAsRead(notificationId, userId);
+      } catch (error) {
+        console.error("Lỗi khi đánh dấu đã đọc thông báo:", error);
+      }
+    };
     socket
       .off("toastNotification")
       .on(
@@ -85,12 +87,6 @@ const UserLayout = () => {
             position: "top-right",
             autoClose: 5000,
           };
-          console.log(
-            "Toast notification:",
-            notificationId,
-            notificationType,
-            message
-          );
 
           switch (notificationType) {
             case "tag":
@@ -117,12 +113,12 @@ const UserLayout = () => {
     return () => {
       socket.off("tagNotification");
       socket.off("toastNotification");
+      socket.off("receiveMessageNotification");
     };
   }, [isInMessagePage, userId, navigate, location.pathname]);
 
   return (
     <>
-      <ToastContainer />
       <LoadingBar />
       <Navbar />
       <Outlet />

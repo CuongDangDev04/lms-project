@@ -15,7 +15,6 @@ const socket = io(BASE_URL, {
 const connectSocket = () => {
   if (!socket.connected) {
     socket.connect();
-    console.log("✅ Socket kết nối:", BASE_URL);
   }
 };
 
@@ -23,7 +22,6 @@ const connectSocket = () => {
 const disconnectSocket = () => {
   if (socket.connected) {
     socket.disconnect();
-    console.log("❌ Socket ngắt kết nối");
   }
 };
 export { socket, connectSocket, disconnectSocket };

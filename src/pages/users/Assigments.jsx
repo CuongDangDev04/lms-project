@@ -10,7 +10,7 @@ import {
 } from "../../services/assignmentService";
 import { toast, ToastContainer } from "react-toastify";
 import Submission from "./Submission";
-import NotificationService from '../../services/notificationService';
+import NotificationService from "../../services/NotificationService";
 import { ModalCustom } from "../../components/admin/ui/ModalCustom";
 
 export default function Assignments() {
@@ -63,7 +63,6 @@ export default function Assignments() {
       } catch (err) {
         setAssignments([]);
         setLoading(false);
-        toast.error("Lỗi khi tải danh sách bài tập.");
       }
     };
     if (userId && classroomId) fetchData();

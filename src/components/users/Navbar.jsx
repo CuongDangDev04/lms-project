@@ -6,6 +6,9 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Bell, ChevronDown, LogOut, User } from "lucide-react";
 import Notifications from "./Notification";
+import useUserId from "../../hooks/useUserId";
+import NotificationService from "../../services/NotificationService";
+import { connectSocket, socket } from "../../hooks/useSocket";
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -21,7 +24,52 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const notificationsRef = useRef(null);
   const navigate = useNavigate();
+  const userId = useUserId();
+  useEffect(() => {
+    if (!userId) return;
+    connectSocket();
+    socket.emit("registerUser", userId);
 
+    socket.on("disconnect", () => {
+      console.warn("⚠️ Socket bị mất kết nối. Đang thử kết nối lại...");
+    });
+
+    socket.on("connect", () => {
+      socket.emit("registerUser", userId);
+    });
+
+    return () => {
+      socket.off("disconnect");
+      socket.off("connect");
+    };
+  }, [userId]);
+  useEffect(() => {
+    if (!userId) return;
+    const fetchUnreadNotificationCount = async () => {
+      try {
+        const response = await NotificationService.getUnreadNotificationCount(
+          userId
+        );
+        
+        setNotificationsCount(response.data.unreadNotificationCount);
+      } catch (error) {
+        console.error("Lỗi khi lấy số thông báo chưa đọc:", error);
+      }
+    };
+    fetchUnreadNotificationCount();
+  }, [userId, notificationsCount]);
+  useEffect(() => {
+    if (!userId) return;
+
+    socket
+      .off("unreadNotificationCount")
+      .on("unreadNotificationCount", ({ unreadNotificationCount }) => {
+        setNotificationsCount(unreadNotificationCount);
+      });
+    return () => {
+      socket.off("unreadNotificationCount");
+    };
+  }, [userId, notificationsCount]);
   useEffect(() => {
     const fetchProfile = async () => {
       try {

@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import PrivateRoute from "./privateRoute"; // Import PrivateRoute
+import PrivateRoute from "./PrivateRoute"; // Import PrivateRoute
 import AdminLayout from "../layouts/AdminLayout";
 import UserLayout from "../layouts/UserLayout";
 import { Login } from "../pages/auth/Login";
@@ -8,15 +8,13 @@ import { Dashboard } from "../pages/admin/Dashboard";
 import UserHome from "../pages/users/UserHome";
 
 import Schedule from "../pages/users/Schedule";
-import UserClass from "../pages/users/UserClass";
-import ClassDetail from "../pages/users/ClassDetail";
 import Course from "../pages/users/Course";
 import CourseDetail from "../pages/users/CourseDetail";
 import Message from "../pages/users/Message";
 import Lectures from "../pages/users/Lectures";
 import Member from "../pages/users/Member";
 import Assigments from "../pages/users/Assigments";
-import GradeSubmission from "../pages/instructor/GradeSubmission"; // Import component mới
+import GradeSubmission from "../pages/instructor/GradeSubmission"; 
 
 import { StudentsManager } from "../pages/admin/StudentsManager";
 import { InstructorsManager } from "../pages/admin/InstructorsManager";
@@ -28,7 +26,7 @@ import AssignedClassroomManager from "../pages/admin/AssignedClassroomManager";
 import AssignedCourse from "../pages/users/AssignedCourse";
 import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
-import Classroom from "../components/users/Classroom";
+import Classroom from "../components/users/classroom";
 import Subject from "../pages/instructor/Subjects";
 
 const AppRoutes = () => {
@@ -61,9 +59,7 @@ const AppRoutes = () => {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/subjects" element={<Subject />} />
           <Route path="/teaching-schedule" element={<TeachSchedule />} />
-          <Route path="class" element={<UserClass />} />
           <Route path="/assign-course" element={<AssignedCourse />} />
-          <Route path="/class/:classroomId" element={<ClassDetail />} />
           <Route path="classroom/:classroomId" element={<Classroom />} />
           <Route path="courses" element={<Course />} />
           <Route path="courseDetail/:classroomId" element={<CourseDetail />}>

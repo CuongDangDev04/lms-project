@@ -14,12 +14,12 @@ import img6 from "../../assets/img_courses/img6.jpg";
 
 // Bảng ánh xạ tên ảnh với file import
 const imageMap = {
-  "img1": img1,
-  "img2": img2,
-  "img3": img3,
-  "img4": img4,
-  "img5": img5,
-  "img6": img6,
+  img1: img1,
+  img2: img2,
+  img3: img3,
+  img4: img4,
+  img5: img5,
+  img6: img6,
 };
 
 export const Subject = () => {
@@ -90,7 +90,9 @@ export const Subject = () => {
     const endDate = new Date(course.end_date);
     const status = getCourseStatus(course.start_date, course.end_date);
 
-    const matchesSearch = courseName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = courseName
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || status === statusFilter;
 
     let matchesDate = true;
@@ -123,7 +125,10 @@ export const Subject = () => {
   if (error) {
     return <div className="text-center py-10 text-red-500">{error}</div>;
   }
-  const paginatedCourses = filteredCourses.slice((currentPage - 1) * entitiesPerPage, currentPage * entitiesPerPage);
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * entitiesPerPage,
+    currentPage * entitiesPerPage
+  );
   const totalPages = Math.ceil(filteredCourses.length / entitiesPerPage);
 
   const Pagination = ({ currentPage, totalPages, onPageChange }) => (
@@ -139,10 +144,11 @@ export const Subject = () => {
         <button
           key={page}
           onClick={() => onPageChange(page)}
-          className={`px-5 py-2 rounded-full transition-all duration-300 shadow-sm ${currentPage === page
-            ? 'bg-gradient-to-r from-blue-500 to-blue-400 text-white'
-            : 'bg-gradient-to-r from-gray-200 to-gray-100 text-gray-700 hover:from-gray-300 hover:to-gray-200'
-            }`}
+          className={`px-5 py-2 rounded-full transition-all duration-300 shadow-sm ${
+            currentPage === page
+              ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white"
+              : "bg-gradient-to-r from-gray-200 to-gray-100 text-gray-700 hover:from-gray-300 hover:to-gray-200"
+          }`}
         >
           {page}
         </button>
@@ -158,7 +164,7 @@ export const Subject = () => {
   );
 
   return (
-    <div className="mt-28 px-4 pb-20 lg:px-8 min-h-screen font-sans">
+    <div className="mt-28 px-4 pb-20 lg:px-8 bg-gray-50 min-h-screen font-sans">
       {/* Thanh tìm kiếm và bộ lọc */}
       <div className="mt-10 container mx-auto">
         <div className="flex flex-col gap-6">
@@ -204,7 +210,8 @@ export const Subject = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedCourses.map((course, index) => {
-              const courseImage = imageMap[`img${(index % 6) + 1}`] || imgDefault; // Gán ảnh tuần tự
+              const courseImage =
+                imageMap[`img${(index % 6) + 1}`] || imgDefault; // Gán ảnh tuần tự
               const startCourse = formatDate(course.start_date);
               const endCourse = formatDate(course.end_date);
 
@@ -255,8 +262,11 @@ export const Subject = () => {
           </div>
         )}
       </div>
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

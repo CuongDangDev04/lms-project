@@ -17,7 +17,6 @@ export const submitAssignment = async (assignmentId, userId, files) => {
         "Content-Type": "multipart/form-data",
       },
     });
-    console.log("Dữ liệu từ /api/submissions/submit:", response.data);
     return response.data;
   } catch (error) {
     console.error("Lỗi khi nộp bài tập:", error);
@@ -29,7 +28,6 @@ export const submitAssignment = async (assignmentId, userId, files) => {
 export const getSubmissionsByAssignment = async (assignmentId) => {
   try {
     const response = await api.get(`${URL_API}/assignment/${assignmentId}`);
-    console.log(`Dữ liệu từ /api/submissions/assignment/${assignmentId}:`, response.data);
     return response.data;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách bài nộp:", error);
@@ -67,7 +65,6 @@ export const downloadSubmissionFiles = async (submissionId, fileIndex = null) =>
         : `submission_${submissionId}.zip`;
     }
 
-    console.log(`Tên file tải về: ${filename}`);
     link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
@@ -90,7 +87,7 @@ export const gradeSubmission = async (submissionId, score, feedback) => {
 
   try {
     const response = await api.post(`${URL_API}/grade`, data);
-    console.log("Dữ liệu từ /api/submissions/grade:", response.data);
+    ("Dữ liệu từ /api/submissions/grade:", response.data);
     return response.data;
   } catch (error) {
     console.error("Lỗi khi chấm điểm bài nộp:", error);
@@ -102,7 +99,6 @@ export const gradeSubmission = async (submissionId, score, feedback) => {
 export const deleteSubmission = async (submissionId) => {
   try {
     const response = await api.delete(`${URL_API}/delete/${submissionId}`);
-    console.log(`Dữ liệu từ /api/submissions/${submissionId}:`, response.data);
     return response.data;
   } catch (error) {
     console.error("Lỗi khi xóa bài nộp:", error);
