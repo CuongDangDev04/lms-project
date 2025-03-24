@@ -71,6 +71,7 @@ const getCourses = async (req, res) => {
             };
         });
 
+        console.log(formattedCourses);
         res.json(formattedCourses);
     } catch (error) {
         res.status(500).json({ message: error.message });
