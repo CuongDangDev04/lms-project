@@ -12,8 +12,8 @@ router.get('/instructors', createController.getInstructors);
 router.get('/:id', createController.getUserById);
 router.put('/:id',verifyTokenAndRole(3), createController.updateUserById);
 router.delete('/:id' , verifyTokenAndRole(3), createController.deleteStudentById);
-router.post("/upload",verifyTokenAndRole(3), upload.single("file"), createController.createStudentsFromExcel);
-router.post("/uploadgv",verifyTokenAndRole(3), upload.single("file"), createController.createInstructorsFromExcel);
+router.post("/upload", upload.single("file"), createController.createStudentsFromExcel);
+router.post("/uploadgv", upload.single("file"), createController.createInstructorsFromExcel);
 router.post("/:id/uploadimg", upload.single("file"), createController.uploadAvatar);
 module.exports = router;
 

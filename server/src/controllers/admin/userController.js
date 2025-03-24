@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const axios = require("axios");
 const FormData = require("form-data");
-const fs = require('fs');
+const fs = require('fs').promises;
 const moment = require('moment');
 
 // Hàm upload ảnh lên ImgBB và lấy URL
@@ -149,12 +149,10 @@ const createInstructorsFromExcel = async (req, res) => {
       // Chuyển đổi giá trị birth thành định dạng hợp lệ
       let birthValue = null;
       if (birth) {
-        // Nếu birth là một số (Excel date serial number)
         if (typeof birth === "number") {
           const excelDate = XLSX.SSF.parse_date_code(birth);
           birthValue = new Date(excelDate.y, excelDate.m - 1, excelDate.d);
         } else {
-          // Nếu birth là chuỗi, sử dụng moment.js để phân tích
           const parsedDate = moment(birth, ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"], true);
           if (parsedDate.isValid()) {
             birthValue = parsedDate.toDate();
@@ -173,21 +171,24 @@ const createInstructorsFromExcel = async (req, res) => {
         gender: genderValue,
         avt: "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
         birth: birthValue,
-        role_id: 2,
+        role_id: 2, // Role_id cho giảng viên là 2
       });
     }
 
     if (errors.length > 0) {
-      await fs.unlink(filePath);
+      console.log('Errors found:', errors);
+      await fs.unlink(filePath).catch(err => console.error('Could not delete file:', err));
       return res.status(400).json({ message: errors.join(", ") });
     }
 
     await User.bulkCreate(newUsers);
-    await fs.unlink(filePath);
+    console.log('Instructors created successfully');
+    await fs.unlink(filePath).catch(err => console.error('Could not delete file:', err));
     res.status(201).json({ message: "Successfully added multiple instructors" });
   } catch (err) {
+    console.error('Error in createInstructorsFromExcel:', err);
     if (req.file && req.file.path) {
-      await fs.unlink(req.file.path);
+      await fs.unlink(req.file.path).catch(err => console.error('Could not delete file:', err));
     }
     res.status(500).json({ error: err.message });
   }
@@ -200,11 +201,11 @@ const createStudentsFromExcel = async (req, res) => {
       return res.status(400).json({ message: "Please upload an Excel file" });
     }
 
-    const filePath = req.file.path; // Lưu đường dẫn file để xóa sau
+    const filePath = req.file.path;
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
-      raw: false, // Đảm bảo ngày tháng được phân tích thành chuỗi
+      raw: false,
     });
 
     let errors = [];
@@ -233,7 +234,6 @@ const createStudentsFromExcel = async (req, res) => {
         continue;
       }
 
-      // Chuyển đổi giá trị gender thành boolean
       let genderValue;
       if (gender === 1 || gender === "1") {
         genderValue = true;
@@ -244,15 +244,12 @@ const createStudentsFromExcel = async (req, res) => {
         continue;
       }
 
-      // Chuyển đổi giá trị birth thành định dạng hợp lệ
       let birthValue = null;
       if (birth) {
-        // Nếu birth là một số (Excel date serial number)
         if (typeof birth === "number") {
           const excelDate = XLSX.SSF.parse_date_code(birth);
           birthValue = new Date(excelDate.y, excelDate.m - 1, excelDate.d);
         } else {
-          // Nếu birth là chuỗi, sử dụng moment.js để phân tích
           const parsedDate = moment(birth, ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"], true);
           if (parsedDate.isValid()) {
             birthValue = parsedDate.toDate();
@@ -269,21 +266,24 @@ const createStudentsFromExcel = async (req, res) => {
         email,
         fullname,
         gender: genderValue,
-        avt: avt || "https://i.ibb.co/jkftcHB2/1741877635358-user.webp", // Sử dụng giá trị avt từ file nếu có
+        avt: avt || "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
         birth: birthValue,
         role_id: 1,
       });
     }
 
     if (errors.length > 0) {
+      console.log('Errors found:', errors);
       await fs.unlink(filePath).catch(err => console.error('Could not delete file:', err));
       return res.status(400).json({ message: errors.join(", ") });
     }
 
     await User.bulkCreate(newUsers);
+    console.log('Users created successfully');
     await fs.unlink(filePath).catch(err => console.error('Could not delete file:', err));
     res.status(201).json({ message: "Successfully added multiple students" });
   } catch (err) {
+    console.error('Error in createStudentsFromExcel:', err);
     if (req.file && req.file.path) {
       await fs.unlink(req.file.path).catch(err => console.error('Could not delete file:', err));
     }
