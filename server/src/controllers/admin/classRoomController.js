@@ -54,8 +54,8 @@ const getAllClassrooms = async (req, res) => {
             include: [
                 { model: Class },
                 { model: Course },
-                { model: ClassStatus, as: 'ClassStatus' },
-                { model: Schedule, as: 'Schedules' },
+                { model: ClassStatus },
+                { model: Schedule },
             ],
         });
 

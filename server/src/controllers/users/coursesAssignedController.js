@@ -7,8 +7,8 @@ const getCourses = async (req, res) => {
             include: [
                 { model: Class, attributes: ['class_name'] },
                 { model: Course, attributes: ['course_code', 'course_name', 'description'] },
-                { model: ClassStatus, attributes: ['status_id', 'status_name'], as: 'ClassStatus' },
-                { model: Schedule, as: 'Schedules' },
+                { model: ClassStatus, attributes: ['status_id', 'status_name'], },
+                { model: Schedule, },
             ],
         });
 
@@ -24,7 +24,6 @@ const getCourses = async (req, res) => {
             ],
             include: [{
                 model: User,
-                as: 'User',
                 attributes: [],
                 where: { role_id: 1 },
             }],
@@ -89,12 +88,11 @@ const getCoursesToAssigned = async (req, res) => {
             include: [
                 {
                     model: Classroom,
-                    as: 'Classroom',
                     include: [
                         { model: Class, attributes: ['class_name'] },
                         { model: Course, attributes: ['course_code', 'course_name', 'description'] },
-                        { model: ClassStatus, attributes: ['status_id', 'status_name'], as: 'ClassStatus' },
-                        { model: Schedule, as: 'Schedules' },
+                        { model: ClassStatus, attributes: ['status_id', 'status_name'] },
+                        { model: Schedule, },
                     ],
                 },
             ],
@@ -112,7 +110,6 @@ const getCoursesToAssigned = async (req, res) => {
             ],
             include: [{
                 model: User,
-                as: 'User',
                 attributes: [],
                 where: { role_id: 1 },
             }],
@@ -181,7 +178,7 @@ const assignedCourse = async (req, res) => {
 
         const classroom = await Classroom.findByPk(classroomId, {
             include: [
-                { model: ClassStatus, as: 'ClassStatus' },
+                { model: ClassStatus },
             ],
         });
         if (!classroom) return res.status(404).json({ message: 'Lớp không tồn tại' });
@@ -193,7 +190,6 @@ const assignedCourse = async (req, res) => {
             where: { classroom_id: classroomId },
             include: [{
                 model: User,
-                as: 'User',
                 attributes: [],
                 where: { role_id: 1 },
             }],
@@ -249,6 +245,6 @@ module.exports = {
     getCoursesToAssigned,
     assignedCourse,
     deleteCoureToAssigned,
-    
+
 
 };

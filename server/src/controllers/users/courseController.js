@@ -70,26 +70,25 @@ const fetchStudentCourses = async (req, res) => {
         },
         {
           model: Classroom,
-          attributes: [ "classroom_id", "start_date", "end_date"],
+          attributes: ["classroom_id", "start_date", "end_date"],
           include: [
             {
               model: Course,
-              attributes: ["course_name", "course_code", "course_id","description"]
+              attributes: ["course_name", "course_code", "course_id", "description"]
             },
             {
               model: Class,
               attributes: ["class_id", "class_name"]
             },
-            { 
-              model: ClassStatus, 
-              as: "ClassStatus",
-              attributes: ["status_name"] 
+            {
+              model: ClassStatus,
+              attributes: ["status_name"]
             },
           ],
         },
       ],
     });
-    
+
     res.status(200).json({
       success: true,
       message: "lấy khóa học của user thành công ",
@@ -102,31 +101,31 @@ const fetchStudentCourses = async (req, res) => {
 };
 
 const fetchTeacherInformation = async (req, res) => {
-    const classroom_id = req.params.classroom_id; 
-    try {
-        const teacher = await Classroom.findOne({
-            where: { classroom_id },
-            include: [
-              {
-                model: Class,
-                attributes: ["class_name"],
-              },
-                {
-                    model: User,
-                    where: { role_id: 2 },
-                    attributes: ["username", "email"]
-                }
-            ]
-        });
-        res.status(200).json({
-            success: true,
-            message: "Lấy thông tin giáo viên thành công!",
-            data: teacher,
-        });
-    } catch (error) {
-        console.error("Error fetching teacher information:", error);
-        res.status(500).json({ message: "Server error" });
-    }
+  const classroom_id = req.params.classroom_id;
+  try {
+    const teacher = await Classroom.findOne({
+      where: { classroom_id },
+      include: [
+        {
+          model: Class,
+          attributes: ["class_name"],
+        },
+        {
+          model: User,
+          where: { role_id: 2 },
+          attributes: ["username", "email"]
+        }
+      ]
+    });
+    res.status(200).json({
+      success: true,
+      message: "Lấy thông tin giáo viên thành công!",
+      data: teacher,
+    });
+  } catch (error) {
+    console.error("Error fetching teacher information:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 }
 
 module.exports = {

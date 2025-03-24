@@ -107,6 +107,10 @@ const sendMessage = async (req, res) => {
     });
     const io = getIO();
     // Gửi tin nhắn + username về client thông qua socket.io
+    // for(const user of usersInClass){
+    //   const receiveUserId = onlineUsers[user.user_id];
+
+    // };
     io.emit("receiveMessage", {
       message_id: userMessage.message_id,
       message: userMessage.message,
@@ -115,6 +119,7 @@ const sendMessage = async (req, res) => {
       fullname: isParticipate.User.fullname,
       taggedUsers,
       timestamp: userMessage.timestamp,
+      classroomId,
     });
 
     for (const user of taggedUsers) {
@@ -172,10 +177,10 @@ const getMessages = async (req, res) => {
     }
 
     const messages = await sequelize.query(
-      `SELECT message_id, up.user_id, cm.message,timestamp,tagged_user_ids, up.classroom_id, u.username 
-       FROM Chat_Messages cm
-       JOIN User_participations up ON up.participate_id = cm.participate_id
-       JOIN Users u ON u.user_id = up.user_id
+      `SELECT message_id, up.user_id, cm.message,timestamp,tagged_user_ids, up.classroom_id, u.username , u.fullname
+       FROM chat_messages cm
+       JOIN user_participations up ON up.participate_id = cm.participate_id
+       JOIN users u ON u.user_id = up.user_id
        WHERE up.classroom_id = :classroomId`,
       {
         type: QueryTypes.SELECT,

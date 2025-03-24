@@ -11,7 +11,6 @@ const getSchedule = async (req, res) => {
             include: [
                 {
                     model: Classroom,
-                    as: 'Classrooms',
                     through: { attributes: [] },
                     include: [
                         {
@@ -24,7 +23,6 @@ const getSchedule = async (req, res) => {
                         },
                         {
                             model: Schedule,
-                            as: 'Schedules',
                             attributes: [
                                 'schedule_id',
                                 'classroom_id',
@@ -117,7 +115,6 @@ const getSchedule = async (req, res) => {
                     include: [
                         {
                             model: User,
-                            as: 'User',
                             where: { role_id: 2 },
                             attributes: ['fullname'],
                         },
@@ -147,7 +144,6 @@ const getScheduleToday = async (req, res) => {
             include: [
                 {
                     model: Classroom,
-                    as: 'Classrooms',
                     through: { attributes: [] },
                     include: [
                         {
@@ -160,7 +156,6 @@ const getScheduleToday = async (req, res) => {
                         },
                         {
                             model: Schedule,
-                            as: 'Schedules',
                             attributes: [
                                 'schedule_id',
                                 'classroom_id',
@@ -238,7 +233,6 @@ const getScheduleToday = async (req, res) => {
                 include: [
                     {
                         model: User,
-                        as: 'User',
                         where: { role_id: 2 },
                         attributes: ['fullname'],
                     },

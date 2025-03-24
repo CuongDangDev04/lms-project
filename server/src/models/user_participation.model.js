@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const UserParticipation = sequelize.define(
-  "User_participation",
+  "user_participation",
   {
     participate_id: {
       type: DataTypes.INTEGER,
@@ -21,7 +21,7 @@ const UserParticipation = sequelize.define(
   },
   {
     timestamps: false,
-    tableName: "User_participations",
+    tableName: "user_participations",
   }
 );
 module.exports = UserParticipation;
