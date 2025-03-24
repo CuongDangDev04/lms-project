@@ -7,7 +7,7 @@ import {
   deleteMessage,
 } from "../services/chatService";
 import ClassService from "../services/ClassService";
-import NotificationService from "../services/NotificationService";
+import NotificationService from "../services/notificationService";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const socket = io(BASE_URL);

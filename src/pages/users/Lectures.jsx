@@ -28,7 +28,7 @@ import {
   FaPlay,
   FaDownload,
 } from 'react-icons/fa';
-import NotificationService from '../../services/NotificationService';
+import NotificationService from '../../services/notificationService';
 
 // Utility functions for file handling
 const getCleanFileName = (filePath) => {
@@ -445,7 +445,7 @@ export default function Lectures() {
   };
 
   const handlePlay = async (lecture, fileIndex) => {
-    
+
 
     if (!isPlayableFile(lecture.file_path[fileIndex])) {
       toast.error("This file format is not playable");

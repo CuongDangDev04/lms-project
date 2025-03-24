@@ -19,7 +19,7 @@ import {
     postponeAndMakeupSchedule,
     updateTeacherAssignment
 } from '../../services/classRoomServices';
-import NotificationService from '../../services/NotificationService';
+import NotificationService from '../../services/notificationService';
 
 const AssignedClassroomManager = () => {
     const [isAssignOpen, setIsAssignOpen] = useState(false);

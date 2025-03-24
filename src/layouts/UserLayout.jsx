@@ -4,7 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 // import { io } from "socket.io-client";
 import LoadingBar from "../components/users/LoadingBar";
 import Navbar from "../components/users/Navbar";
-import NotificationService from "../services/NotificationService";
+import NotificationService from "../services/notificationService";
 
 import { connectSocket, socket } from "../hooks/useSocket";
 

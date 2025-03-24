@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 
 import { toast, ToastContainer } from "react-toastify"; // Thêm toast
 import "react-toastify/dist/ReactToastify.css"; // Thêm CSS cho toast
-import NotificationService from "../../services/NotificationService";
+import NotificationService from "../../services/notificationService";
 import { Bell, Tag, Users, Settings } from "lucide-react";
 import { connectSocket, socket } from "../../hooks/useSocket";
 import { fetchStudentCourses } from "../../services/courseServices";
@@ -229,10 +229,9 @@ const Notifications = () => {
             <li
               key={notif.notification_id}
               className={`p-3 flex items-start gap-3 rounded-lg transition relative cursor-pointer 
-                ${
-                  notif.is_read || notif.status
-                    ? "bg-white"
-                    : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
+                ${notif.is_read || notif.status
+                  ? "bg-white"
+                  : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
                 }`}
               onClick={() => {
                 tagNavigate2(notif.Notification.message);

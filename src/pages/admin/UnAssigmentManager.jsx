@@ -17,7 +17,7 @@ import { ModalCustom } from '../../components/admin/ui/ModalCustom';
 import useClassroomData from '../../hooks/useClassroomData';
 import ClassroomTable from '../../components/admin/ClassroomTable';
 import Pagination from '../../components/admin/Pagination';
-import NotificationService from '../../services/NotificationService';
+import NotificationService from '../../services/notificationService';
 
 registerLocale('vi', vi);
 

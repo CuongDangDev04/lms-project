@@ -10,7 +10,7 @@ import {
 } from "../../services/assignmentService";
 import { toast, ToastContainer } from "react-toastify";
 import Submission from "./Submission";
-import NotificationService from "../../services/NotificationService";
+import NotificationService from "../../services/notificationService";
 import { ModalCustom } from "../../components/admin/ui/ModalCustom";
 
 export default function Assignments() {

@@ -7,7 +7,7 @@ import {
   deleteSubmission,
 } from "../../services/SubmissionService";
 import { ModalCustom } from "../../components/admin/ui/ModalCustom";
-import NotificationService from "../../services/NotificationService";
+import NotificationService from "../../services/notificationService";
 import { useParams } from "react-router-dom";
 
 const Submission = ({ assignmentId, userId, userRole = "student", deadline, assignmentTitle }) => {
@@ -104,7 +104,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
       };
       setSubmissions((prev) => [...prev, newSubmission]); // Cập nhật danh sách ngay lập tức
       setFiles([]); // Xóa danh sách file đã chọn
-      
+
       const notificationData = {
         classroom_id: classRoomId.classroomId, // Sử dụng user_id của học sinh
         notificationType: "classroom",
