@@ -12,6 +12,8 @@ const getCourses = async (req, res) => {
             ],
         });
 
+        console.log(classrooms);
+
         const classroomIds = classrooms.map((classroom) => classroom.classroom_id);
 
         const enrollmentCounts = await UserParticipation.findAll({
