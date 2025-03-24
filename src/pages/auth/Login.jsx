@@ -10,7 +10,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import img_login from "../../assets/user/img_login.png";
-import img_login2 from "../../assets/user/img_login2.png";
+import img_login2 from "../../assets/user/img_Login2.png";
 import img_login3 from "../../assets/user/img_login3.png";
 import img_login4 from "../../assets/user/img_login4.png";
 import LoadingBar from "../../components/users/LoadingBar";
@@ -160,10 +160,9 @@ export const Login = () => {
               <label
                 htmlFor="username"
                 className={`absolute left-4 text-gray-500 transition-all duration-300 
-                  ${
-                    username
-                      ? "-top-2 text-sm text-gray-500 bg-white px-1"
-                      : "top-1/2 -translate-y-1/2"
+                  ${username
+                    ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                    : "top-1/2 -translate-y-1/2"
                   }
                   peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
               >
@@ -184,10 +183,9 @@ export const Login = () => {
               <label
                 htmlFor="password"
                 className={`absolute left-4 text-gray-500 transition-all duration-300 
-                  ${
-                    password
-                      ? "-top-2 text-sm text-gray-500 bg-white px-1"
-                      : "top-1/2 -translate-y-1/2"
+                  ${password
+                    ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                    : "top-1/2 -translate-y-1/2"
                   }
                   peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
               >
@@ -255,9 +253,8 @@ export const Login = () => {
               {images.map((_, index) => (
                 <span
                   key={index}
-                  className={`w-3 h-3 rounded-full ${
-                    currentImageIndex === index ? "bg-white" : "bg-white/50"
-                  } transition-all duration-300`}
+                  className={`w-3 h-3 rounded-full ${currentImageIndex === index ? "bg-white" : "bg-white/50"
+                    } transition-all duration-300`}
                 />
               ))}
             </div>
@@ -307,10 +304,9 @@ export const Login = () => {
                     <label
                       htmlFor="forgotEmail"
                       className={`absolute left-4 text-gray-500 transition-all duration-300 
-                        ${
-                          forgotEmail
-                            ? "-top-2 text-sm text-gray-500 bg-white px-1"
-                            : "top-1/2 -translate-y-1/2"
+                        ${forgotEmail
+                          ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                          : "top-1/2 -translate-y-1/2"
                         }
                         peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
                     >
@@ -358,10 +354,9 @@ export const Login = () => {
                     <label
                       htmlFor="resetCode"
                       className={`absolute left-4 text-gray-500 transition-all duration-300 
-                        ${
-                          resetCode
-                            ? "-top-2 text-sm text-gray-500 bg-white px-1"
-                            : "top-1/2 -translate-y-1/2"
+                        ${resetCode
+                          ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                          : "top-1/2 -translate-y-1/2"
                         }
                         peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
                     >
@@ -382,10 +377,9 @@ export const Login = () => {
                     <label
                       htmlFor="newPassword"
                       className={`absolute left-4 text-gray-500 transition-all duration-300 
-                        ${
-                          newPassword
-                            ? "-top-2 text-sm text-gray-500 bg-white px-1"
-                            : "top-1/2 -translate-y-1/2"
+                        ${newPassword
+                          ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                          : "top-1/2 -translate-y-1/2"
                         }
                         peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
                     >
@@ -416,10 +410,9 @@ export const Login = () => {
                     <label
                       htmlFor="confirmPassword"
                       className={`absolute left-4 text-gray-500 transition-all duration-300 
-                        ${
-                          confirmPassword
-                            ? "-top-2 text-sm text-gray-500 bg-white px-1"
-                            : "top-1/2 -translate-y-1/2"
+                        ${confirmPassword
+                          ? "-top-2 text-sm text-gray-500 bg-white px-1"
+                          : "top-1/2 -translate-y-1/2"
                         }
                         peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
                     >
