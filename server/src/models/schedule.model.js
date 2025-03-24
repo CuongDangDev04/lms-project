@@ -8,13 +8,14 @@ const Schedule = sequelize.define(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+      allowNull: false,
     },
     event_type: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     weekdays: {
-      type: DataTypes.ENUM("2", "3", "4", "5", "6", "7", "8"), // 2 = Monday, 3 = Tuesday, 4 = Wednesday, 5 = Thursday, 6 = Friday, 7 = Saturday, 8 = Sunday
+      type: DataTypes.ENUM("2", "3", "4", "5", "6", "7", "8"),
       allowNull: true,
     },
     start_time: {
@@ -35,27 +36,26 @@ const Schedule = sequelize.define(
     },
     is_postponed: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false,
       allowNull: false,
+      defaultValue: false,
     },
     makeup_date: {
       type: DataTypes.DATEONLY,
-      defaultValue: null,
       allowNull: true,
+      defaultValue: null,
     },
     date: {
       type: DataTypes.DATEONLY,
+      allowNull: true,
       defaultValue: null,
     },
     parent_schedule_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'Schedules',
-        key: 'schedule_id',
+        model: "Schedules",
+        key: "schedule_id",
       },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
     },
     classroom_id: {
       type: DataTypes.INTEGER,
@@ -64,19 +64,12 @@ const Schedule = sequelize.define(
         model: "classrooms",
         key: "classroom_id",
       },
-
     },
-
   },
   {
     tableName: "Schedules",
     timestamps: false,
   }
 );
-
-Schedule.belongsTo(Schedule, {
-  as: 'parentSchedule',
-  foreignKey: 'parent_schedule_id',
-});
 
 module.exports = Schedule;

@@ -15,7 +15,7 @@ router.get(
 );
 router.get(
   "/teacherInformation/:classroom_id",
-  getRequestUser(),
+  
   CourseUserController.fetchTeacherInformation
 );
 

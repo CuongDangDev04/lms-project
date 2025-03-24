@@ -4,8 +4,12 @@ const {
   UserParticipation,
   sequelize,
   Classroom,
+  Class,
+  Course,
+  Notification,
+  UserNotification,
 } = require("../models");
-const { getIO } = require("../config/socket");
+const { getIO, onlineUsers } = require("../config/socket");
 const { QueryTypes } = require("sequelize");
 // const sendMessage = async (req, res) => {
 //   try {
@@ -83,9 +87,27 @@ const sendMessage = async (req, res) => {
         attributes: ["user_id", "username"],
       });
     }
-
+    const classroom = await Classroom.findOne({
+      where: { classroom_id: classroomId },
+      include: [
+        {
+          model: Class,
+          attributes: ["class_name"],
+        },
+        {
+          model: Course,
+          attributes: ["course_name"],
+        },
+      ],
+    });
+    const notification = await Notification.create({
+      message:
+        "Lớp " + classroom.Course.course_name + " của bạn có tin nhắn mới!",
+      notification_type: "classroom",
+    });
+    const io = getIO();
     // Gửi tin nhắn + username về client thông qua socket.io
-    getIO().emit("receiveMessage", {
+    io.emit("receiveMessage", {
       message_id: userMessage.message_id,
       message: userMessage.message,
       userId: isParticipate.User.user_id,
@@ -96,10 +118,38 @@ const sendMessage = async (req, res) => {
     });
 
     for (const user of taggedUsers) {
-      getIO().emit("tagNotification", {
+      io.emit("tagNotification", {
         messageId: userMessage.message_id,
         sender: userId,
         sendTo: user.user_id,
+
+        classroomId,
+      });
+    }
+
+    // console.log("hehehe", classroom);
+    for (const user of usersInClass) {
+      await UserNotification.create({
+        user_id: user.user_id,
+        notification_id: notification.notification_id,
+        status: 0, // Trạng thái mặc định: chưa đọc
+      });
+      const receiveUserId = onlineUsers[user.user_id];
+
+      io.to(receiveUserId).emit("receiveMessageNotification", {
+        message: userMessage.message_id,
+        sender: userId,
+        sendTo: user.user_id,
+        classroomId,
+        className: classroom.Class.class_name,
+        courseName: classroom.Course.course_name,
+      });
+      io.to(receiveUserId).emit("receiveNotification", {
+        notification_id: notification.notification_id,
+        notification_type: notification.notification_type,
+        message: notification.message,
+        timestamp: new Date().toISOString(),
+        status: 0,
         classroomId,
       });
     }
@@ -122,7 +172,7 @@ const getMessages = async (req, res) => {
     }
 
     const messages = await sequelize.query(
-      `SELECT message_id, up.user_id, cm.message,timestamp,tagged_user_ids, up.classroom_id, u.username , u.fullname
+      `SELECT message_id, up.user_id, cm.message,timestamp,tagged_user_ids, up.classroom_id, u.username 
        FROM Chat_Messages cm
        JOIN User_participations up ON up.participate_id = cm.participate_id
        JOIN Users u ON u.user_id = up.user_id

@@ -10,14 +10,15 @@ const classRoomAssigmentAdminRoute = require('./classAssigmentRoute');
 const classRoomAdminRoute = require('./classRoomRoute');
 const userParticipationAdminRoute = require('./userParticipationsRoute')
 const dbReportAdminRoute = require('./dbReportRoute');
+const { verifyTokenAndRole } = require('../../middlewares/auth.middleware');
 
 //Xuat route su dung
 router.use('/users', userAdminRoute);
 router.use('/courses', courseAdminRoute);
 router.use('/classes', classAdminRoute);
-router.use('/classrooms', classRoomAdminRoute, classRoomAssigmentAdminRoute);
-router.use('/classStatus', classStatusAdminRoute);
-router.use('/user-participations', userParticipationAdminRoute);
-router.use('/dashboard-stats', dbReportAdminRoute);
+router.use('/classrooms',verifyTokenAndRole(3), classRoomAdminRoute, classRoomAssigmentAdminRoute);
+router.use('/classStatus',verifyTokenAndRole(3), classStatusAdminRoute);
+router.use('/user-participations',verifyTokenAndRole(3), userParticipationAdminRoute);
+router.use('/dashboard-stats',verifyTokenAndRole(3), dbReportAdminRoute);
 
 module.exports = router;

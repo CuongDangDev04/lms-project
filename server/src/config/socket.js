@@ -9,11 +9,7 @@ let onlineUsers = {};
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: [
-        API_FE,
-        "http://localhost:5173",
-        "https://lmsclient-nine.vercel.app"
-      ],
+      origin: API_FE,
       methods: ["GET", "POST"],
     },
   });

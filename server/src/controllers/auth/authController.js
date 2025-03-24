@@ -62,10 +62,10 @@ const login = async (req, res) => {
             return res.status(400).json({ message: "MSSV không tồn tại" });
         }
 
-        // const passwordValid = await bcrypt.compare(password, student.password);
-        // if (!passwordValid) {
-        //     return res.status(400).json({ message: "Mật khẩu không đúng" });
-        // }
+        const passwordValid = await bcrypt.compare(password, student.password);
+        if (!passwordValid) {
+            return res.status(400).json({ message: "Mật khẩu không đúng" });
+        }
         // Lấy role từ bảng roles
 
         const payload = { id: student.user_id, username: student.username, role_id: student.role_id };

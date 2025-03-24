@@ -16,6 +16,7 @@ const sequelize = new Sequelize(
         rejectUnauthorized: true,
       },
     },
+    logging: false
   }
 );
 
