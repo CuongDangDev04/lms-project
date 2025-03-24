@@ -26,7 +26,7 @@ import AssignedClassroomManager from "../pages/admin/AssignedClassroomManager";
 import AssignedCourse from "../pages/users/AssignedCourse";
 import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
-import Classroom from "../components/users/classroom";
+import Classroom from "../components/users/Classroom";
 import Subject from "../pages/instructor/Subjects";
 
 const AppRoutes = () => {
