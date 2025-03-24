@@ -100,10 +100,10 @@ const uploadAvatar = async (req, res) => {
 const createInstructorsFromExcel = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "Vui lòng upload file Excel" });
+      return res.status(400).json({ message: "Please upload an Excel file" });
     }
 
-    const filePath = req.file.path; // Lưu đường dẫn file để xóa sau
+    const filePath = req.file.path;
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -115,10 +115,10 @@ const createInstructorsFromExcel = async (req, res) => {
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
     for (let row of worksheet) {
-      const { username, email, fullname, gender, avt, birth } = row;
+      const { username, email, fullname, birth, gender } = row;
 
       if (!username || !email) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Thiếu thông tin bắt buộc (username hoặc email)`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Missing required information (username or email)`);
         continue;
       }
 
@@ -126,12 +126,42 @@ const createInstructorsFromExcel = async (req, res) => {
       const userName = await User.findOne({ where: { username } });
 
       if (emailUser) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Email ${email} đã tồn tại`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Email ${email} already exists`);
         continue;
       }
       if (userName) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Username ${username} đã tồn tại`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Username ${username} already exists`);
         continue;
+      }
+
+      // Chuyển đổi giá trị gender thành boolean
+      let genderValue;
+      if (gender === 1 || gender === "1") {
+        genderValue = true;
+      } else if (gender === 0 || gender === "0") {
+        genderValue = false;
+      } else {
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid gender value (${gender})`);
+        continue;
+      }
+
+      // Chuyển đổi giá trị birth thành định dạng hợp lệ
+      let birthValue = null;
+      if (birth) {
+        // Nếu birth là một số (Excel date serial number)
+        if (typeof birth === "number") {
+          const excelDate = XLSX.SSF.parse_date_code(birth);
+          birthValue = new Date(excelDate.y, excelDate.m - 1, excelDate.d);
+        } else {
+          // Nếu birth là chuỗi, sử dụng moment.js để phân tích
+          const parsedDate = moment(birth, ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"], true);
+          if (parsedDate.isValid()) {
+            birthValue = parsedDate.toDate();
+          } else {
+            errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid birth date (${birth})`);
+            continue;
+          }
+        }
       }
 
       newUsers.push({
@@ -139,24 +169,24 @@ const createInstructorsFromExcel = async (req, res) => {
         password: hashedPassword,
         email,
         fullname,
-        gender,
+        gender: genderValue,
         avt: "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
-        birth,
+        birth: birthValue,
         role_id: 2,
       });
     }
 
     if (errors.length > 0) {
-      await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
+      await fs.unlink(filePath);
       return res.status(400).json({ message: errors.join(", ") });
     }
 
     await User.bulkCreate(newUsers);
-    await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
-    res.status(201).json({ message: "Thêm nhiều giảng viên thành công" });
+    await fs.unlink(filePath);
+    res.status(201).json({ message: "Successfully added multiple instructors" });
   } catch (err) {
     if (req.file && req.file.path) {
-      await fs.unlink(req.file.path).catch(err => console.error('Không thể xóa file:', err));
+      await fs.unlink(req.file.path);
     }
     res.status(500).json({ error: err.message });
   }
@@ -166,13 +196,15 @@ const createInstructorsFromExcel = async (req, res) => {
 const createStudentsFromExcel = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "Vui lòng upload file Excel" });
+      return res.status(400).json({ message: "Please upload an Excel file" });
     }
 
     const filePath = req.file.path; // Lưu đường dẫn file để xóa sau
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
-    const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+      raw: false, // Đảm bảo ngày tháng được phân tích thành chuỗi
+    });
 
     let errors = [];
     let newUsers = [];
@@ -184,7 +216,7 @@ const createStudentsFromExcel = async (req, res) => {
       const { username, email, fullname, gender, avt, birth } = row;
 
       if (!username || !email) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Thiếu thông tin bắt buộc (username hoặc email)`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Missing required information (username or email)`);
         continue;
       }
 
@@ -192,12 +224,42 @@ const createStudentsFromExcel = async (req, res) => {
       const userName = await User.findOne({ where: { username } });
 
       if (emailUser) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Email ${email} đã tồn tại`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Email ${email} already exists`);
         continue;
       }
       if (userName) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Username ${username} đã tồn tại`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Username ${username} already exists`);
         continue;
+      }
+
+      // Chuyển đổi giá trị gender thành boolean
+      let genderValue;
+      if (gender === 1 || gender === "1") {
+        genderValue = true;
+      } else if (gender === 0 || gender === "0") {
+        genderValue = false;
+      } else {
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid gender value (${gender})`);
+        continue;
+      }
+
+      // Chuyển đổi giá trị birth thành định dạng hợp lệ
+      let birthValue = null;
+      if (birth) {
+        // Nếu birth là một số (Excel date serial number)
+        if (typeof birth === "number") {
+          const excelDate = XLSX.SSF.parse_date_code(birth);
+          birthValue = new Date(excelDate.y, excelDate.m - 1, excelDate.d);
+        } else {
+          // Nếu birth là chuỗi, sử dụng moment.js để phân tích
+          const parsedDate = moment(birth, ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"], true);
+          if (parsedDate.isValid()) {
+            birthValue = parsedDate.toDate();
+          } else {
+            errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid birth date (${birth})`);
+            continue;
+          }
+        }
       }
 
       newUsers.push({
@@ -205,28 +267,30 @@ const createStudentsFromExcel = async (req, res) => {
         password: hashedPassword,
         email,
         fullname,
-        gender,
-        avt: "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
-        birth,
+        gender: genderValue,
+        avt: avt || "https://i.ibb.co/jkftcHB2/1741877635358-user.webp", // Sử dụng giá trị avt từ file nếu có
+        birth: birthValue,
         role_id: 1,
       });
     }
 
     if (errors.length > 0) {
-      await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
+      await fs.unlink(filePath).catch(err => console.error('Could not delete file:', err));
       return res.status(400).json({ message: errors.join(", ") });
     }
 
     await User.bulkCreate(newUsers);
-    await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
-    res.status(201).json({ message: "Thêm nhiều sinh viên thành công" });
+    await fs.unlink(filePath).catch(err => console.error('Could not delete file:', err));
+    res.status(201).json({ message: "Successfully added multiple students" });
   } catch (err) {
     if (req.file && req.file.path) {
-      await fs.unlink(req.file.path).catch(err => console.error('Không thể xóa file:', err));
+      await fs.unlink(req.file.path).catch(err => console.error('Could not delete file:', err));
     }
     res.status(500).json({ error: err.message });
   }
 };
+
+
 // Hàm tạo user mới
 const createUser = async (req, res) => {
   const { username, password, email, fullname, gender, avt, birth } = req.body;
