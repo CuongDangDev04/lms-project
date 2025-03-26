@@ -18,7 +18,7 @@ const Classroom = sequelize.define(
       allowNull: false,
     },
     status_id: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     start_date: {

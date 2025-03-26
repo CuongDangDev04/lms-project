@@ -122,11 +122,10 @@ const getMessages = async (req, res) => {
     }
 
     const messages = await sequelize.query(
-      `SELECT message_id, up.user_id, cm.message,timestamp,tagged_user_ids, up.classroom_id, u.username , u.fullname
-       FROM chat_messages cm
-       JOIN user_participations up ON up.participate_id = cm.participate_id
-       JOIN users u ON u.user_id = up.user_id
-       WHERE up.classroom_id = :classroomId`,
+      `SELECT message_id, up.user_id, cm.message,timestamp,tagged_user_ids, up.classroom_id, u.username 
+      FROM Chat_Messages cm
+      JOIN User_participations up ON up.participate_id = cm.participate_id
+      JOIN Users u ON u.user_id = up.user_id`,
       {
         type: QueryTypes.SELECT,
         replacements: { classroomId: classroomId }, // Thay thế giá trị động
