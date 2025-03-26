@@ -12,6 +12,8 @@ const getCourses = async (req, res) => {
             ],
         });
 
+        console.log(classrooms);
+
         const classroomIds = classrooms.map((classroom) => classroom.classroom_id);
 
         const enrollmentCounts = await UserParticipation.findAll({
@@ -43,7 +45,7 @@ const getCourses = async (req, res) => {
         const formattedCourses = classrooms.map((classroom) => {
             const currentEnrollment = enrollmentMap[classroom.classroom_id] || 0;
 
-            const classStatus = classroom.ClassStatus || { status_name: 'Không xác định' };
+            const classStatus = classroom.class_status || { status_name: 'Không xác định' };
 
             return {
                 classroom_id: classroom.classroom_id,
@@ -71,6 +73,7 @@ const getCourses = async (req, res) => {
             };
         });
 
+        console.log(formattedCourses);
         res.json(formattedCourses);
     } catch (error) {
         res.status(500).json({ message: error.message });
