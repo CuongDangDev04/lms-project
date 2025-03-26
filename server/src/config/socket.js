@@ -18,12 +18,23 @@ const initSocket = (server) => {
     // console.log("User connected:", socket.id);
     socket.on("registerUser", (userId) => {
       onlineUsers[userId] = socket.id;
-      console.log(`🔗 User ${userId} kết nối với socket ${socket.id}`);
+      // console.log(`🔗 User ${userId} kết nối với socket ${socket.id}`);
     });
+    socket.on("joinRoom", ({ classroomId }) => {
+      const rooms = Array.from(socket.rooms);
+      rooms.forEach((room) => {
+        if (room !== socket.id) {
+          socket.leave(room);
+        }
+      });
 
+      // Tham gia vào phòng mới
+      socket.join(classroomId);
+      // console.log(`🟢 User ${socket.id} đã vào phòng ${classroomId}`);
+    });
     socket.on("sendMessage", (data) => {
       // console.log("Tin nhắn nhận được từ client:", data);
-      io.emit("receiveMessage", data); // Gửi lại tin nhắn cho tất cả client
+      io.to(data.classroomId).emit("receiveMessage", data); // Gửi lại tin nhắn cho tất cả client
     });
     socket.on("deleteMessage", (messageId) => {
       // console.log(`Tin nhắn ${messageId} đã bị xóa`);
@@ -51,7 +62,7 @@ const initSocket = (server) => {
       for (const userId in onlineUsers) {
         if (onlineUsers[userId] === socket.id) {
           delete onlineUsers[userId];
-          console.log(`❌ User ${userId} đã ngắt kết nối`);
+          // console.log(`❌ User ${userId} đã ngắt kết nối`);
         }
       }
     });

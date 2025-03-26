@@ -85,7 +85,7 @@ const sendMessage = async (req, res) => {
     }
 
     // Gửi tin nhắn + username về client thông qua socket.io
-    getIO().emit("receiveMessage", {
+    getIO().to(classroomId).emit("receiveMessage", {
       message_id: userMessage.message_id,
       message: userMessage.message,
       userId: isParticipate.User.user_id,
