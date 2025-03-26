@@ -157,6 +157,8 @@ export const ManagerEntity = ({
         value = isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
       } else if (field.name === "gender") {
         value = entity[field.name] === "true" || entity[field.name] === 1 || entity[field.name] === "Nam" ? true : false;
+      } else if (field.name === "password") {
+        value = ""; // Đặt password thành chuỗi rỗng khi chỉnh sửa
       }
       return { ...acc, [field.name]: value };
     }, { [idField]: entity[idField] });
@@ -262,6 +264,10 @@ export const ManagerEntity = ({
 
         {loading ? (
           <div className="text-center text-gray-600">Đang tải dữ liệu...</div>
+        ) : paginatedEntities.length === 0 ? (
+          <div className="text-center text-gray-600 p-4 bg-white rounded-lg shadow">
+            Không tìm thấy {entityType.toLowerCase()} nào.
+          </div>
         ) : (
           <>
             <EntityForm
@@ -282,7 +288,7 @@ export const ManagerEntity = ({
               isOpen={isEditOpen}
               onOpenChange={setIsEditOpen}
             />
-            {deleteEntity && ( // Chỉ hiển thị modal xóa nếu deleteEntity tồn tại
+            {deleteEntity && (
               <ModalCustom
                 title="Xác Nhận Xóa"
                 triggerText=""
@@ -318,7 +324,7 @@ export const ManagerEntity = ({
               sortConfig={sortConfig}
               onSort={handleSort}
               onEdit={openEditModal}
-              onDelete={deleteEntity ? openDeleteModal : null} // Chỉ truyền onDelete nếu deleteEntity tồn tại
+              onDelete={deleteEntity ? openDeleteModal : null}
               onToggleStatus={handleToggleStatus}
             />
             <Pagination
@@ -336,6 +342,7 @@ export const ManagerEntity = ({
           closeOnClick
           pauseOnHover
           draggable
+          limit={1}
           theme="light"
           className="mt-4 sm:mt-6"
         />

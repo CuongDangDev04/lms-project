@@ -166,7 +166,7 @@ export const Login = () => {
                   }
                   peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-500 peer-focus:bg-white peer-focus:px-1`}
               >
-                MSSV
+                Tên đăng nhập
               </label>
             </div>
 
