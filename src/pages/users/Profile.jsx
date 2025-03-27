@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProfile, uploadImage } from "../../services/userServices";
+import { uploadImage } from "../../services/userServices";
 import { logout } from "../../services/authServices";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -10,25 +10,34 @@ export const Profile = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  // Lấy thông tin user từ localStorage
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchUserFromLocalStorage = () => {
       try {
-        const profileData = await getProfile();
-        setUser(profileData);
-      } catch (error) {
-        setError(error.message || "Lỗi khi lấy thông tin profile");
+        const userData = JSON.parse(localStorage.getItem("user"));
+        if (!userData) {
+          setError("Không tìm thấy thông tin người dùng trong localStorage");
+          return;
+        }
+        setUser(userData);
+      } catch (err) {
+        setError("Lỗi khi lấy thông tin người dùng từ localStorage");
       }
     };
-    fetchProfile();
+
+    fetchUserFromLocalStorage();
   }, []);
+
   const handleLogout = async () => {
     try {
       await logout(); // Gọi hàm logout từ authServices
+      localStorage.removeItem("user"); // Xóa thông tin user khỏi localStorage
       navigate("/login"); // Chuyển hướng về trang đăng nhập sau khi đăng xuất
     } catch (error) {
       setError(error.message || "Đăng xuất thất bại"); // Hiển thị lỗi nếu có
     }
   };
+
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -37,6 +46,8 @@ export const Profile = () => {
         setError(null);
         const updatedUser = await uploadImage(file);
         setUser(updatedUser.data);
+        // Cập nhật lại localStorage với thông tin user mới (bao gồm avatar mới)
+        localStorage.setItem("user", JSON.stringify(updatedUser.data));
       } catch (error) {
         setError(error.message || "Upload ảnh avatar thất bại");
       } finally {
@@ -44,7 +55,6 @@ export const Profile = () => {
       }
     }
   };
-
 
   return (
     <div className="min-h-screen pb-10 w-full bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-50 flex flex-col">
@@ -83,7 +93,7 @@ export const Profile = () => {
           </span>
         </div>
       </nav>
-  
+
       <div className="flex-1 flex flex-col p-4 gap-6 w-[80%] max-w-4xl mx-auto">
         <div className="w-full flex flex-col items-center p-6 bg-white rounded-2xl shadow-lg">
           <div className="relative mb-4 group">
@@ -152,7 +162,7 @@ export const Profile = () => {
             {user?.fullname || "Chưa có tên"}
           </h2>
         </div>
-  
+
         <div className="w-full bg-white p-6 rounded-2xl shadow-lg">
           {error && (
             <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-lg border border-red-200 shadow-sm text-sm">
@@ -172,7 +182,7 @@ export const Profile = () => {
               </div>
             </div>
           )}
-  
+
           {!user ? (
             <div className="flex justify-center items-center min-h-[150px]">
               <div className="flex items-center gap-3">
@@ -188,44 +198,98 @@ export const Profile = () => {
                 Thông tin cá nhân
               </h3>
               <div className="space-y-6 text-gray-700 text-base">
-                <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
-                  <span className="font-medium text-gray-600">Họ tên:</span>
-                  <span className="text-gray-800 font-medium">
-                    {user.fullname || "Chưa có email"}
-                  </span>
-                </div>
-                <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
-                  <span className="font-medium text-gray-600">
-                    Mã số sinh viên:
-                  </span>
-                  <span className="text-gray-800 font-medium">
-                    {user.username || "Chưa có email"}
-                  </span>
-                </div>
-                <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
-                  <span className="font-medium text-gray-600">Email:</span>
-                  <span className="text-gray-800 font-medium">
-                    {user.email || "Chưa có email"}
-                  </span>
-                </div>
-                <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
-                  <span className="font-medium text-gray-600">Giới tính:</span>
-                  <span className="text-gray-800 font-medium">
-                    {user.gender === true
-                      ? "Nam"
-                      : user.gender === false
-                      ? "Nữ"
-                      : "Chưa xác định"}
-                  </span>
-                </div>
-                <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
-                  <span className="font-medium text-gray-600">Ngày sinh:</span>
-                  <span className="text-gray-800 font-medium">
-                    {user.birth
-                      ? new Date(user.birth).toLocaleDateString("vi-VN")
-                      : "Chưa có ngày sinh"}
-                  </span>
-                </div>
+                {/* Hiển thị thông tin dựa trên role_id */}
+                {user.role_id === 1 ? (
+                  // Thông tin cho sinh viên (role_id = 1)
+                  <>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">Họ tên:</span>
+                      <span className="text-gray-800 font-medium">
+                        {user.fullname || "Chưa có họ tên"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">
+                        Mã số sinh viên:
+                      </span>
+                      <span className="text-gray-800 font-medium">
+                        {user.username || "Chưa có mã số sinh viên"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">Email:</span>
+                      <span className="text-gray-800 font-medium">
+                        {user.email || "Chưa có email"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">Giới tính:</span>
+                      <span className="text-gray-800 font-medium">
+                        {user.gender === true
+                          ? "Nam"
+                          : user.gender === false
+                          ? "Nữ"
+                          : "Chưa xác định"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">Ngày sinh:</span>
+                      <span className="text-gray-800 font-medium">
+                        {user.birth
+                          ? new Date(user.birth).toLocaleDateString("vi-VN")
+                          : "Chưa có ngày sinh"}
+                      </span>
+                    </div>
+                  </>
+                ) : user.role_id === 2 ? (
+                  // Thông tin cho giảng viên (role_id = 2)
+                  <>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">Họ tên:</span>
+                      <span className="text-gray-800 font-medium">
+                        {user.fullname || "Chưa có họ tên"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">
+                        Mã giảng viên:
+                      </span>
+                      <span className="text-gray-800 font-medium">
+                        {user.username || "Chưa có mã giảng viên"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">Email:</span>
+                      <span className="text-gray-800 font-medium">
+                        {user.email || "Chưa có email"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">Giới tính:</span>
+                      <span className="text-gray-800 font-medium">
+                        {user.gender === true
+                          ? "Nam"
+                          : user.gender === false
+                          ? "Nữ"
+                          : "Chưa xác định"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
+                      <span className="font-medium text-gray-600">Ngày sinh:</span>
+                      <span className="text-gray-800 font-medium">
+                        {user.birth
+                          ? new Date(user.birth).toLocaleDateString("vi-VN")
+                          : "Chưa có ngày sinh"}
+                      </span>
+                    </div>
+                    
+                  </>
+                ) : (
+                  // Trường hợp role_id không xác định
+                  <div className="text-center text-gray-600">
+                    Vai trò người dùng không xác định.
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -257,3 +321,4 @@ export const Profile = () => {
   );
 };
 
+export default Profile;

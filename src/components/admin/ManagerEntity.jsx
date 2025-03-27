@@ -7,6 +7,8 @@ import { FaUpload } from "react-icons/fa";
 import Pagination from "./Pagination";
 import { EntityTable } from "./EntityTable";
 import { EntityForm } from "./EntityForm";
+import { fi } from "date-fns/locale";
+import LoadingBar from "../users/LoadingBar";
 
 export const ManagerEntity = ({
   title,
@@ -39,6 +41,7 @@ export const ManagerEntity = ({
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const entitiesPerPage = 6;
 
   const location = useLocation();
@@ -157,6 +160,8 @@ export const ManagerEntity = ({
         value = isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
       } else if (field.name === "gender") {
         value = entity[field.name] === "true" || entity[field.name] === 1 || entity[field.name] === "Nam" ? true : false;
+      } else if (field.name === "password") {
+        value = ""; // Đặt password thành chuỗi rỗng khi chỉnh sửa
       }
       return { ...acc, [field.name]: value };
     }, { [idField]: entity[idField] });
@@ -178,6 +183,7 @@ export const ManagerEntity = ({
       toast.error("Vui lòng chọn file Excel trước khi upload!");
       return;
     }
+    setUploadLoading(true);
     try {
       await uploadEntities(selectedFile);
       fetchEntitiesData();
@@ -186,6 +192,8 @@ export const ManagerEntity = ({
       toast.success(`Thêm nhiều ${entityType.toLowerCase()} bằng file Excel thành công!`);
     } catch (error) {
       toast.error("Có lỗi xảy ra khi upload file Excel!");
+    }finally {
+      setUploadLoading(false);
     }
   };
 
@@ -201,6 +209,7 @@ export const ManagerEntity = ({
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 tracking-tight text-center sm:text-left">
             {title}
           </h2>
+          <LoadingBar isLoading={loading || uploadLoading} />
           <div className="flex gap-4">
             <ModalCustom
               title={`Thêm ${entityType} Mới`}
@@ -262,6 +271,10 @@ export const ManagerEntity = ({
 
         {loading ? (
           <div className="text-center text-gray-600">Đang tải dữ liệu...</div>
+        ) : paginatedEntities.length === 0 ? (
+          <div className="text-center text-gray-600 p-4 bg-white rounded-lg shadow">
+            Không tìm thấy {entityType.toLowerCase()} nào.
+          </div>
         ) : (
           <>
             <EntityForm
@@ -282,7 +295,7 @@ export const ManagerEntity = ({
               isOpen={isEditOpen}
               onOpenChange={setIsEditOpen}
             />
-            {deleteEntity && ( // Chỉ hiển thị modal xóa nếu deleteEntity tồn tại
+            {deleteEntity && (
               <ModalCustom
                 title="Xác Nhận Xóa"
                 triggerText=""
@@ -318,7 +331,7 @@ export const ManagerEntity = ({
               sortConfig={sortConfig}
               onSort={handleSort}
               onEdit={openEditModal}
-              onDelete={deleteEntity ? openDeleteModal : null} // Chỉ truyền onDelete nếu deleteEntity tồn tại
+              onDelete={deleteEntity ? openDeleteModal : null}
               onToggleStatus={handleToggleStatus}
             />
             <Pagination
@@ -336,6 +349,7 @@ export const ManagerEntity = ({
           closeOnClick
           pauseOnHover
           draggable
+          limit={1}
           theme="light"
           className="mt-4 sm:mt-6"
         />

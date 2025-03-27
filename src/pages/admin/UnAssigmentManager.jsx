@@ -534,7 +534,7 @@ const UnAssigmentManager = () => {
                     </div>
                 </ModalCustom>
 
-                <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme="light" className="mt-4 sm:mt-6" />
+                <ToastContainer limit={1} position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover draggable theme="light" className="mt-4 sm:mt-6" />
             </div>
         </div>
     );

@@ -94,7 +94,7 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
   }, [setIsSidebarOpen]);
 
   const teachers = teacherData?.Users || [];
-  const teacherName = teachers.length > 0 ? teachers[0].username : "Không xác định";
+  const teacherName = teachers.length > 0 ? teachers[0].fullname : "Không xác định";
   const className = teacherData?.Class?.class_name || "Không xác định";
 
   return (

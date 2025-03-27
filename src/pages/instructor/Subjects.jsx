@@ -45,18 +45,29 @@ export const Subject = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       if (!teacherId) {
+        console.log("Không tìm thấy teacherId trong localStorage");
         setError("Không tìm thấy thông tin giảng viên trong localStorage");
         setLoading(false);
         return;
       }
 
       try {
+        console.log("Đang gọi API với teacherId:", teacherId);
         const data = await getCoursesByInstructor(teacherId);
-        setCourses(data.data); // Dữ liệu từ API đã có định dạng phù hợp
+        console.log("Dữ liệu từ API:", data);
+        setCourses(data.data || []); // Đảm bảo setCourses là mảng rỗng nếu không có dữ liệu
         setLoading(false);
       } catch (err) {
-        setError("Không thể tải danh sách khóa học");
-        setLoading(false);
+        console.error("Lỗi khi gọi API:", err);
+        // Nếu lỗi là 404, coi như không có dữ liệu và đặt courses thành mảng rỗng
+        if (err.response && err.response.status === 404) {
+          setCourses([]); // Không có khóa học
+          setLoading(false);
+        } else {
+          // Các lỗi khác (500, network error, v.v.)
+          setError("Không thể tải danh sách khóa học. Vui lòng thử lại sau.");
+          setLoading(false);
+        }
       }
     };
 
@@ -109,6 +120,13 @@ export const Subject = () => {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
+  // Phân trang
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * entitiesPerPage,
+    currentPage * entitiesPerPage
+  );
+  const totalPages = Math.ceil(filteredCourses.length / entitiesPerPage);
+
   // Xử lý khi nhấp vào khóa học
   const handleCourseClick = (classroom_id) => {
     if (classroom_id) {
@@ -118,19 +136,7 @@ export const Subject = () => {
     }
   };
 
-  if (loading) {
-    return <div className="text-center py-10">Đang tải...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-10 text-red-500">{error}</div>;
-  }
-  const paginatedCourses = filteredCourses.slice(
-    (currentPage - 1) * entitiesPerPage,
-    currentPage * entitiesPerPage
-  );
-  const totalPages = Math.ceil(filteredCourses.length / entitiesPerPage);
-
+  // Component phân trang
   const Pagination = ({ currentPage, totalPages, onPageChange }) => (
     <div className="flex justify-center items-center mt-8 space-x-3">
       <button
@@ -163,6 +169,17 @@ export const Subject = () => {
     </div>
   );
 
+  // Nếu đang tải, hiển thị thông báo
+  if (loading) {
+    return <div className="text-center py-10">Đang tải...</div>;
+  }
+
+  // Nếu có lỗi (không phải lỗi 404), hiển thị thông báo lỗi
+  if (error) {
+    return <div className="text-center py-10 text-red-500">{error}</div>;
+  }
+
+  // Hiển thị giao diện chính
   return (
     <div className="mt-28 px-4 pb-20 lg:px-8 bg-gray-50 min-h-screen font-sans">
       {/* Thanh tìm kiếm và bộ lọc */}
@@ -248,7 +265,7 @@ export const Subject = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 0 00-2-2H5a2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
                       <span>
@@ -262,6 +279,7 @@ export const Subject = () => {
           </div>
         )}
       </div>
+
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
