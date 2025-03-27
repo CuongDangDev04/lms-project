@@ -24,8 +24,10 @@ const initSocket = (server) => {
     socket.on("joinRoom", ({ classroomId }) => {
       const rooms = Array.from(socket.rooms);
       rooms.forEach((room) => {
+        // console.log("roommmmm: ", room);
         if (room !== socket.id) {
           socket.leave(room);
+          // console.log(`User ${socket.id} đã rời phòng ${room}`);
         }
       });
 

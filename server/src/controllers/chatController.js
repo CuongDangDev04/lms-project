@@ -50,7 +50,6 @@ const sendMessage = async (req, res) => {
     });
     let cleanMessage = message;
     const taggedUserIds = [];
-
     usersInClass.forEach((user) => {
       const tagPattern = new RegExp(`@${user.username}\\b`, "g");
       if (message.match(tagPattern)) {
