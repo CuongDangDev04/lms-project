@@ -1,8 +1,15 @@
-const { Assignment, UserParticipation } = require("../../models/index");
+const {
+  Assignment,
+  UserParticipation,
+  Class,
+  Classroom,
+  Course,
+} = require("../../models/index");
 const fsPromises = require("fs").promises; // Để dùng access và readFile
 const fs = require("fs"); // Để dùng createReadStream
 const path = require("path");
 const archiver = require("archiver");
+const { getIO } = require("../../config/socket");
 
 // Hàm hỗ trợ để parse file_path an toàn
 const parseFilePath = (filePath) => {
@@ -18,7 +25,12 @@ const parseFilePath = (filePath) => {
     // Nếu không phải JSON, coi như là một đường dẫn đơn và trả về dưới dạng mảng
     return [filePath];
   } catch (error) {
-    console.error("Lỗi khi parse file_path:", error.message, "filePath:", filePath);
+    console.error(
+      "Lỗi khi parse file_path:",
+      error.message,
+      "filePath:",
+      filePath
+    );
     // Nếu parse thất bại, trả về như một mảng chứa một phần tử
     return typeof filePath === "string" ? [filePath] : [];
   }
@@ -39,13 +51,16 @@ exports.uploadAssignment = async (req, res) => {
     // Kiểm tra các trường bắt buộc
     if (!user_participation_id || !title || !user_id) {
       return res.status(400).json({
-        message: "Vui lòng cung cấp đầy đủ user_participation_id, title và user_id.",
+        message:
+          "Vui lòng cung cấp đầy đủ user_participation_id, title và user_id.",
       });
     }
 
     // Kiểm tra xem có file nào được upload không
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "Vui lòng upload ít nhất một file." });
+      return res
+        .status(400)
+        .json({ message: "Vui lòng upload ít nhất một file." });
     }
 
     // Lấy danh sách đường dẫn file đã upload
@@ -62,7 +77,43 @@ exports.uploadAssignment = async (req, res) => {
 
       file_path: JSON.stringify(file_paths), // Lưu mảng đường dẫn dưới dạng JSON
     });
-
+    // const classroom = await UserParticipation.findOne({
+    //   where: { participate_id: user_participation_id },
+    //   include: [
+    //     {
+    //       model: Classroom,
+    //       attributes: ["classroom_id"],
+    //       include: [
+    //         {
+    //           model: Course,
+    //           attributes: ["course_id", "course_name"],
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // });
+    // if (!classroom) {
+    //   return res.status(404).json({ message: "Không tìm thấy classroom." });
+    // } else {
+    //   // console.log("classroom", classroom.Classroom.Course.course_name);
+    //   const io = getIO();
+    //   const userInClass = await UserParticipation.findAll({
+    //     where: { classroom_id: classroom.classroom_id },
+    //     attributes: ["user_id"],
+    //   });
+    //   const className = classroom.Classroom.Course.course_name;
+    //   for (const user of userInClass) {
+    //     if (user.user_id !== user_id) {
+    //       const receiverSocketId = onlineUsers[user.user_id];
+    //       io.to(receiverSocketId).emit("receiveNotification", {
+    //         message: `Bài tập mới đã được tải lên: ${title}`,
+    //         timestamp: new Date().toISOString(),
+    //         classroomId: classroom.classroom_id,
+    //         courseName: className,
+    //       });
+    //     }
+    //   }
+    // }
     res.status(201).json({
       message: "Upload bài tập thành công!",
       assignment: newAssignment,
@@ -96,7 +147,10 @@ exports.downloadAssignmentFiles = async (req, res) => {
       const absolutePath = path.resolve(filePath);
       await fsPromises.access(absolutePath);
 
-      res.setHeader("Content-Disposition", `attachment; filename="${path.basename(filePath)}"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${path.basename(filePath)}"`
+      );
       res.setHeader("Content-Type", "application/octet-stream");
       return fs.createReadStream(absolutePath).pipe(res);
     }
@@ -106,13 +160,19 @@ exports.downloadAssignmentFiles = async (req, res) => {
       const absolutePath = path.resolve(filePath);
       await fsPromises.access(absolutePath);
 
-      res.setHeader("Content-Disposition", `attachment; filename="${path.basename(filePath)}"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${path.basename(filePath)}"`
+      );
       res.setHeader("Content-Type", "application/octet-stream");
       return fs.createReadStream(absolutePath).pipe(res);
     }
 
     if (filePaths.length > 1) {
-      res.setHeader("Content-Disposition", `attachment; filename="assignment_${assignment_id}.zip"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="assignment_${assignment_id}.zip"`
+      );
       res.setHeader("Content-Type", "application/zip");
 
       const archive = archiver("zip", { zlib: { level: 9 } });
@@ -142,7 +202,9 @@ exports.getAllAssignments = async (req, res) => {
 
     // Kiểm tra xem classroom_id có được cung cấp không
     if (!classroom_id) {
-      return res.status(400).json({ message: "Vui lòng cung cấp classroom_id." });
+      return res
+        .status(400)
+        .json({ message: "Vui lòng cung cấp classroom_id." });
     }
 
     // Lấy tất cả bài tập theo classroom_id
@@ -159,7 +221,9 @@ exports.getAllAssignments = async (req, res) => {
 
     // Kiểm tra nếu không có bài tập nào
     if (assignments.length === 0) {
-      return res.status(404).json({ message: "Không tìm thấy bài tập nào cho classroom_id này." });
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy bài tập nào cho classroom_id này." });
     }
 
     // Trả về danh sách bài tập
@@ -169,10 +233,11 @@ exports.getAllAssignments = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi khi lấy danh sách bài tập:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi lấy danh sách bài tập.", error });
+    res
+      .status(500)
+      .json({ message: "Có lỗi xảy ra khi lấy danh sách bài tập.", error });
   }
 };
-
 
 exports.getUserParticipationId = async (req, res) => {
   try {
@@ -185,10 +250,14 @@ exports.getUserParticipationId = async (req, res) => {
     });
 
     if (!participation) {
-      return res.status(404).json({ message: "Không tìm thấy user_participation_id" });
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy user_participation_id" });
     }
 
-    res.status(200).json({ user_participation_id: participation.participate_id });
+    res
+      .status(200)
+      .json({ user_participation_id: participation.participate_id });
   } catch (error) {
     console.error("Lỗi khi lấy user_participation_id:", error);
     res.status(500).json({ message: "Lỗi server" });
@@ -207,7 +276,9 @@ exports.updateAssignment = async (req, res) => {
     } = req.body;
 
     if (!assignment_id) {
-      return res.status(400).json({ message: "Vui lòng cung cấp assignment_id." });
+      return res
+        .status(400)
+        .json({ message: "Vui lòng cung cấp assignment_id." });
     }
     const assignment = await Assignment.findByPk(assignment_id);
     if (!assignment) {
@@ -215,7 +286,9 @@ exports.updateAssignment = async (req, res) => {
     }
 
     if (!title) {
-      return res.status(400).json({ message: "Tiêu đề (title) là trường bắt buộc." });
+      return res
+        .status(400)
+        .json({ message: "Tiêu đề (title) là trường bắt buộc." });
     }
 
     let file_paths = JSON.parse(assignment.file_path || "[]");
@@ -246,8 +319,12 @@ exports.updateAssignment = async (req, res) => {
     await assignment.update({
       title,
       description,
-      start_assignment: start_assignment ? new Date(start_assignment) : assignment.start_assignment,
-      end_assignment: end_assignment ? new Date(end_assignment) : assignment.end_assignment,
+      start_assignment: start_assignment
+        ? new Date(start_assignment)
+        : assignment.start_assignment,
+      end_assignment: end_assignment
+        ? new Date(end_assignment)
+        : assignment.end_assignment,
       file_path: JSON.stringify(file_paths),
     });
 
@@ -267,7 +344,9 @@ exports.deleteAssignment = async (req, res) => {
     const { assignment_id } = req.params;
 
     if (!assignment_id) {
-      return res.status(400).json({ message: "Vui lòng cung cấp assignment_id." });
+      return res
+        .status(400)
+        .json({ message: "Vui lòng cung cấp assignment_id." });
     }
 
     const assignment = await Assignment.findByPk(assignment_id);

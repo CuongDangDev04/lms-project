@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 let io;
-const API_FE = [process.env.API_FRONTEND_DEV, process.env.API_FRONTEND_PROD];;
+const API_FE = [process.env.API_FRONTEND_DEV, process.env.API_FRONTEND_PROD];
 let onlineUsers = {};
 
 const initSocket = (server) => {
@@ -48,7 +48,7 @@ const initSocket = (server) => {
           message,
           timestamp: new Date().toISOString(),
         });
-        console.log(`📩 Gửi thông báo tới user ${userId}`);
+        // console.log(`📩 Gửi thông báo tới user ${userId}`);
       } else {
         console.log(`⚠️ User ${userId} không online!`);
       }
