@@ -18,23 +18,7 @@ const storage = multer.diskStorage({
 const uploadv2 = multer({
   storage: storage,
   limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2GB (2 * 1024 * 1024 * 1024 bytes)
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'application/pdf',
-      'video/mp4',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-      'application/vnd.ms-excel', // .xls
-      'application/vnd.ms-powerpoint', // .ppt
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Chỉ chấp nhận JPEG, PNG, PDF, MP4, Excel (XLS/XLSX), hoặc PowerPoint (PPT/PPTX)!'), false);
-    }
-  },
+  
 });
 
 module.exports = uploadv2;

@@ -18,7 +18,7 @@ const Classroom = sequelize.define(
       allowNull: false,
     },
     status_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
     },
     start_date: {
@@ -37,6 +37,7 @@ const Classroom = sequelize.define(
   },
   {
     timestamps: false,
+    tableName: "classrooms",
   }
 );
 module.exports = Classroom;

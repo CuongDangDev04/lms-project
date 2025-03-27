@@ -7,10 +7,12 @@ const getCourses = async (req, res) => {
             include: [
                 { model: Class, attributes: ['class_name'] },
                 { model: Course, attributes: ['course_code', 'course_name', 'description'] },
-                { model: ClassStatus, attributes: ['status_id', 'status_name'], as: 'ClassStatus' },
-                { model: Schedule, as: 'Schedules' },
+                { model: ClassStatus, attributes: ['status_id', 'status_name'], },
+                { model: Schedule, },
             ],
         });
+
+        console.log(classrooms);
 
         const classroomIds = classrooms.map((classroom) => classroom.classroom_id);
 
@@ -24,7 +26,6 @@ const getCourses = async (req, res) => {
             ],
             include: [{
                 model: User,
-                as: 'User',
                 attributes: [],
                 where: { role_id: 1 },
             }],
@@ -44,7 +45,7 @@ const getCourses = async (req, res) => {
         const formattedCourses = classrooms.map((classroom) => {
             const currentEnrollment = enrollmentMap[classroom.classroom_id] || 0;
 
-            const classStatus = classroom.ClassStatus || { status_name: 'Không xác định' };
+            const classStatus = classroom.class_status || { status_name: 'Không xác định' };
 
             return {
                 classroom_id: classroom.classroom_id,
@@ -72,6 +73,7 @@ const getCourses = async (req, res) => {
             };
         });
 
+        console.log(formattedCourses);
         res.json(formattedCourses);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -89,12 +91,11 @@ const getCoursesToAssigned = async (req, res) => {
             include: [
                 {
                     model: Classroom,
-                    as: 'Classroom',
                     include: [
                         { model: Class, attributes: ['class_name'] },
                         { model: Course, attributes: ['course_code', 'course_name', 'description'] },
-                        { model: ClassStatus, attributes: ['status_id', 'status_name'], as: 'ClassStatus' },
-                        { model: Schedule, as: 'Schedules' },
+                        { model: ClassStatus, attributes: ['status_id', 'status_name'] },
+                        { model: Schedule, },
                     ],
                 },
             ],
@@ -112,7 +113,6 @@ const getCoursesToAssigned = async (req, res) => {
             ],
             include: [{
                 model: User,
-                as: 'User',
                 attributes: [],
                 where: { role_id: 1 },
             }],
@@ -181,7 +181,7 @@ const assignedCourse = async (req, res) => {
 
         const classroom = await Classroom.findByPk(classroomId, {
             include: [
-                { model: ClassStatus, as: 'ClassStatus' },
+                { model: ClassStatus },
             ],
         });
         if (!classroom) return res.status(404).json({ message: 'Lớp không tồn tại' });
@@ -193,7 +193,6 @@ const assignedCourse = async (req, res) => {
             where: { classroom_id: classroomId },
             include: [{
                 model: User,
-                as: 'User',
                 attributes: [],
                 where: { role_id: 1 },
             }],
@@ -249,6 +248,6 @@ module.exports = {
     getCoursesToAssigned,
     assignedCourse,
     deleteCoureToAssigned,
-    
+
 
 };

@@ -5,7 +5,9 @@ const dotenv = require("dotenv");
 dotenv.config();
 const axios = require("axios");
 const FormData = require("form-data");
-const fs = require('fs');
+const fs = require('fs'); // Import fs đồng bộ
+const fsPromises = require('fs').promises; // Import fs.promises cho bất đồng bộ
+const moment = require('moment');
 
 // Hàm upload ảnh lên ImgBB và lấy URL
 const uploadImageToImgBB = async (filePath) => {
@@ -16,18 +18,18 @@ const uploadImageToImgBB = async (filePath) => {
     throw new Error("API_KEY_UPLOAD_IMG is not defined in .env");
   }
 
-  if (!fs.existsSync(filePath)) {
+  if (!fs.existsSync(filePath)) { // Sử dụng fs đồng bộ
     throw new Error(`File does not exist at path: ${filePath}`);
   }
 
   const formData = new FormData();
-  formData.append("image", fs.createReadStream(filePath)); // Sử dụng file từ đĩa
+  formData.append("image", fs.createReadStream(filePath)); // Sử dụng fs đồng bộ
   formData.append("key", apiKey);
 
   try {
     console.log("Uploading to ImgBB with file:", filePath);
     const response = await axios.post(url, formData, {
-      headers: formData.getHeaders(), // Sử dụng headers từ FormData
+      headers: formData.getHeaders(),
     });
     console.log("Upload success, URL:", response.data.data.url);
     return response.data.data.url;
@@ -51,6 +53,7 @@ const uploadImageToImgBB = async (filePath) => {
   }
 };
 
+// Hàm upload avatar
 const uploadAvatar = async (req, res) => {
   const user_id = req.params.id;
   const file = req.file;
@@ -68,17 +71,15 @@ const uploadAvatar = async (req, res) => {
     console.log("Processing file:", file);
 
     // Upload ảnh lên ImgBB và lấy URL
-    const imageUrl = await uploadImageToImgBB(file.path); // Sử dụng file.path
+    const imageUrl = await uploadImageToImgBB(file.path);
 
     await User.update(
       { avt: imageUrl },
       { where: { user_id } }
     );
 
-    // Xóa file tạm sau khi upload thành công
-    fs.unlink(file.path, (err) => {
-      if (err) console.error("Error deleting temp file:", err);
-    });
+    // Xóa file tạm bằng fs.promises
+    await fsPromises.unlink(file.path).catch(err => console.error("Error deleting temp file:", err));
 
     const updatedUser = await User.findByPk(user_id);
     res.status(200).json({
@@ -89,21 +90,20 @@ const uploadAvatar = async (req, res) => {
   } catch (err) {
     console.error("Error uploading avatar:", err);
     if (file && file.path) {
-      fs.unlink(file.path, (err) => {
-        if (err) console.error("Error deleting temp file:", err);
-      });
+      await fsPromises.unlink(file.path).catch(err => console.error("Error deleting temp file:", err));
     }
     res.status(500).json({ error: err.message });
   }
 };
 
+// Hàm thêm nhiều giảng viên từ file Excel
 const createInstructorsFromExcel = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "Vui lòng upload file Excel" });
+      return res.status(400).json({ message: "Please upload an Excel file" });
     }
 
-    const filePath = req.file.path; // Lưu đường dẫn file để xóa sau
+    const filePath = req.file.path;
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -115,10 +115,10 @@ const createInstructorsFromExcel = async (req, res) => {
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
     for (let row of worksheet) {
-      const { username, email, fullname, gender, avt, birth } = row;
+      const { username, email, fullname, birth, gender } = row;
 
       if (!username || !email) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Thiếu thông tin bắt buộc (username hoặc email)`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Missing required information (username or email)`);
         continue;
       }
 
@@ -126,12 +126,38 @@ const createInstructorsFromExcel = async (req, res) => {
       const userName = await User.findOne({ where: { username } });
 
       if (emailUser) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Email ${email} đã tồn tại`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Email ${email} already exists`);
         continue;
       }
       if (userName) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Username ${username} đã tồn tại`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Username ${username} already exists`);
         continue;
+      }
+
+      let genderValue;
+      if (gender === 1 || gender === "1") {
+        genderValue = true;
+      } else if (gender === 0 || gender === "0") {
+        genderValue = false;
+      } else {
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid gender value (${gender})`);
+        continue;
+      }
+
+      let birthValue = null;
+      if (birth) {
+        if (typeof birth === "number") {
+          const excelDate = XLSX.SSF.parse_date_code(birth);
+          birthValue = new Date(excelDate.y, excelDate.m - 1, excelDate.d);
+        } else {
+          const parsedDate = moment(birth, ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"], true);
+          if (parsedDate.isValid()) {
+            birthValue = parsedDate.toDate();
+          } else {
+            errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid birth date (${birth})`);
+            continue;
+          }
+        }
       }
 
       newUsers.push({
@@ -139,24 +165,27 @@ const createInstructorsFromExcel = async (req, res) => {
         password: hashedPassword,
         email,
         fullname,
-        gender,
+        gender: genderValue,
         avt: "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
-        birth,
+        birth: birthValue,
         role_id: 2,
       });
     }
 
     if (errors.length > 0) {
-      await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
+      console.log('Errors found:', errors);
+      await fsPromises.unlink(filePath).catch(err => console.error('Could not delete file:', err));
       return res.status(400).json({ message: errors.join(", ") });
     }
 
     await User.bulkCreate(newUsers);
-    await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
-    res.status(201).json({ message: "Thêm nhiều giảng viên thành công" });
+    console.log('Instructors created successfully');
+    await fsPromises.unlink(filePath).catch(err => console.error('Could not delete file:', err));
+    res.status(201).json({ message: "Successfully added multiple instructors" });
   } catch (err) {
+    console.error('Error in createInstructorsFromExcel:', err);
     if (req.file && req.file.path) {
-      await fs.unlink(req.file.path).catch(err => console.error('Không thể xóa file:', err));
+      await fsPromises.unlink(req.file.path).catch(err => console.error('Could not delete file:', err));
     }
     res.status(500).json({ error: err.message });
   }
@@ -166,13 +195,15 @@ const createInstructorsFromExcel = async (req, res) => {
 const createStudentsFromExcel = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "Vui lòng upload file Excel" });
+      return res.status(400).json({ message: "Please upload an Excel file" });
     }
 
-    const filePath = req.file.path; // Lưu đường dẫn file để xóa sau
+    const filePath = req.file.path;
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
-    const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+      raw: false,
+    });
 
     let errors = [];
     let newUsers = [];
@@ -184,7 +215,7 @@ const createStudentsFromExcel = async (req, res) => {
       const { username, email, fullname, gender, avt, birth } = row;
 
       if (!username || !email) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Thiếu thông tin bắt buộc (username hoặc email)`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Missing required information (username or email)`);
         continue;
       }
 
@@ -192,12 +223,38 @@ const createStudentsFromExcel = async (req, res) => {
       const userName = await User.findOne({ where: { username } });
 
       if (emailUser) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Email ${email} đã tồn tại`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Email ${email} already exists`);
         continue;
       }
       if (userName) {
-        errors.push(`Dòng ${worksheet.indexOf(row) + 2}: Username ${username} đã tồn tại`);
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Username ${username} already exists`);
         continue;
+      }
+
+      let genderValue;
+      if (gender === 1 || gender === "1") {
+        genderValue = true;
+      } else if (gender === 0 || gender === "0") {
+        genderValue = false;
+      } else {
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid gender value (${gender})`);
+        continue;
+      }
+
+      let birthValue = null;
+      if (birth) {
+        if (typeof birth === "number") {
+          const excelDate = XLSX.SSF.parse_date_code(birth);
+          birthValue = new Date(excelDate.y, excelDate.m - 1, excelDate.d);
+        } else {
+          const parsedDate = moment(birth, ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"], true);
+          if (parsedDate.isValid()) {
+            birthValue = parsedDate.toDate();
+          } else {
+            errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid birth date (${birth})`);
+            continue;
+          }
+        }
       }
 
       newUsers.push({
@@ -205,28 +262,32 @@ const createStudentsFromExcel = async (req, res) => {
         password: hashedPassword,
         email,
         fullname,
-        gender,
-        avt: "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
-        birth,
+        gender: genderValue,
+        avt: avt || "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
+        birth: birthValue,
         role_id: 1,
       });
     }
 
     if (errors.length > 0) {
-      await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
+      console.log('Errors found:', errors);
+      await fsPromises.unlink(filePath).catch(err => console.error('Could not delete file:', err));
       return res.status(400).json({ message: errors.join(", ") });
     }
 
     await User.bulkCreate(newUsers);
-    await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
-    res.status(201).json({ message: "Thêm nhiều sinh viên thành công" });
+    console.log('Users created successfully');
+    await fsPromises.unlink(filePath).catch(err => console.error('Could not delete file:', err));
+    res.status(201).json({ message: "Successfully added multiple students" });
   } catch (err) {
+    console.error('Error in createStudentsFromExcel:', err);
     if (req.file && req.file.path) {
-      await fs.unlink(req.file.path).catch(err => console.error('Không thể xóa file:', err));
+      await fsPromises.unlink(req.file.path).catch(err => console.error('Could not delete file:', err));
     }
     res.status(500).json({ error: err.message });
   }
 };
+
 // Hàm tạo user mới
 const createUser = async (req, res) => {
   const { username, password, email, fullname, gender, avt, birth } = req.body;
@@ -250,7 +311,7 @@ const createUser = async (req, res) => {
       email,
       fullname,
       gender,
-      avt: "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
+      avt: avt || "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
       birth,
       role_id: 1,
     });
@@ -288,7 +349,7 @@ const createInstructor = async (req, res) => {
       email,
       fullname,
       gender,
-      avt: "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
+      avt: avt || "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
       birth,
       role_id: 2,
     });
@@ -319,6 +380,8 @@ const updateUserById = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Lấy danh sách tất cả user
 const getUsers = async (req, res) => {
   try {
     const users = await User.findAll({
@@ -329,6 +392,8 @@ const getUsers = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Lấy danh sách sinh viên
 const getStudents = async (req, res) => {
   try {
     const users = await User.findAll({ where: { role_id: 1 } });
@@ -337,6 +402,8 @@ const getStudents = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Lấy danh sách giảng viên
 const getInstructors = async (req, res) => {
   try {
     const users = await User.findAll({ where: { role_id: 2 } });
@@ -345,6 +412,8 @@ const getInstructors = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Lấy thông tin user theo ID
 const getUserById = async (req, res) => {
   const user_id = req.params.id;
   try {
@@ -359,6 +428,7 @@ const getUserById = async (req, res) => {
   }
 };
 
+// Xóa sinh viên theo ID
 const deleteStudentById = async (req, res) => {
   const user_id = req.params.id;
   try {
@@ -382,5 +452,5 @@ module.exports = {
   getInstructors,
   createStudentsFromExcel,
   createInstructorsFromExcel,
-  uploadAvatar
+  uploadAvatar,
 };

@@ -36,10 +36,10 @@ Classroom.belongsTo(Course, { foreignKey: "course_id" });
 
 // 3. Classroom - ClassStatus (1-N)
 ClassStatus.hasMany(Classroom, { foreignKey: "status_id" });
-Classroom.belongsTo(ClassStatus, { foreignKey: "status_id", as: "ClassStatus" });
+Classroom.belongsTo(ClassStatus, { foreignKey: "status_id" });
 
 // 4. Schedule - Classroom (1-N)
-Classroom.hasMany(Schedule, { foreignKey: "classroom_id", as: "Schedules" });
+Classroom.hasMany(Schedule, { foreignKey: "classroom_id" });
 Schedule.belongsTo(Classroom, { foreignKey: "classroom_id" });
 
 // 5. User - Classroom (N-N) --> UserParticipation

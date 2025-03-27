@@ -88,20 +88,32 @@ const sendNotificationToSpecificUser = async (req, res) => {
 // Gửi thông báo cho tất cả user trong một khóa học
 const sendNotificationToClassroomUsers = async (req, res) => {
   try {
-    const { classroom_id, notificationType, message } = req.body;
+    const { classroom_id, notificationType, action, assignmentTitle } =
+      req.body;
     console.log(req.body);
 
     // Kiểm tra đầu vào
     if (!classroom_id) {
       return res.status(400).json({ error: "Classroom ID là bắt buộc!" });
     }
-    if (!message) {
-      return res.status(400).json({ error: "Thông báo không được để trống!" });
-    }
     if (!["tag", "system", "classroom"].includes(notificationType)) {
       return res.status(400).json({ error: "Loại thông báo không hợp lệ!" });
     }
-
+    if (!action) {
+      return res.status(400).json({ error: "Thiếu hành động" });
+    }
+    if (!assignmentTitle) {
+      return res.status(400).json({ error: "Chưa có bài tập" });
+    }
+    const classroom = await Classroom.findOne({
+      where: { classroom_id: classroom_id },
+      include: [
+        {
+          model: Course,
+          attributes: ["course_name"],
+        },
+      ],
+    });
     // Lấy danh sách tất cả user tham gia trong classroom_id này
     const participations = await UserParticipation.findAll({
       where: { classroom_id }, // Chỉ tìm theo classroom_id cụ thể
@@ -130,7 +142,34 @@ const sendNotificationToClassroomUsers = async (req, res) => {
         .status(404)
         .json({ error: "Không tìm thấy sinh viên nào trong lớp học này!" });
     }
-
+    let message = "";
+    switch (action) {
+      case 1:
+        message =
+          "Lớp " +
+          classroom.Course.course_name +
+          " của bạn có bài tập mới, vui lòng nộp đúng hạn!";
+        break;
+      case 2:
+        // message: `Giảng viên ${user.fullname} đã chỉnh sửa bài tập ${title}, vui lòng xem các thay đổi!`,
+        message =
+          "Bài tập " +
+          assignmentTitle +
+          "của lớp " +
+          classroom.Course.course_name +
+          " vừa được chỉnh sửa, vui lòng xem các thay đổi!";
+        break;
+      case 3:
+        message =
+          "Bài tập " +
+          assignmentTitle +
+          "của lớp " +
+          classroom.Course.course_name +
+          " đã được xóa!";
+        break;
+      default:
+        return res.status(400).json({ error: "Hành động không hợp lệ" });
+    }
     // Tạo notification
     const notification = await Notification.create({
       notification_type: notificationType,
@@ -158,17 +197,19 @@ const sendNotificationToClassroomUsers = async (req, res) => {
         // Gửi thông báo chi tiết
         io.to(receiverSocketId).emit("receiveNotification", {
           notification_id: notification.notification_id,
-          message,
+          message: notification.message,
           timestamp: new Date().toISOString(),
           status: 0,
           classroom_id, // Gửi classroom_id thay vì course_id
+          assignmentTitle,
         });
 
         // Gửi toast notification
         io.to(receiverSocketId).emit("toastNotification", {
           notificationType,
-          message,
+          message: notification.message,
           classroom_id, // Gửi classroom_id thay vì course_id
+          assignmentTitle,
         });
         io.to(receiverSocketId).emit("unreadNotificationCount", {
           unreadNotificationCount,

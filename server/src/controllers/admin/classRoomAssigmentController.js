@@ -160,12 +160,11 @@ const getClassroomsByTeacher = async (req, res) => {
             include: [
                 {
                     model: Classroom,
-                    as: 'Classroom',
                     include: [
                         { model: Class, attributes: ['class_id', 'class_name'] },
                         { model: Course, attributes: ['course_id', 'course_name'] },
-                        { model: ClassStatus, attributes: ['status_id', 'status_name'], as: 'ClassStatus' },
-                        { model: Schedule, attributes: ['schedule_id', 'event_type', 'weekdays', 'start_time', 'end_time', 'description'], as: 'Schedules' },
+                        { model: ClassStatus, attributes: ['status_id', 'status_name'] },
+                        { model: Schedule, attributes: ['schedule_id', 'event_type', 'weekdays', 'start_time', 'end_time', 'description'] },
                     ],
                 },
             ],
@@ -194,7 +193,6 @@ const updateTeacherAssignment = async (req, res) => {
         const classroom = await Classroom.findByPk(classroom_id, {
             include: [{
                 model: Schedule,
-                as: 'Schedules'
             }],
         });
         if (!classroom) {
@@ -230,12 +228,11 @@ const updateTeacherAssignment = async (req, res) => {
             include: [
                 {
                     model: Classroom,
-                    as: 'Classroom',
                     include: [
                         { model: Class, attributes: ['class_id', 'class_name'] },
                         { model: Course, attributes: ['course_id', 'course_name'] },
-                        { model: ClassStatus, attributes: ['status_id', 'status_name'], as: 'ClassStatus' },
-                        { model: Schedule, attributes: ['schedule_id', 'event_type', 'weekdays', 'start_time', 'end_time', 'description'], as: 'Schedules' },
+                        { model: ClassStatus, attributes: ['status_id', 'status_name'] },
+                        { model: Schedule, attributes: ['schedule_id', 'event_type', 'weekdays', 'start_time', 'end_time', 'description'] },
                     ],
                 },
             ],
@@ -303,17 +300,15 @@ const getAllAssignedClassrooms = async (req, res) => {
             include: [
                 {
                     model: Classroom,
-                    as: 'Classroom',
                     include: [
                         { model: Class, attributes: ['class_id', 'class_name'] },
                         { model: Course, attributes: ['course_id', 'course_name'] },
-                        { model: ClassStatus, attributes: ['status_id', 'status_name'], as: 'ClassStatus' },
-                        { model: Schedule, attributes: ['schedule_id', 'event_type', 'weekdays', 'start_time', 'end_time', 'description'], as: 'Schedules' },
+                        { model: ClassStatus, attributes: ['status_id', 'status_name'] },
+                        { model: Schedule, attributes: ['schedule_id', 'event_type', 'weekdays', 'start_time', 'end_time', 'description'] },
                     ],
                 },
                 {
                     model: User,
-                    as: 'User',
                     where: { role_id: 2 },
                     attributes: ['user_id', 'username', 'fullname'],
                 },

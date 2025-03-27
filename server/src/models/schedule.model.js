@@ -51,26 +51,21 @@ const Schedule = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'Schedules',
+        model: 'Schedule',
         key: 'schedule_id',
       },
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     },
     classroom_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.NUMBER,
       allowNull: true,
-      references: {
-        model: "classrooms",
-        key: "classroom_id",
-      },
-
     },
 
   },
   {
-    tableName: "Schedules",
     timestamps: false,
+    tableName: "schedules",
   }
 );
 

@@ -4,6 +4,8 @@ const {
   Class,
   Classroom,
   Course,
+  Notification,
+  UserNotification,
 } = require("../../models/index");
 const fsPromises = require("fs").promises; // Để dùng access và readFile
 const fs = require("fs"); // Để dùng createReadStream
@@ -65,7 +67,6 @@ exports.uploadAssignment = async (req, res) => {
 
     // Lấy danh sách đường dẫn file đã upload
     const file_paths = req.files.map((file) => file.path);
-
     // Tạo bản ghi mới trong bảng assignments
     const newAssignment = await Assignment.create({
       user_participation_id,
@@ -77,43 +78,7 @@ exports.uploadAssignment = async (req, res) => {
 
       file_path: JSON.stringify(file_paths), // Lưu mảng đường dẫn dưới dạng JSON
     });
-    // const classroom = await UserParticipation.findOne({
-    //   where: { participate_id: user_participation_id },
-    //   include: [
-    //     {
-    //       model: Classroom,
-    //       attributes: ["classroom_id"],
-    //       include: [
-    //         {
-    //           model: Course,
-    //           attributes: ["course_id", "course_name"],
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // });
-    // if (!classroom) {
-    //   return res.status(404).json({ message: "Không tìm thấy classroom." });
-    // } else {
-    //   // console.log("classroom", classroom.Classroom.Course.course_name);
-    //   const io = getIO();
-    //   const userInClass = await UserParticipation.findAll({
-    //     where: { classroom_id: classroom.classroom_id },
-    //     attributes: ["user_id"],
-    //   });
-    //   const className = classroom.Classroom.Course.course_name;
-    //   for (const user of userInClass) {
-    //     if (user.user_id !== user_id) {
-    //       const receiverSocketId = onlineUsers[user.user_id];
-    //       io.to(receiverSocketId).emit("receiveNotification", {
-    //         message: `Bài tập mới đã được tải lên: ${title}`,
-    //         timestamp: new Date().toISOString(),
-    //         classroomId: classroom.classroom_id,
-    //         courseName: className,
-    //       });
-    //     }
-    //   }
-    // }
+
     res.status(201).json({
       message: "Upload bài tập thành công!",
       assignment: newAssignment,

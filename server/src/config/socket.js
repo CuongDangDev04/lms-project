@@ -3,13 +3,14 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 let io;
-const API_FE = [process.env.API_FRONTEND_DEV, process.env.API_FRONTEND_PROD];
+const API_FE = process.env.API_FRONTEND;
+const API_FRONTEND_PROD = process.env.API_FRONTEND_PROD;
 let onlineUsers = {};
-
+let rooms = {};
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: API_FE,
+      origin: [API_FE, API_FRONTEND_PROD],
       methods: ["GET", "POST"],
     },
   });
@@ -30,7 +31,7 @@ const initSocket = (server) => {
 
       // Tham gia vào phòng mới
       socket.join(classroomId);
-      // console.log(`🟢 User ${socket.id} đã vào phòng ${classroomId}`);
+      // console.log(`🟢 User ${socket.id} đã vào phòng ${rooms}`);
     });
     socket.on("sendMessage", (data) => {
       // console.log("Tin nhắn nhận được từ client:", data);

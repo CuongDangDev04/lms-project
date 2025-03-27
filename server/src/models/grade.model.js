@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 const Grade = sequelize.define(
-  "Grade",
+  "grade",
   {
     grade_id: {
       type: DataTypes.INTEGER,
@@ -29,7 +29,7 @@ const Grade = sequelize.define(
   },
   {
     timestamps: false,
-    tableName: "Grades",
+    tableName: "grades",
   }
 );
 

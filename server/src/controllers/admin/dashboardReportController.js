@@ -39,9 +39,9 @@ const getStats = async (req, res) => {
                 c.course_id,
                 c.course_name,
                 COUNT(DISTINCT up.user_id) as registered_students
-            FROM Courses c
-            LEFT JOIN Classrooms cr ON c.course_id = cr.course_id
-            LEFT JOIN User_participations up ON cr.classroom_id = up.classroom_id
+            FROM courses c
+            LEFT JOIN classrooms cr ON c.course_id = cr.course_id
+            LEFT JOIN user_participations up ON cr.classroom_id = up.classroom_id
             GROUP BY c.course_id, c.course_name
             ORDER BY registered_students DESC
         `);
@@ -51,8 +51,8 @@ const getStats = async (req, res) => {
                 c.course_id,
                 c.course_name,
                 COUNT(cr.classroom_id) as classroom_count
-            FROM Courses c
-            LEFT JOIN Classrooms cr ON c.course_id = cr.course_id
+            FROM courses c
+            LEFT JOIN classrooms cr ON c.course_id = cr.course_id
             GROUP BY c.course_id, c.course_name
             ORDER BY classroom_count DESC
             LIMIT 5
@@ -91,9 +91,9 @@ const exportStats = async (req, res) => {
                 c.course_id,
                 c.course_name,
                 COUNT(DISTINCT up.user_id) as registered_students
-            FROM Courses c
-            LEFT JOIN Classrooms cr ON c.course_id = cr.course_id
-            LEFT JOIN User_participations up ON cr.classroom_id = up.classroom_id
+            FROM courses c
+            LEFT JOIN classrooms cr ON c.course_id = cr.course_id
+            LEFT JOIN user_participations up ON cr.classroom_id = up.classroom_id
             GROUP BY c.course_id, c.course_name
             ORDER BY registered_students DESC
         `);
@@ -103,8 +103,8 @@ const exportStats = async (req, res) => {
                 c.course_id,
                 c.course_name,
                 COUNT(cr.classroom_id) as classroom_count
-            FROM Courses c
-            LEFT JOIN Classrooms cr ON c.course_id = cr.course_id
+            FROM courses c
+            LEFT JOIN classrooms cr ON c.course_id = cr.course_id
             GROUP BY c.course_id, c.course_name
             ORDER BY classroom_count DESC
         `);
