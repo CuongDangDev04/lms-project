@@ -68,6 +68,8 @@ const Notifications = () => {
           timestamp: notification.timestamp,
         },
         classroomId: notification.classroomId || notification.classroom_id,
+        assignmentTitle: notification.assignmentTitle,
+        lectureTitle: notification.lectureTitle,
       },
       ...prev,
     ]);
@@ -200,6 +202,37 @@ const Notifications = () => {
       console.error("Lỗi khi chuyển hướng:", error);
     }
   };
+  const courseNavigate = async (message) => {
+    try {
+      if (!message) {
+        console.error("Message is undefined, cannot navigate.");
+        return;
+      }
+      const regex = message.match(/lớp\s(.+?)(,| vui lòng|$)/);
+      const courseName = regex ? regex[1] : null;
+      if (courseName) {
+        let courses = await fetchStudentCourses();
+        let course = courses.find(
+          (c) => c.Classroom.Course.course_name === courseName
+        );
+        if (/bài tập\s(.+?)\s(của|vào)/.test(message)) {
+          if (course) {
+            navigate(`/courseDetail/${course.classroom_id}/assignments`);
+          } else {
+            console.error(`Không tìm thấy khóa học với tên: ${courseName}`);
+          }
+        } else if (/bài giảng\s(.+?)\s(của|lên)/.test(message)) {
+          if (course) {
+            navigate(`/courseDetail/${course.classroom_id}/lectures`);
+          } else {
+            console.error(`Không tìm thấy khóa học với tên: ${courseName}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi chuyển hướng:", error);
+    }
+  };
   return (
     <div className="w-96 p-4 bg-white shadow-lg rounded-lg">
       <div className="flex justify-between items-center mb-3">
@@ -236,6 +269,7 @@ const Notifications = () => {
                 }`}
               onClick={() => {
                 tagNavigate2(notif.Notification.message);
+                courseNavigate(notif.Notification.message);
                 if (!notif.is_read && !notif.status) {
                   markAsRead(notif.notification_id);
                 }
@@ -249,6 +283,12 @@ const Notifications = () => {
                 if (notif.classroomId) {
                   navigate(`/courseDetail/${notif.classroomId}/messages`);
                 }
+                if (notif.assignmentTitle) {
+                  navigate(`/courseDetail/${notif.classroomId}/assignments`);
+                }
+                if (notif.lectureTitle) {
+                  navigate(`/courseDetail/${notif.classroomId}/lectures`);
+                }
               }}
             >
               {getIcon(notif.notification_type)}
@@ -258,15 +298,15 @@ const Notifications = () => {
                   {new Date(notif.Notification.timestamp).toLocaleString()}
                 </p>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex-1 justify-end flex">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteNotification(notif.notification_id);
                   }}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-red-500 hover:text-red-700 ml-auto text-[10px]"
                 >
-                  ✖
+                  xóa
                 </button>
               </div>
             </li>

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
   fetchLectureOnClassroom,
   uploadLecture,
@@ -7,11 +7,11 @@ import {
   getUserParticipationId,
   updateLecture,
   deleteLecture,
-} from '../../services/LectureService';
-import { ModalCustom } from '../../components/admin/ui/ModalCustom';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import path from 'path-browserify';
+} from "../../services/LectureService";
+import { ModalCustom } from "../../components/admin/ui/ModalCustom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import path from "path-browserify";
 
 // Import icons
 import {
@@ -27,15 +27,15 @@ import {
   FaTrash,
   FaPlay,
   FaDownload,
-} from 'react-icons/fa';
-import NotificationService from '../../services/notificationService';
+} from "react-icons/fa";
+import NotificationService from "../../services/notificationService";
 
 // Utility functions for file handling
 const getCleanFileName = (filePath) => {
-  if (!filePath || typeof filePath !== 'string') return 'Không có tên file';
+  if (!filePath || typeof filePath !== "string") return "Không có tên file";
   // Lấy tên file từ đường dẫn bằng cách tách theo dấu phân cách cuối cùng
   const fileName = filePath.split(/[\\/]/).pop(); // Tách theo \ hoặc / và lấy phần cuối
-  const cleanName = fileName.replace(/^\d+-/, ''); // Xóa số và dấu - ở đầu
+  const cleanName = fileName.replace(/^\d+-/, ""); // Xóa số và dấu - ở đầu
   return cleanName;
 };
 
@@ -43,20 +43,20 @@ const getFileIcon = (fileName) => {
   if (!fileName) return <FaFile className="text-gray-500" />;
   const extension = path.extname(fileName).toLowerCase();
   switch (extension) {
-    case '.pdf':
+    case ".pdf":
       return <FaFilePdf className="text-red-500" />;
-    case '.pptx':
-    case '.ppt':
+    case ".pptx":
+    case ".ppt":
       return <FaFilePowerpoint className="text-orange-500" />;
-    case '.doc':
-    case '.docx':
+    case ".doc":
+    case ".docx":
       return <FaFileWord className="text-blue-500" />;
-    case '.xlsx':
-    case '.xls':
+    case ".xlsx":
+    case ".xls":
       return <FaFileExcel className="text-green-500" />;
-    case '.jpg':
-    case '.jpeg':
-    case '.png':
+    case ".jpg":
+    case ".jpeg":
+    case ".png":
       return <FaFileImage className="text-purple-500" />;
     default:
       return <FaFile className="text-gray-500" />;
@@ -66,23 +66,23 @@ const getFileIcon = (fileName) => {
 const parseFilePath = (filePath) => {
   try {
     if (Array.isArray(filePath)) return filePath;
-    if (typeof filePath === 'string') {
-      if (filePath.startsWith('[') && filePath.endsWith(']')) {
+    if (typeof filePath === "string") {
+      if (filePath.startsWith("[") && filePath.endsWith("]")) {
         return JSON.parse(filePath);
       }
       return [filePath];
     }
     return [];
   } catch (error) {
-    console.error('Lỗi khi parse file_path:', error, 'filePath:', filePath);
-    return typeof filePath === 'string' ? [filePath] : [];
+    console.error("Lỗi khi parse file_path:", error, "filePath:", filePath);
+    return typeof filePath === "string" ? [filePath] : [];
   }
 };
 
 const isPlayableFile = (filePath) => {
   if (!filePath) return false;
   const extension = path.extname(filePath).toLowerCase();
-  return ['.mp4', '.webm', '.ogg'].includes(extension);
+  return [".mp4", ".webm", ".ogg"].includes(extension);
 };
 
 // Lecture Item component
@@ -105,13 +105,18 @@ const LectureItem = ({
         onClick={toggleOpen}
       >
         <h3 className="text-lg font-semibold text-gray-800">{lecture.title}</h3>
-        {isOpen ? <FaChevronUp className="text-gray-500" /> : <FaChevronDown className="text-gray-500" />}
+        {isOpen ? (
+          <FaChevronUp className="text-gray-500" />
+        ) : (
+          <FaChevronDown className="text-gray-500" />
+        )}
       </div>
       {isOpen && (
         <div className="p-4 space-y-4">
           <div>
             <p className="text-gray-600">
-              <span className="font-medium">Mô tả:</span> {lecture.description || "Không có mô tả"}
+              <span className="font-medium">Mô tả:</span>{" "}
+              {lecture.description || "Không có mô tả"}
             </p>
           </div>
           <div>
@@ -123,7 +128,11 @@ const LectureItem = ({
                     <span className="text-xl">{getFileIcon(filePath)}</span>
                     <span
                       className="text-gray-800 font-medium truncate flex-1"
-                      title={lecture.fileNames && lecture.fileNames[fileIndex] ? lecture.fileNames[fileIndex] : getCleanFileName(filePath)}
+                      title={
+                        lecture.fileNames && lecture.fileNames[fileIndex]
+                          ? lecture.fileNames[fileIndex]
+                          : getCleanFileName(filePath)
+                      }
                     >
                       {/* Hiển thị tên file gốc nếu có, nếu không thì dùng tên được làm sạch */}
                       {lecture.fileNames && lecture.fileNames[fileIndex]
@@ -203,7 +212,7 @@ export default function Lectures() {
   const [userRole, setUserRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const [userParticipationId, setUserParticipationId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [openAccordion, setOpenAccordion] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDownloading, setIsDownloading] = useState({});
@@ -215,15 +224,15 @@ export default function Lectures() {
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
 
   // Form states
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [uploadFiles, setUploadFiles] = useState([]);
   const [existingFiles, setExistingFiles] = useState([]);
 
   // Edit states
   const [editLectureId, setEditLectureId] = useState(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [editFiles, setEditFiles] = useState([]);
   const [removeFileIndices, setRemoveFileIndices] = useState([]);
   const [deleteLectureId, setDeleteLectureId] = useState(null);
@@ -234,7 +243,7 @@ export default function Lectures() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem("user"));
     if (user) {
       setUserRole(user.role_id);
       setUserId(user.id);
@@ -244,7 +253,7 @@ export default function Lectures() {
   useEffect(() => {
     const fetchData = async () => {
       if (!classroomId || !userId) {
-        setError('Thiếu classroomId hoặc user_id');
+        setError("Thiếu classroomId hoặc user_id");
         setLoading(false);
         return;
       }
@@ -252,7 +261,10 @@ export default function Lectures() {
       try {
         // Get user participation ID
         if (userRole === 2) {
-          const participationId = await getUserParticipationId(userId, classroomId);
+          const participationId = await getUserParticipationId(
+            userId,
+            classroomId
+          );
           setUserParticipationId(participationId);
         }
 
@@ -262,17 +274,21 @@ export default function Lectures() {
           id: lecture.lecture_id,
           title: lecture.title,
           description: lecture.description,
-          teacher: `Giáo viên: ${lecture.user_participation?.User?.username || 'Unknown'}`,
-          className: `Lớp: Classroom ${lecture.user_participation?.classroomId || classroomId}`,
-          thumbnail: 'https://via.placeholder.com/150',
+          teacher: `Giáo viên: ${
+            lecture.user_participation?.User?.username || "Unknown"
+          }`,
+          className: `Lớp: Classroom ${
+            lecture.user_participation?.classroomId || classroomId
+          }`,
+          thumbnail: "https://via.placeholder.com/150",
           file_path: parseFilePath(lecture.file_path),
           fileNames: lecture.fileNames || [], // Store the original file names
         }));
         setLectures(mappedLectures);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Không thể tải dữ liệu bài giảng');
+        console.error("Error fetching data:", err);
+        setError("Không thể tải dữ liệu bài giảng");
         setLectures([]);
         setLoading(false);
       }
@@ -304,63 +320,77 @@ export default function Lectures() {
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
     if (!title || uploadFiles.length === 0) {
-      toast.error('Vui lòng điền tiêu đề và chọn ít nhất một file!');
+      toast.error("Vui lòng điền tiêu đề và chọn ít nhất một file!");
       return;
     }
 
     setIsUploading(true);
     try {
-      const response = await uploadLecture(classroomId, uploadFiles, title, description);
-      toast.success('Tải lên bài giảng thành công!');
+      const response = await uploadLecture(
+        classroomId,
+        uploadFiles,
+        title,
+        description
+      );
+      toast.success("Tải lên bài giảng thành công!");
       const notificationData = {
         classroom_id: classroomId,
         notificationType: "classroom", // Loại thông báo liên quan đến khóa học
-        message: `Giảng viên ${user.fullname} đã tải lên bài giảng ${title}!`
-
+        lectureTitle: title,
+        action: 4,
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);
-
 
       const newLecture = {
         id: response.data.lecture_id,
         title,
         description,
-        teacher: `Giáo viên: ${JSON.parse(localStorage.getItem('user'))?.username || 'Unknown'}`,
+        teacher: `Giáo viên: ${
+          JSON.parse(localStorage.getItem("user"))?.username || "Unknown"
+        }`,
         className: `Lớp: Classroom ${classroomId}`,
-        thumbnail: 'https://via.placeholder.com/150',
-        file_path: response.data.file_path ? JSON.parse(response.data.file_path) : uploadFiles.map(file => file.name),
+        thumbnail: "https://via.placeholder.com/150",
+        file_path: response.data.file_path
+          ? JSON.parse(response.data.file_path)
+          : uploadFiles.map((file) => file.name),
       };
 
       setLectures([...lectures, newLecture]);
-      setTitle('');
-      setDescription('');
+      setTitle("");
+      setDescription("");
       setUploadFiles([]);
       setIsUploadModalOpen(false);
     } catch (error) {
-      toast.error('Tải lên bài giảng thất bại: ' + error.message);
+      toast.error("Tải lên bài giảng thất bại: " + error.message);
     } finally {
       setIsUploading(false);
     }
   };
   const handleDownload = async (lectureId, fileIndex) => {
-    setIsDownloading((prev) => ({ ...prev, [`${lectureId}-${fileIndex}`]: true }));
+    setIsDownloading((prev) => ({
+      ...prev,
+      [`${lectureId}-${fileIndex}`]: true,
+    }));
     try {
       const lecture = lectures.find((l) => l.id === lectureId);
       if (!lecture) return;
 
       const { fileUrl, filename } = await downloadLecture(lectureId, fileIndex);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = fileUrl;
-      link.setAttribute('download', filename);
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
 
       toast.success(`Đã tải xuống ${filename} thành công!`);
     } catch (error) {
-      toast.error('Không thể tải file: ' + error.message);
+      toast.error("Không thể tải file: " + error.message);
     } finally {
-      setIsDownloading((prev) => ({ ...prev, [`${lectureId}-${fileIndex}`]: false }));
+      setIsDownloading((prev) => ({
+        ...prev,
+        [`${lectureId}-${fileIndex}`]: false,
+      }));
     }
   };
 
@@ -385,37 +415,46 @@ export default function Lectures() {
     }
 
     try {
-      const response = await updateLecture(editLectureId, editFiles, editTitle, editDescription, removeFileIndices);
+      const response = await updateLecture(
+        editLectureId,
+        editFiles,
+        editTitle,
+        editDescription,
+        removeFileIndices
+      );
       const notificationData = {
         classroom_id: classroomId,
         notificationType: "classroom",
-        message: `Giảng viên ${user.fullname} đã chỉnh sửa bài giảng ${title}, vui lòng xem các thay đổi`,
+        lectureTitle: editTitle,
+        action: 5,
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);
-      toast.success('Chỉnh sửa bài giảng thành công!');
+      toast.success("Chỉnh sửa bài giảng thành công!");
 
-      setLectures(prevLectures =>
-        prevLectures.map(lecture =>
+      setLectures((prevLectures) =>
+        prevLectures.map((lecture) =>
           lecture.id === editLectureId
             ? {
-              ...lecture,
-              title: editTitle,
-              description: editDescription,
-              file_path: response.lecture.filePaths || parseFilePath(response.lecture.file_path),
-              fileNames: response.lecture.fileNames
-            }
+                ...lecture,
+                title: editTitle,
+                description: editDescription,
+                file_path:
+                  response.lecture.filePaths ||
+                  parseFilePath(response.lecture.file_path),
+                fileNames: response.lecture.fileNames,
+              }
             : lecture
         )
       );
 
       setIsEditModalOpen(false);
       setEditLectureId(null);
-      setEditTitle('');
-      setEditDescription('');
+      setEditTitle("");
+      setEditDescription("");
       setEditFiles([]);
       setRemoveFileIndices([]);
     } catch (error) {
-      toast.error('Chỉnh sửa bài giảng thất bại: ' + error.message);
+      toast.error("Chỉnh sửa bài giảng thất bại: " + error.message);
     }
   };
 
@@ -430,14 +469,15 @@ export default function Lectures() {
       const notificationData = {
         classroom_id: classroomId,
         notificationType: "classroom",
-        message: `Giảng viên ${user.fullname} đã xóa bài giảng ${title}`,
+        lectureTitle: deleteLectureId,
+        action: 6,
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);
-      toast.success('Xóa bài giảng thành công!');
+      toast.success("Xóa bài giảng thành công!");
 
       setLectures(lectures.filter((lecture) => lecture.id !== deleteLectureId));
     } catch (error) {
-      toast.error('Xóa bài giảng thất bại: ' + error.message);
+      toast.error("Xóa bài giảng thất bại: " + error.message);
     } finally {
       setIsDeleteModalOpen(false);
       setDeleteLectureId(null);
@@ -445,8 +485,6 @@ export default function Lectures() {
   };
 
   const handlePlay = async (lecture, fileIndex) => {
-
-
     if (!isPlayableFile(lecture.file_path[fileIndex])) {
       toast.error("This file format is not playable");
       return;
@@ -468,7 +506,13 @@ export default function Lectures() {
 
   return (
     <div className="max-w-6xl mx-auto  mt-4 p-6 bg-gray-50 min-h-screen">
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+      />
 
       <h1 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-500 to-teal-500 text-transparent bg-clip-text">
         Danh sách bài giảng
@@ -493,10 +537,16 @@ export default function Lectures() {
         )}
       </div>
 
-      <ModalCustom title="Tải lên bài giảng mới" open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
+      <ModalCustom
+        title="Tải lên bài giảng mới"
+        open={isUploadModalOpen}
+        onOpenChange={setIsUploadModalOpen}
+      >
         <form onSubmit={handleUploadSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Tiêu đề</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Tiêu đề
+            </label>
             <input
               type="text"
               value={title}
@@ -506,7 +556,9 @@ export default function Lectures() {
             />
           </div>
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Mô tả</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Mô tả
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -515,7 +567,9 @@ export default function Lectures() {
             />
           </div>
           <div>
-            <label className="block text-gray-700 font-medium mb-1">File bài giảng</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              File bài giảng
+            </label>
             <input
               type="file"
               multiple
@@ -528,7 +582,9 @@ export default function Lectures() {
                 <p className="text-gray-600">File đã chọn:</p>
                 <ul className="list-disc pl-5">
                   {uploadFiles.map((file, index) => (
-                    <li key={index} className="text-gray-600">{file.name}</li>
+                    <li key={index} className="text-gray-600">
+                      {file.name}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -537,18 +593,25 @@ export default function Lectures() {
           <button
             type="submit"
             disabled={isUploading}
-            className={`w-full py-2 px-4 rounded-lg text-white ${isUploading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
-              } transition-all`}
+            className={`w-full py-2 px-4 rounded-lg text-white ${
+              isUploading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
+            } transition-all`}
           >
-            {isUploading ? 'Đang tải lên...' : 'Tải lên'}
+            {isUploading ? "Đang tải lên..." : "Tải lên"}
           </button>
         </form>
       </ModalCustom>
 
-      <ModalCustom title="Chỉnh sửa bài giảng" open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <ModalCustom
+        title="Chỉnh sửa bài giảng"
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+      >
         <form onSubmit={handleEditSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Tiêu đề</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Tiêu đề
+            </label>
             <input
               type="text"
               value={editTitle}
@@ -558,7 +621,9 @@ export default function Lectures() {
             />
           </div>
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Mô tả</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Mô tả
+            </label>
             <textarea
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
@@ -567,8 +632,12 @@ export default function Lectures() {
             />
           </div>
           <div>
-            <label className="block text-gray-700 font-medium mb-1">File hiện tại</label>
-            {parseFilePath(lectures.find((l) => l.id === editLectureId)?.file_path || []).map(
+            <label className="block text-gray-700 font-medium mb-1">
+              File hiện tại
+            </label>
+            {parseFilePath(
+              lectures.find((l) => l.id === editLectureId)?.file_path || []
+            ).map(
               (filePath, index) =>
                 !removeFileIndices.includes(index) && (
                   <div key={index} className="flex items-center space-x-2 mb-2">
@@ -587,7 +656,9 @@ export default function Lectures() {
             )}
           </div>
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Thêm file mới (tùy chọn)</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Thêm file mới (tùy chọn)
+            </label>
             <input
               type="file"
               multiple
@@ -599,7 +670,9 @@ export default function Lectures() {
                 <p className="text-gray-600">File mới đã chọn:</p>
                 <ul className="list-disc pl-5">
                   {editFiles.map((file, index) => (
-                    <li key={index} className="text-gray-600">{file.name}</li>
+                    <li key={index} className="text-gray-600">
+                      {file.name}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -623,7 +696,9 @@ export default function Lectures() {
         }}
       >
         <div className="space-y-4">
-          <p className="text-gray-700">Bạn có chắc chắn muốn xóa bài giảng này không?</p>
+          <p className="text-gray-700">
+            Bạn có chắc chắn muốn xóa bài giảng này không?
+          </p>
           <div className="flex justify-end space-x-3">
             <button
               onClick={() => setIsDeleteModalOpen(false)}
@@ -642,7 +717,7 @@ export default function Lectures() {
       </ModalCustom>
 
       <ModalCustom
-        title={currentPlayingLecture?.title || 'Phát bài giảng'}
+        title={currentPlayingLecture?.title || "Phát bài giảng"}
         open={isPlayerModalOpen}
         onOpenChange={setIsPlayerModalOpen}
         size="lg"
@@ -651,7 +726,10 @@ export default function Lectures() {
           <div className="bg-black aspect-video rounded-lg flex items-center justify-center">
             {currentPlayingLecture?.streamUrl ? (
               <video className="w-full h-full" controls autoPlay>
-                <source src={currentPlayingLecture.streamUrl} type="video/mp4" />
+                <source
+                  src={currentPlayingLecture.streamUrl}
+                  type="video/mp4"
+                />
                 Your browser does not support the video tag.
               </video>
             ) : (
@@ -659,8 +737,12 @@ export default function Lectures() {
             )}
           </div>
           <div className="mt-4">
-            <h3 className="text-lg font-medium text-gray-800">{currentPlayingLecture?.title}</h3>
-            <p className="text-gray-600">{currentPlayingLecture?.description}</p>
+            <h3 className="text-lg font-medium text-gray-800">
+              {currentPlayingLecture?.title}
+            </h3>
+            <p className="text-gray-600">
+              {currentPlayingLecture?.description}
+            </p>
           </div>
         </div>
       </ModalCustom>
@@ -671,7 +753,9 @@ export default function Lectures() {
           <span className="ml-3 text-lg text-gray-600">Đang tải...</span>
         </div>
       ) : error ? (
-        <div className="text-center text-red-500 bg-red-50 p-4 rounded-lg">{error}</div>
+        <div className="text-center text-red-500 bg-red-50 p-4 rounded-lg">
+          {error}
+        </div>
       ) : (
         <>
           {filteredLectures.length === 0 ? (

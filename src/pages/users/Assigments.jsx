@@ -190,7 +190,7 @@ export default function Assignments() {
       const notificationData = {
         classroom_id: classroomId,
         notificationType: "classroom",
-        assignmentTitle: title,
+        assignmentTitle: editTitle,
         action: 2,
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);
@@ -220,7 +220,7 @@ export default function Assignments() {
       const notificationData = {
         classroom_id: classroomId,
         notificationType: "classroom",
-        assignmentTitle: title,
+        assignmentTitle: assignmentToDelete,
         action: 3,
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);
