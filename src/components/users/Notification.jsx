@@ -298,15 +298,15 @@ const Notifications = () => {
                   {new Date(notif.Notification.timestamp).toLocaleString()}
                 </p>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex-1 justify-end flex">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteNotification(notif.notification_id);
                   }}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-red-500 hover:text-red-700 ml-auto text-[10px]"
                 >
-                  ✖
+                  xóa
                 </button>
               </div>
             </li>
