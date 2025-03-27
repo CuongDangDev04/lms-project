@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { logout } from '../../services/authServices';
 import logo from '../../assets/admin/logo_xoaphong.png';
+import { toast } from 'react-toastify';
 
 export const Header = ({ toggleSidebar }) => {
     const navigate = useNavigate();
@@ -9,6 +10,7 @@ export const Header = ({ toggleSidebar }) => {
     const handleLogout = async () => {
         try {
             await logout();
+            toast.success('Đăng xuất thành công!')
             navigate('/login');
         } catch (error) {
             console.error('Đăng xuất thất bại:', error);

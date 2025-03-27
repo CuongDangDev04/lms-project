@@ -7,6 +7,8 @@ import { FaUpload } from "react-icons/fa";
 import Pagination from "./Pagination";
 import { EntityTable } from "./EntityTable";
 import { EntityForm } from "./EntityForm";
+import { fi } from "date-fns/locale";
+import LoadingBar from "../users/LoadingBar";
 
 export const ManagerEntity = ({
   title,
@@ -39,6 +41,7 @@ export const ManagerEntity = ({
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const entitiesPerPage = 6;
 
   const location = useLocation();
@@ -180,6 +183,7 @@ export const ManagerEntity = ({
       toast.error("Vui lòng chọn file Excel trước khi upload!");
       return;
     }
+    setUploadLoading(true);
     try {
       await uploadEntities(selectedFile);
       fetchEntitiesData();
@@ -188,6 +192,8 @@ export const ManagerEntity = ({
       toast.success(`Thêm nhiều ${entityType.toLowerCase()} bằng file Excel thành công!`);
     } catch (error) {
       toast.error("Có lỗi xảy ra khi upload file Excel!");
+    }finally {
+      setUploadLoading(false);
     }
   };
 
@@ -203,6 +209,7 @@ export const ManagerEntity = ({
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 tracking-tight text-center sm:text-left">
             {title}
           </h2>
+          <LoadingBar isLoading={loading || uploadLoading} />
           <div className="flex gap-4">
             <ModalCustom
               title={`Thêm ${entityType} Mới`}
