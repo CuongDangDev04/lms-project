@@ -113,7 +113,7 @@ const fetchTeacherInformation = async (req, res) => {
         {
           model: User,
           where: { role_id: 2 },
-          attributes: ["username", "email"]
+          attributes: ["username", "email", "fullname"]
         }
       ]
     });
