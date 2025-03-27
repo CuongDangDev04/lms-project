@@ -178,10 +178,13 @@ const AssignedCourse = () => {
 
             await NotificationService.sendNotificationToClassroomTeachers(notificationData);
             toast.success('Đăng ký khóa học thành công!');
-
-
         } catch (error) {
-            toast.error(`Đăng ký thất bại: ${error.message}`);
+            if (error.response.status === 400) {
+                toast.warning(error.response.data.message);
+                setIsRegisterModalOpen(false);
+            } else {
+                toast.error(`Đăng ký học phần thất bại: ${error.message}`);
+            }
         }
     };
     const handleCancelRegistration = async (classroomId) => {

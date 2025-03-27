@@ -6,7 +6,7 @@ const AssignedClassService = {
     getAvailableClasses: async () => {
         try {
             const response = await api.get(`${API_BASE_URL}`);
-
+            console.log(response.data);
             return response.data;
         } catch (error) {
             console.error("Lỗi lấy danh sách lớp học:", error);
