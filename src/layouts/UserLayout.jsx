@@ -82,7 +82,7 @@ const UserLayout = () => {
       .off("toastNotification")
       .on(
         "toastNotification",
-        ({ notificationId, message, notificationType }) => {
+        ({ notificationId, message, notificationType, classroom_id }) => {
           let toastOptions = {
             position: "top-right",
             autoClose: 5000,
@@ -95,7 +95,11 @@ const UserLayout = () => {
             case "classroom":
               toast(`${message}`, {
                 ...toastOptions,
-                className: "classroom-toast",
+                className: "classroom-toast cursor-pointer",
+                onClick: () => {
+                  navigate(`/courseDetail/${classroom_id}/assignments`);
+                  toast.dismiss();
+                },
               });
               break;
             case "system":

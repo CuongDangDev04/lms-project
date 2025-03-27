@@ -67,7 +67,7 @@ const Notifications = () => {
           message: notification.message,
           timestamp: notification.timestamp,
         },
-        classroomId: notification.classroomId,
+        classroomId: notification.classroomId || notification.classroom_id,
       },
       ...prev,
     ]);
@@ -229,9 +229,10 @@ const Notifications = () => {
             <li
               key={notif.notification_id}
               className={`p-3 flex items-start gap-3 rounded-lg transition relative cursor-pointer 
-                ${notif.is_read || notif.status
-                  ? "bg-white"
-                  : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
+                ${
+                  notif.is_read || notif.status
+                    ? "bg-white"
+                    : "bg-gray-100 hover:bg-gray-200 font-gold border-l-4 border-blue-500"
                 }`}
               onClick={() => {
                 tagNavigate2(notif.Notification.message);
@@ -257,15 +258,17 @@ const Notifications = () => {
                   {new Date(notif.Notification.timestamp).toLocaleString()}
                 </p>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteNotification(notif.notification_id);
-                }}
-                className="absolute right-3 top-3 text-red-500 hover:text-red-700"
-              >
-                ✖
-              </button>
+              <div className="flex-shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteNotification(notif.notification_id);
+                  }}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  ✖
+                </button>
+              </div>
             </li>
           ))
         ) : (
