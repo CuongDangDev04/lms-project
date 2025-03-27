@@ -55,7 +55,10 @@ export default function Assignments() {
         return;
       }
       try {
-        const participationId = await getUserParticipationId(userId, classroomId);
+        const participationId = await getUserParticipationId(
+          userId,
+          classroomId
+        );
         setUserParticipationId(participationId);
         const data = await getAssignmentsByClassRoom(classroomId);
         setAssignments(data.assignments || []);
@@ -95,12 +98,30 @@ export default function Assignments() {
       return;
     }
     try {
-      const response = await uploadAssignment(userParticipationId, userId, uploadFiles, title, description, null, endDate);
-      setAssignments((prev) => [...prev, { ...response.assignment, assignment_id: response.assignment.assignment_id || Date.now() }]);
+      const response = await uploadAssignment(
+        userParticipationId,
+        userId,
+        uploadFiles,
+        title,
+        description,
+        null,
+        endDate
+      );
+      setAssignments((prev) => [
+        ...prev,
+        {
+          ...response.assignment,
+          assignment_id: response.assignment.assignment_id || Date.now(),
+        },
+      ]);
       const notificationData = {
         classroom_id: classroomId,
         notificationType: "classroom",
-        message: `Giảng viên ${user.fullname} đã tải lên file bài tập ${title}, vui lòng làm và nộp đúng hạn!`,
+        assignmentTitle: title,
+        action: 1,
+        //action: 1 => create
+        //action: 2 => update
+        //action: 3 => delete
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);
       toast.success("Tạo bài tập thành công!");
@@ -144,25 +165,40 @@ export default function Assignments() {
       return;
     }
     try {
-      const data = { title: editTitle, description: editDescription, endDate: editEndDate };
-      const response = await updateAssignment(editAssignment.assignment_id, data, editFiles, removeFileIndices);
+      const data = {
+        title: editTitle,
+        description: editDescription,
+        endDate: editEndDate,
+      };
+      const response = await updateAssignment(
+        editAssignment.assignment_id,
+        data,
+        editFiles,
+        removeFileIndices
+      );
       setAssignments((prev) =>
         prev.map((a) =>
           a.assignment_id === editAssignment.assignment_id
-            ? { ...a, ...data, file_path: response.assignment.file_path || a.file_path }
+            ? {
+                ...a,
+                ...data,
+                file_path: response.assignment.file_path || a.file_path,
+              }
             : a
         )
       );
       const notificationData = {
         classroom_id: classroomId,
         notificationType: "classroom",
-        message: `Giảng viên ${user.fullname} đã chỉnh sửa bài tập ${title}, vui lòng xem các thay đổi!`,
+        assignmentTitle: title,
+        action: 2,
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);
       toast.success("Cập nhật bài tập thành công!");
       setEditAssignment(null);
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Lỗi khi cập nhật bài tập.";
+      const errorMessage =
+        error.response?.data?.message || "Lỗi khi cập nhật bài tập.";
       toast.error(errorMessage);
     }
   };
@@ -178,11 +214,14 @@ export default function Assignments() {
     if (!assignmentToDelete) return;
     try {
       await deleteAssignment(assignmentToDelete);
-      setAssignments((prev) => prev.filter((a) => a.assignment_id !== assignmentToDelete));
+      setAssignments((prev) =>
+        prev.filter((a) => a.assignment_id !== assignmentToDelete)
+      );
       const notificationData = {
         classroom_id: classroomId,
         notificationType: "classroom",
-        message: `Giảng viên ${user.fullname} đã xóa file bài tập ${title}`,
+        assignmentTitle: title,
+        action: 3,
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);
       toast.success("Xóa bài tập thành công!");
@@ -229,7 +268,9 @@ export default function Assignments() {
         >
           <form onSubmit={handleUploadSubmit} className="space-y-4">
             <div>
-              <label className="block text-gray-700 font-medium mb-1">Tiêu đề</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                Tiêu đề
+              </label>
               <input
                 type="text"
                 value={title}
@@ -239,7 +280,9 @@ export default function Assignments() {
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-1">Mô tả</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                Mô tả
+              </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -248,7 +291,9 @@ export default function Assignments() {
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-1">Deadline</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                Deadline
+              </label>
               <input
                 type="datetime-local"
                 value={endDate}
@@ -258,7 +303,9 @@ export default function Assignments() {
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-1">File bài tập</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                File bài tập
+              </label>
               <input
                 type="file"
                 multiple
@@ -271,7 +318,9 @@ export default function Assignments() {
                   <p className="text-gray-600">File đã chọn:</p>
                   <ul className="list-disc pl-5">
                     {uploadFiles.map((file, index) => (
-                      <li key={index} className="text-gray-600">{file.name}</li>
+                      <li key={index} className="text-gray-600">
+                        {file.name}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -296,7 +345,9 @@ export default function Assignments() {
         >
           <form onSubmit={handleEditSubmit} className="space-y-4">
             <div>
-              <label className="block text-gray-700 font-medium mb-1">Tiêu đề</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                Tiêu đề
+              </label>
               <input
                 type="text"
                 value={editTitle}
@@ -306,7 +357,9 @@ export default function Assignments() {
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-1">Mô tả</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                Mô tả
+              </label>
               <textarea
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
@@ -315,7 +368,9 @@ export default function Assignments() {
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-1">Deadline</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                Deadline
+              </label>
               <input
                 type="datetime-local"
                 value={editEndDate}
@@ -325,11 +380,16 @@ export default function Assignments() {
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-1">File hiện tại</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                File hiện tại
+              </label>
               {Array.isArray(existingFiles) && existingFiles.length > 0 ? (
                 existingFiles.map((filePath, index) =>
                   !removeFileIndices.includes(index) ? (
-                    <div key={index} className="flex items-center space-x-2 mb-2">
+                    <div
+                      key={index}
+                      className="flex items-center space-x-2 mb-2"
+                    >
                       <span className="text-gray-800 font-medium truncate flex-1">
                         {filePath.split(/[\\/]/).pop()}
                       </span>
@@ -337,7 +397,9 @@ export default function Assignments() {
                         type="button"
                         onClick={() => {
                           setRemoveFileIndices((prev) => [...prev, index]);
-                          setExistingFiles((prev) => prev.filter((_, i) => i !== index));
+                          setExistingFiles((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          );
                         }}
                         className="text-red-500 hover:text-red-700 transition-colors"
                       >
@@ -347,11 +409,15 @@ export default function Assignments() {
                   ) : null
                 )
               ) : (
-                <p className="text-gray-500 italic mt-2">Không có file hiện tại</p>
+                <p className="text-gray-500 italic mt-2">
+                  Không có file hiện tại
+                </p>
               )}
             </div>
             <div>
-              <label className="block text-gray-700 font-medium mb-1">Thêm file mới (tùy chọn)</label>
+              <label className="block text-gray-700 font-medium mb-1">
+                Thêm file mới (tùy chọn)
+              </label>
               <input
                 type="file"
                 multiple
@@ -363,7 +429,9 @@ export default function Assignments() {
                   <p className="text-gray-600">File mới đã chọn:</p>
                   <ul className="list-disc pl-5">
                     {editFiles.map((file, index) => (
-                      <li key={index} className="text-gray-600">{file.name}</li>
+                      <li key={index} className="text-gray-600">
+                        {file.name}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -386,7 +454,10 @@ export default function Assignments() {
         onOpenChange={setDeleteModalOpen}
       >
         <div className="text-gray-700">
-          <p>Bạn có chắc muốn xóa bài tập này không? Hành động này không thể hoàn tác.</p>
+          <p>
+            Bạn có chắc muốn xóa bài tập này không? Hành động này không thể hoàn
+            tác.
+          </p>
           <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={() => setDeleteModalOpen(false)}
@@ -408,7 +479,9 @@ export default function Assignments() {
       {loading ? (
         <div className="flex justify-center items-center py-8 sm:py-12">
           <div className="animate-spin w-8 h-8 sm:w-10 sm:h-10 border-4 border-t-transparent border-blue-500 rounded-full"></div>
-          <span className="ml-2 text-base sm:text-lg text-gray-600">Đang tải...</span>
+          <span className="ml-2 text-base sm:text-lg text-gray-600">
+            Đang tải...
+          </span>
         </div>
       ) : filteredAssignments.length === 0 ? (
         <p className="text-center text-gray-500 text-lg sm:text-xl py-8 sm:py-12 bg-white rounded-2xl shadow-md">
@@ -427,20 +500,29 @@ export default function Assignments() {
                   className="flex flex-col sm:flex-row justify-between items-start cursor-pointer"
                   onClick={() =>
                     setOpenAssignmentId(
-                      openAssignmentId === assignment.assignment_id ? null : assignment.assignment_id
+                      openAssignmentId === assignment.assignment_id
+                        ? null
+                        : assignment.assignment_id
                     )
                   }
                 >
                   <div className="flex-1">
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800">{assignment.title}</h3>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
+                      {assignment.title}
+                    </h3>
                     <p className="text-gray-600 mt-1 sm:mt-2 text-xs sm:text-sm">
                       {assignment.description || "Không có mô tả"}
                     </p>
                     <p className="text-xs sm:text-sm mt-2 sm:mt-3 flex items-center">
-                      <span className="text-gray-500 font-medium">Deadline:</span>
+                      <span className="text-gray-500 font-medium">
+                        Deadline:
+                      </span>
                       <span
-                        className={`ml-2 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium ${isPastDue ? "bg-red-100 text-red-500" : "bg-green-100 text-green-500"
-                          }`}
+                        className={`ml-2 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium ${
+                          isPastDue
+                            ? "bg-red-100 text-red-500"
+                            : "bg-green-100 text-green-500"
+                        }`}
                       >
                         {new Date(assignment.end_assignment).toLocaleString()}
                       </span>
