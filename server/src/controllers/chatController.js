@@ -50,7 +50,6 @@ const sendMessage = async (req, res) => {
     });
     let cleanMessage = message;
     const taggedUserIds = [];
-
     usersInClass.forEach((user) => {
       const tagPattern = new RegExp(`@${user.username}\\b`, "g");
       if (message.match(tagPattern)) {
@@ -107,11 +106,7 @@ const sendMessage = async (req, res) => {
     });
     const io = getIO();
     // Gửi tin nhắn + username về client thông qua socket.io
-    // for(const user of usersInClass){
-    //   const receiveUserId = onlineUsers[user.user_id];
-
-    // };
-    io.emit("receiveMessage", {
+    getIO().to(classroomId).emit("receiveMessage", {
       message_id: userMessage.message_id,
       message: userMessage.message,
       userId: isParticipate.User.user_id,
