@@ -88,8 +88,13 @@ const sendNotificationToSpecificUser = async (req, res) => {
 // Gửi thông báo cho tất cả user trong một khóa học
 const sendNotificationToClassroomUsers = async (req, res) => {
   try {
-    const { classroom_id, notificationType, action, assignmentTitle } =
-      req.body;
+    const {
+      classroom_id,
+      notificationType,
+      action,
+      assignmentTitle,
+      lectureTitle,
+    } = req.body;
     console.log(req.body);
 
     // Kiểm tra đầu vào
@@ -102,8 +107,9 @@ const sendNotificationToClassroomUsers = async (req, res) => {
     if (!action) {
       return res.status(400).json({ error: "Thiếu hành động" });
     }
-    if (!assignmentTitle) {
-      return res.status(400).json({ error: "Chưa có bài tập" });
+
+    if (!assignmentTitle && !lectureTitle) {
+      return res.status(400).json({ error: "Chưa có bài tập hoặc bài giảng" });
     }
     const classroom = await Classroom.findOne({
       where: { classroom_id: classroom_id },
@@ -136,36 +142,78 @@ const sendNotificationToClassroomUsers = async (req, res) => {
       },
       attributes: ["user_id"],
     });
-
+    console.log("hjadsjnoadsjklnoadfs:", action === 3);
     if (!users || users.length === 0) {
       return res
         .status(404)
         .json({ error: "Không tìm thấy sinh viên nào trong lớp học này!" });
     }
+    const teacher = await UserParticipation.findOne({
+      where: { classroom_id },
+      include: {
+        model: User,
+        where: { role_id: 2 },
+        attributes: ["fullname"],
+      },
+    });
     let message = "";
     switch (action) {
       case 1:
         message =
-          "Lớp " +
+          "Giảng viên " +
+          teacher.User.fullname +
+          " đã thêm bài tập " +
+          assignmentTitle +
+          " vào lớp " +
           classroom.Course.course_name +
-          " của bạn có bài tập mới, vui lòng nộp đúng hạn!";
+          ", vui lòng nộp đúng hạn!";
         break;
       case 2:
         // message: `Giảng viên ${user.fullname} đã chỉnh sửa bài tập ${title}, vui lòng xem các thay đổi!`,
         message =
-          "Bài tập " +
+          "Giảng viên " +
+          teacher.User.fullname +
+          " đã chỉnh sửa bài tập " +
           assignmentTitle +
-          "của lớp " +
+          " của lớp " +
           classroom.Course.course_name +
-          " vừa được chỉnh sửa, vui lòng xem các thay đổi!";
+          ", vui lòng xem các thay đổi!";
         break;
       case 3:
         message =
-          "Bài tập " +
+          "Giảng viên " +
+          teacher.User.fullname +
+          " đã xóa bài tập " +
           assignmentTitle +
-          "của lớp " +
-          classroom.Course.course_name +
-          " đã được xóa!";
+          " của lớp " +
+          classroom.Course.course_name;
+        break;
+      case 4:
+        message =
+          "Giảng viên " +
+          teacher.User.fullname +
+          " đã tải bài giảng " +
+          lectureTitle +
+          " lên lớp " +
+          classroom.Course.course_name;
+        break;
+      case 5:
+        message =
+          "Giảng viên " +
+          teacher.User.fullname +
+          " đã chỉnh sửa bài giảng " +
+          lectureTitle +
+          " của lớp " +
+          classroom.Course.course_name;
+        break;
+      case 6:
+        message =
+          "Giảng viên " +
+          teacher.User.fullname +
+          " đã xóa bài giảng " +
+          lectureTitle +
+          " của lớp " +
+          classroom.Course.course_name;
         break;
       default:
         return res.status(400).json({ error: "Hành động không hợp lệ" });
@@ -202,6 +250,7 @@ const sendNotificationToClassroomUsers = async (req, res) => {
           status: 0,
           classroom_id, // Gửi classroom_id thay vì course_id
           assignmentTitle,
+          lectureTitle,
         });
 
         // Gửi toast notification
@@ -210,6 +259,7 @@ const sendNotificationToClassroomUsers = async (req, res) => {
           message: notification.message,
           classroom_id, // Gửi classroom_id thay vì course_id
           assignmentTitle,
+          lectureTitle,
         });
         io.to(receiverSocketId).emit("unreadNotificationCount", {
           unreadNotificationCount,
