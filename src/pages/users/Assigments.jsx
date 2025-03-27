@@ -220,7 +220,7 @@ export default function Assignments() {
       const notificationData = {
         classroom_id: classroomId,
         notificationType: "classroom",
-        assignmentTitle: title,
+        title: title,
         action: 3,
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);

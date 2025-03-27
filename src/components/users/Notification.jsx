@@ -68,6 +68,7 @@ const Notifications = () => {
           timestamp: notification.timestamp,
         },
         classroomId: notification.classroomId || notification.classroom_id,
+        assignmentTitle: notification.assignmentTitle,
       },
       ...prev,
     ]);
@@ -248,6 +249,9 @@ const Notifications = () => {
                 }
                 if (notif.classroomId) {
                   navigate(`/courseDetail/${notif.classroomId}/messages`);
+                }
+                if (notif.assignmentTitle) {
+                  navigate(`/courseDetail/${notif.classroomId}/assignments`);
                 }
               }}
             >
