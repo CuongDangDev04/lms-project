@@ -48,7 +48,7 @@ const ChatBox = ({ userId }) => {
     socket.on("receiveMessage", (message) => {
       // if (classroomId !== message.classroomId) return;
       setMessages((prev) =>
-        [...prev, message].sort(
+        [...prev, { ...message, status: message.status ?? 1 }].sort(
           (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
         )
       );
@@ -78,11 +78,22 @@ const ChatBox = ({ userId }) => {
     };
   }, [classroomId]);
 
-  // Xử lý xóa tin nhắn qua socket
   useEffect(() => {
     const handleDeleteMessage = (messageId) => {
-      setMessages((prev) => prev.filter((msg) => msg.message_id !== messageId));
+      console.log("Xóa tin nhắn:", messageId);
+      fetchMessages(classroomId)
+        .then((data) => {
+          const sortedMessages = data.sort(
+            (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+          );
+          const showMessage = sortedMessages.map((msg) =>
+            msg.message_id === messageId ? { ...msg, status: 0 } : msg
+          );
+          setMessages(showMessage);
+        })
+        .catch((err) => console.error("Lỗi tải tin nhắn:", err));
     };
+
     socket.on("messageDeleted", handleDeleteMessage);
     return () => socket.off("messageDeleted", handleDeleteMessage);
   }, []);
@@ -118,7 +129,11 @@ const ChatBox = ({ userId }) => {
   const handleDeleteMessage = async (messageId) => {
     try {
       await deleteMessage(messageId);
-      socket.emit("deleteMessage", messageId);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.message_id === messageId ? { ...msg, status: 0 } : msg
+        )
+      );
       setShowDeleteId(null);
     } catch (error) {
       console.error("Lỗi xóa tin nhắn:", error);
@@ -260,7 +275,13 @@ const ChatBox = ({ userId }) => {
                           </span>
                         )}
                         <span className="text-sm break-words">
-                          {msg.message}
+                          {msg.status === 0 ? (
+                            <span className="italic text-gray-400">
+                              Tin nhắn đã thu hồi
+                            </span>
+                          ) : (
+                            msg.message
+                          )}
                         </span>
                       </div>
                       <span

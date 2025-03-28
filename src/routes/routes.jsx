@@ -71,7 +71,10 @@ const AppRoutes = () => {
           </Route>
           <Route path="/profile" element={<Profile />} />
           {/* Route mới cho GradeSubmission */}
-          <Route path="/assignments/:assignmentId/grade" element={<GradeSubmission />} />
+          <Route
+            path="/assignments/:assignmentId/grade"
+            element={<GradeSubmission />}
+          />
         </Route>
       </Route>
 
