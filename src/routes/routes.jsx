@@ -23,7 +23,7 @@ import { ClassesManager } from "../pages/admin/ClassesManager";
 import { AssignmentManager } from "../pages/admin/AssignmentManager";
 import UnAssigmentManager from "../pages/admin/UnAssigmentManager";
 import AssignedClassroomManager from "../pages/admin/AssignedClassroomManager";
-import AssignedCourse from "../pages/users/AssignedCourse";
+
 import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
 import Classroom from "../components/users/Classroom";
