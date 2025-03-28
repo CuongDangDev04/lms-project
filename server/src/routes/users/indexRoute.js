@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 // Import cac route bennn trond User Route
-const courseUserRoute = require('./courseAssignedRoute');
 const scheduleUserRoute = require('./schedulesRoute');
 const courseRoute = require('./coursesRoute');
 // const messageRoute = require('./messageRoute');
@@ -18,7 +17,7 @@ router.use('/coursesAssigned', courseUserRoute);
 router.use('/schedule', scheduleUserRoute);
 router.use('/courses', courseRoute);
 // router.use('/messages', messageRoute);
- router.use('/members', memberController);
+router.use('/members', memberController);
 router.use('/assignments', assignmentRoute);
 router.use('/lectures', lectureRoute);
 router.use('/instructor', instructorRoute)
