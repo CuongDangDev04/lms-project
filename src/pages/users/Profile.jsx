@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { uploadImage } from "../../services/userServices";
+import { getUserById, uploadImage } from "../../services/userServices";
 import { logout } from "../../services/authServices";
 import "react-toastify/dist/ReactToastify.css";
+import useUserId from "../../hooks/useUserId";
 
 export const Profile = () => {
   const [user, setUser] = useState(null);
@@ -11,22 +12,23 @@ export const Profile = () => {
   const navigate = useNavigate();
 
   // Lấy thông tin user từ localStorage
+  const userId = useUserId();
+
+  console.log(userId);
   useEffect(() => {
-    const fetchUserFromLocalStorage = () => {
+    if (!userId) return;
+    const fetchUser = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("user"));
-        if (!userData) {
-          setError("Không tìm thấy thông tin người dùng trong localStorage");
-          return;
-        }
-        setUser(userData);
-      } catch (err) {
-        setError("Lỗi khi lấy thông tin người dùng từ localStorage");
+
+        const response = await getUserById(userId);
+        setUser(response);
+        console.log(response);
+      } catch (error) {
+        setError(error.message || "Lỗi không xác định");
       }
     };
-
-    fetchUserFromLocalStorage();
-  }, []);
+    fetchUser();
+  }, [userId]);
 
   const handleLogout = async () => {
     try {
@@ -228,8 +230,8 @@ export const Profile = () => {
                         {user.gender === true
                           ? "Nam"
                           : user.gender === false
-                          ? "Nữ"
-                          : "Chưa xác định"}
+                            ? "Nữ"
+                            : "Chưa xác định"}
                       </span>
                     </div>
                     <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
@@ -270,8 +272,8 @@ export const Profile = () => {
                         {user.gender === true
                           ? "Nam"
                           : user.gender === false
-                          ? "Nữ"
-                          : "Chưa xác định"}
+                            ? "Nữ"
+                            : "Chưa xác định"}
                       </span>
                     </div>
                     <div className="flex flex-col p-2 rounded-lg transition-colors duration-200">
@@ -282,7 +284,7 @@ export const Profile = () => {
                           : "Chưa có ngày sinh"}
                       </span>
                     </div>
-                    
+
                   </>
                 ) : (
                   // Trường hợp role_id không xác định
