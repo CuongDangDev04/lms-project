@@ -28,6 +28,7 @@ import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
 import Classroom from "../components/users/Classroom";
 import Subject from "../pages/instructor/Subjects";
+import AddStudentToClass from "../pages/academicAffairs/addStudentToClass";
 
 const AppRoutes = () => {
   return (
@@ -48,6 +49,10 @@ const AppRoutes = () => {
           <Route
             path="manager-assign/assigned-classrooms"
             element={<AssignedClassroomManager />}
+          />
+          <Route
+            path="manager-assign/add-student-to-class"
+            element={<AddStudentToClass />}
           />
         </Route>
       </Route>
