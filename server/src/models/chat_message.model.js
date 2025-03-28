@@ -24,6 +24,10 @@ const ChatMessage = sequelize.define(
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+    status: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: 1,
+    },
   },
   {
     timestamps: false,

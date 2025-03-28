@@ -1,9 +1,9 @@
 const { google } = require("googleapis");
 const axios = require("axios");
-const CLIENT_ID =
-  "62361815935-at1at3tlp2gji3gf37m1csmej86stc10.apps.googleusercontent.com";
-const CLIENT_SECRET = "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";
-const REFRESH_TOKEN = "your_saved_refresh_token";
+const dotenv = require("dotenv");
+dotenv.config();
+const DAILY_API_KEY = process.env.DAILY_API_KEY;
+const DAILY_API_HOST = process.env.DAILY_API_HOST;
 const {
   User,
   Course,
@@ -112,9 +112,50 @@ const getUserClassCourse = async (req, res) => {
   }
 };
 const createRoomOnline = async (req, res) => {
-  const { classroomId } = req.params;
-  const roomName = `Class_${classroomId}`;
-  res.json({ roomName });
+  try {
+    const { classroomId } = req.params;
+    if (!classroomId) {
+      return res.status(400).json({ message: "Thiếu classroomID" });
+    }
+    const classroom = await Classroom.findByPk(classroomId);
+    if (!classroom) {
+      return res.status(404).json({ message: "Không tìm thấy lớp học này" });
+    }
+    if (classroom.room_url) {
+      try {
+        const roomName = classroom.room_url.split("/").pop();
+        const roomURL = await axios.get(`${DAILY_API_HOST}/${roomName}`, {
+          headers: {
+            Authorization: `Bearer ${DAILY_API_KEY}`,
+          },
+        });
+        if (!roomURL) {
+          return res.status(400).json({ message: "Không có room trên cloud" });
+        }
+        return res.status(200).json({ roomUrl: roomURL.data.url });
+      } catch (error) {
+        console.warn("Phòng trên Daily.co không tồn tại, tạo phòng mới...");
+      }
+    }
+    const response = await axios.post(
+      `${DAILY_API_HOST}`,
+      {
+        name: `classroom_${classroomId}`,
+        properties: { enable_chat: true, enable_screenshare: true },
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${DAILY_API_KEY}`,
+        },
+      }
+    );
+    classroom.room_url = response.data.url;
+    await classroom.save();
+    res.status(200).json({ roomUrl: response.data.url });
+  } catch (error) {
+    console.error("Lỗi khi tạo phòng:", error);
+  }
 };
 
 const getClassroomOfCourse = async (req, res) => {
