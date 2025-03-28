@@ -150,7 +150,6 @@ const Navbar = () => {
       { to: "/", label: "Tổng quan" },
       { to: "/courses", label: "Khóa học" },
       { to: "/schedule", label: "Lịch học" },
-      { to: "/assign-course", label: "Đăng ký học phần" },
     ];
   };
 
@@ -182,8 +181,8 @@ const Navbar = () => {
                 key={item.to}
                 to={item.to}
                 className={`px-4 py-2 transition-all ${location.pathname === item.to
-                    ? "text-blue-600 font-semibold"
-                    : "hover:text-blue-600"
+                  ? "text-blue-600 font-semibold"
+                  : "hover:text-blue-600"
                   }`}
               >
                 {item.label}
@@ -204,8 +203,8 @@ const Navbar = () => {
               >
                 <Bell
                   className={`text-gray-600 ${window.innerWidth < 1024
-                      ? "w-4 h-4 sm:w-5 sm:h-5"
-                      : "w-6 h-6"
+                    ? "w-4 h-4 sm:w-5 sm:h-5"
+                    : "w-6 h-6"
                     }`}
                 />
                 {notificationsCount > 0 && (
