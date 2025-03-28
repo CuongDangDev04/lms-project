@@ -23,11 +23,12 @@ import { ClassesManager } from "../pages/admin/ClassesManager";
 import { AssignmentManager } from "../pages/admin/AssignmentManager";
 import UnAssigmentManager from "../pages/admin/UnAssigmentManager";
 import AssignedClassroomManager from "../pages/admin/AssignedClassroomManager";
-import AssignedCourse from "../pages/users/AssignedCourse";
+
 import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
 import Classroom from "../components/users/Classroom";
 import Subject from "../pages/instructor/Subjects";
+import { NotFound } from "../pages/errors/NotFound";
 
 const AppRoutes = () => {
   return (
@@ -59,7 +60,6 @@ const AppRoutes = () => {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/subjects" element={<Subject />} />
           <Route path="/teaching-schedule" element={<TeachSchedule />} />
-          <Route path="/assign-course" element={<AssignedCourse />} />
           <Route path="classroom/:classroomId" element={<Classroom />} />
           <Route path="courses" element={<Course />} />
           <Route path="courseDetail/:classroomId" element={<CourseDetail />}>
@@ -79,6 +79,7 @@ const AppRoutes = () => {
       </Route>
 
       <Route path="/login" element={<Login />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

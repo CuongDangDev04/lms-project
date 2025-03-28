@@ -6,7 +6,9 @@ const App = () => {
   return (
      
     <Router>
-      <ToastContainer />
+      <ToastContainer 
+      
+      />
       <AppRoutes />
     </Router>
   );

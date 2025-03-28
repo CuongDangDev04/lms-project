@@ -29,7 +29,6 @@ const SideBarMobile = () => {
         { name: "Trang chủ", icon: <Home size={24} />, path: "/" },
         { name: "Khóa học", icon: <BookOpen size={24} />, path: "/courses" },
         { name: "Lịch học", icon: <Calendar size={24} />, path: "/schedule" },
-        { name: "Đăng ký học phần", icon: <BookOpen size={24} />, path: "/assign-course" }, // Thêm từ Navbar
         { name: "Hồ sơ", icon: <User size={24} />, path: "/profile" },
     ];
 
@@ -50,24 +49,23 @@ const SideBarMobile = () => {
         return menuItemsMobile.find((item) => item.path === currentPath)?.path || "/";
     };
 
-  
+
 
     return isMobile ? (
         <div className="fixed bottom-0 left-0 w-full bg-white shadow-lg border-t flex justify-around py-2 z-50">
             {menuItemsMobile.map((item) => (
                 <button
                     key={item.name}
-                    className={`flex flex-col items-center p-2 ${
-                        getActiveItem() === item.path ? "text-red-600 font-semibold" : "text-gray-600"
-                    }`}
+                    className={`flex flex-col items-center p-2 ${getActiveItem() === item.path ? "text-red-600 font-semibold" : "text-gray-600"
+                        }`}
                     onClick={() => navigate(item.path)}
                 >
                     {item.icon}
                     <span className="text-xs">{item.name}</span>
                 </button>
             ))}
-            
-            
+
+
         </div>
     ) : null;
 };
