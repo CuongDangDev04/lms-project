@@ -13,7 +13,6 @@ const submissionRoute = require('../../routes/users/submissionRoute')
 const { assign } = require('nodemailer/lib/shared');
 
 //Xuat route su dung
-router.use('/coursesAssigned', courseUserRoute);
 router.use('/schedule', scheduleUserRoute);
 router.use('/courses', courseRoute);
 // router.use('/messages', messageRoute);
