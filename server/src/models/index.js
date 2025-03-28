@@ -14,9 +14,6 @@ const Lecture = require("./lecture.model");
 const Submission = require("./submission.model");
 const UserNotification = require("./user_notification.model");
 const Notification = require("./notification.model");
-const Receipt = require("./receipt.model");
-const Payment = require("./payment.model");
-const ReceiptDetail = require("./receipt_detail.model");
 
 // 1. User - Role (1-N)
 Role.hasMany(User, { foreignKey: "role_id" });
@@ -122,28 +119,6 @@ Notification.belongsToMany(User, {
 });
 UserNotification.belongsTo(User, { foreignKey: "user_id" });
 UserNotification.belongsTo(Notification, { foreignKey: "notification_id" });
-
-//receipt <> payment
-Receipt.hasMany(Payment, { foreignKey: "receipt_id", onDelete: "CASCADE" });
-Payment.belongsTo(Receipt, { foreignKey: "receipt_id" });
-//receipt <> receipt_detail <> user_participate
-Receipt.belongsToMany(UserParticipation, {
-  through: ReceiptDetail,
-  foreignKey: "receipt_id",
-  otherKey: "participate_id",
-});
-UserParticipation.belongsToMany(Receipt, {
-  through: ReceiptDetail,
-  foreignKey: "participate_id",
-  otherKey: "receipt_id",
-});
-
-ReceiptDetail.belongsTo(Receipt, {
-  foreignKey: "receipt_id",
-});
-ReceiptDetail.belongsTo(UserParticipation, {
-  foreignKey: "participate_id",
-});
 
 module.exports = {
   sequelize,
