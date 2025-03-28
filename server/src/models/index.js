@@ -14,6 +14,9 @@ const Lecture = require("./lecture.model");
 const Submission = require("./submission.model");
 const UserNotification = require("./user_notification.model");
 const Notification = require("./notification.model");
+const Receipt = require("./receipt.model");
+const Payment = require("./payment.model");
+const ReceiptDetail = require("./receipt_detail.model");
 
 // 1. User - Role (1-N)
 Role.hasMany(User, { foreignKey: "role_id" });
@@ -46,7 +49,7 @@ Schedule.belongsTo(Classroom, { foreignKey: "classroom_id" });
 User.belongsToMany(Classroom, {
   through: UserParticipation,
   foreignKey: "user_id",
-  otherKey: "classroom_id"
+  otherKey: "classroom_id",
 });
 Classroom.belongsToMany(User, {
   through: UserParticipation,
@@ -56,10 +59,10 @@ Classroom.belongsToMany(User, {
 
 // 6. Quan hệ trực tiếp giữa UserParticipation và User, Classroom
 UserParticipation.belongsTo(User, {
-  foreignKey: "user_id"
+  foreignKey: "user_id",
 });
 UserParticipation.belongsTo(Classroom, {
-  foreignKey: "classroom_id"
+  foreignKey: "classroom_id",
 });
 
 User.hasMany(UserParticipation, { foreignKey: "user_id" });
@@ -69,29 +72,29 @@ UserParticipation.hasMany(ChatMessage, { foreignKey: "participate_id" });
 ChatMessage.belongsTo(UserParticipation, { foreignKey: "participate_id" });
 
 // Course -> Classroom (1 - N)
-Course.hasMany(Classroom, { foreignKey: 'course_id' });
+Course.hasMany(Classroom, { foreignKey: "course_id" });
 
 // 9. Assignment - UserParticipation (1-N)
 UserParticipation.hasMany(Assignment, { foreignKey: "user_participation_id" });
-Assignment.belongsTo(UserParticipation, { foreignKey: "user_participation_id" });
+Assignment.belongsTo(UserParticipation, {
+  foreignKey: "user_participation_id",
+});
 
 // 10. Assignment - User (1-N)
 User.hasMany(Assignment, { foreignKey: "user_id" });
 Assignment.belongsTo(User, { foreignKey: "user_id" });
-
-
 
 // 13. Grade - Assignment (1-N)
 Assignment.hasMany(Grade, { foreignKey: "assignment_id" });
 Grade.belongsTo(Assignment, { foreignKey: "assignment_id" });
 
 // 14. Lecture - UserParticipation (1-N)
-UserParticipation.hasMany(Lecture, { foreignKey: 'user_participation_id' });
-Lecture.belongsTo(UserParticipation, { foreignKey: 'user_participation_id' });
+UserParticipation.hasMany(Lecture, { foreignKey: "user_participation_id" });
+Lecture.belongsTo(UserParticipation, { foreignKey: "user_participation_id" });
 
 // 15. Lecture - User (1-N)
-User.hasMany(Lecture, { foreignKey: 'user_id' });
-Lecture.belongsTo(User, { foreignKey: 'user_id' });
+User.hasMany(Lecture, { foreignKey: "user_id" });
+Lecture.belongsTo(User, { foreignKey: "user_id" });
 
 // Quan hệ Assignment - Submission
 Assignment.hasMany(Submission, { foreignKey: "assignment_id" });
@@ -119,6 +122,28 @@ Notification.belongsToMany(User, {
 });
 UserNotification.belongsTo(User, { foreignKey: "user_id" });
 UserNotification.belongsTo(Notification, { foreignKey: "notification_id" });
+
+//receipt <> payment
+Receipt.hasMany(Payment, { foreignKey: "receipt_id", onDelete: "CASCADE" });
+Payment.belongsTo(Receipt, { foreignKey: "receipt_id" });
+//receipt <> receipt_detail <> user_participate
+Receipt.belongsToMany(UserParticipation, {
+  through: ReceiptDetail,
+  foreignKey: "receipt_id",
+  otherKey: "participate_id",
+});
+UserParticipation.belongsToMany(Receipt, {
+  through: ReceiptDetail,
+  foreignKey: "participate_id",
+  otherKey: "receipt_id",
+});
+
+ReceiptDetail.belongsTo(Receipt, {
+  foreignKey: "receipt_id",
+});
+ReceiptDetail.belongsTo(UserParticipation, {
+  foreignKey: "participate_id",
+});
 
 module.exports = {
   sequelize,
