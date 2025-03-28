@@ -28,6 +28,7 @@ import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
 import Classroom from "../components/users/Classroom";
 import Subject from "../pages/instructor/Subjects";
+import { NotFound } from "../pages/errors/NotFound";
 
 const AppRoutes = () => {
   return (
@@ -75,6 +76,7 @@ const AppRoutes = () => {
       </Route>
 
       <Route path="/login" element={<Login />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
