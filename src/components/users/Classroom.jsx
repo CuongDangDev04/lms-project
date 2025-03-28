@@ -18,20 +18,30 @@ const Classroom = () => {
       try {
         const user = await getUserById(userId);
         setUsername(user.username);
-        console.log("User info:", user);
       } catch (error) {
         console.error("Lỗi khi lấy user:", error);
       }
     };
 
     fetchUser();
-    // const checkUserInClass =async () =>{
-    //   if(!userId || !classroomId) return;
-    //   const data =
-
-    // }
-    // checkUserInClass();
-  }, [userId, classroomId]);
+  }, [userId]);
+  useEffect(() => {
+    const checkUserInClass = async () => {
+      if (!userId || !classroomId) return;
+      try {
+        const data = await classroomService.getAllClassOfUser(userId);
+        const checkUserAccess = data.classCourseOfUser.Classrooms.find(
+          (c) => c.classroom_id == classroomId
+        );
+        if (!checkUserAccess) {
+          navigate("*");
+        }
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra quyền truy cập lớp:", error);
+      }
+    };
+    checkUserInClass();
+  }, [classroomId, navigate, userId]);
   useEffect(() => {
     const fetchRoom = async () => {
       if (!classroomId) return;
@@ -66,7 +76,8 @@ const Classroom = () => {
     return () => callFrame.destroy(); // Cleanup khi component unmount
   }, [roomUrl, username, navigate, classroomId]);
   return (
-    <div className="fixed top-0 left-0 w-full h-full bg-white z-50">
+    <div className="fixed top-0 left-0 w-full h-full bg-white z-50 pb-16">
+      {" "}
       <div ref={videoCallRef} className="w-full h-full"></div>
     </div>
   );
