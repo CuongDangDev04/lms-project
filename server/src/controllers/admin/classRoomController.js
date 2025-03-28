@@ -63,7 +63,7 @@ const getAllClassrooms = async (req, res) => {
         const classrooms = await Classroom.findAll({
             include: [
                 { model: Class, attributes: ['class_id', 'class_name'] },
-                { model: Course, attributes: ['course_id', 'course_name'] },
+                { model: Course, attributes: ['course_id', 'course_name', 'course_code'] },
                 { model: ClassStatus, attributes: ['status_id', 'status_name'] },
                 { model: Schedule, attributes: ['schedule_id', 'event_type', 'start_time', 'end_time'] },
             ],
