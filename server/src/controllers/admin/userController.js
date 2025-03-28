@@ -419,7 +419,7 @@ const getUserById = async (req, res) => {
   try {
     const user = await User.findOne({
       where: { user_id: user_id },
-      attributes: ['user_id', 'username', 'email', 'birth', 'avt', 'gender', 'fullname'],
+      attributes: ['user_id', 'username', 'email', 'birth', 'avt', 'gender', 'fullname', 'role_id'],
     });
     if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
     res.status(200).json(user);
