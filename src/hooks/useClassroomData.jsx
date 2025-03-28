@@ -1,4 +1,3 @@
-// src/hooks/useClassroomData.js
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import {
@@ -8,12 +7,13 @@ import {
     getClasses,
     getCourses,
 } from '../services/classRoomServices';
-import { getInstructors } from '../services/userServices';
+import { getInstructors, getStudents } from '../services/userServices';
 
 const useClassroomData = (filterMode) => {
     const [classrooms, setClassrooms] = useState([]);
     const [teachers, setTeachers] = useState([]);
     const [statuses, setStatuses] = useState([]);
+    const [students, setStudents] = useState([]); // Thêm state cho students
     const [userParticipations, setUserParticipations] = useState([]);
     const [classes, setClasses] = useState([]);
     const [courses, setCourses] = useState([]);
@@ -22,10 +22,11 @@ const useClassroomData = (filterMode) => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [classroomsData, teachersData, statusesData, participationsData, classesData, coursesData] = await Promise.all([
+            const [classroomsData, teachersData, statusesData, studentsData, participationsData, classesData, coursesData] = await Promise.all([
                 getClassrooms(),
                 getInstructors(),
                 getStatuses(),
+                getStudents(), // Thêm API call để lấy danh sách sinh viên
                 getUserParticipations(),
                 getClasses(),
                 getCourses(),
@@ -34,6 +35,7 @@ const useClassroomData = (filterMode) => {
             const classroomList = Array.isArray(classroomsData) ? classroomsData : [];
             const participationList = Array.isArray(participationsData) ? participationsData : [];
             const teachersList = Array.isArray(teachersData) ? teachersData : [];
+            const studentsList = Array.isArray(studentsData) ? studentsData : []; // Xử lý danh sách sinh viên
             const assignedClassroomIds = new Set(participationList.map((p) => p.classroom_id));
 
             let filteredClassrooms = classroomList;
@@ -53,11 +55,13 @@ const useClassroomData = (filterMode) => {
             setClassrooms(filteredClassrooms);
             setTeachers(teachersList);
             setStatuses(Array.isArray(statusesData) ? statusesData : []);
+            setStudents(studentsList); // Cập nhật state cho students
             setUserParticipations(participationList);
             setClasses(Array.isArray(classesData) ? classesData : []);
             setCourses(Array.isArray(coursesData) ? coursesData : []);
         } catch (error) {
             toast.error('Lỗi khi tải dữ liệu!');
+            console.error('Error fetching data:', error);
         } finally {
             setLoading(false);
         }
@@ -71,6 +75,7 @@ const useClassroomData = (filterMode) => {
         classrooms,
         teachers,
         statuses,
+        students, // Thêm students vào dữ liệu trả về
         userParticipations,
         classes,
         courses,
