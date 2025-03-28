@@ -113,7 +113,11 @@ const AddStudentToClass = () => {
 
     const columns = [
         { label: 'ID', key: 'classroom_id', render: (c) => c.classroom_id || 'N/A' },
-        { label: 'Tên Khóa Học', key: 'course_id', render: (c) => c.Course?.course_name || 'Chưa có' },
+        {
+            label: 'Tên Khóa Học',
+            key: 'course_id',
+            render: (c) => c.Course ? `${c.Course.course_code} - ${c.Course.course_name}` : 'Chưa có'
+        },
         { label: 'Số Lượng Sinh Viên', key: 'student_count', render: (c) => c.student_count || 0 },
         { label: 'Giảng Viên', key: 'assignedTeacherName', render: (c) => c.assignedTeacherName || 'Chưa phân công' },
     ];
