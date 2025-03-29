@@ -165,7 +165,7 @@ const AddStudentToClass = () => {
                 <ol className="flex items-center space-x-2 text-sm text-gray-500">
                     <li>
                         <button
-                            onClick={() => navigate('/admin')}
+                            onClick={() => navigate('/eduAffair')}
                             className="hover:text-teal-600 transition-colors duration-200"
                         >
                             Trang chủ
@@ -174,7 +174,7 @@ const AddStudentToClass = () => {
                     <li>
                         <span className="mx-1">/</span>
                         <button
-                            onClick={() => navigate('/admin/manager-assign')}
+                            onClick={() => navigate('/eduAffair/manager-assign')}
                             className="hover:text-teal-600 transition-colors duration-200"
                         >
                             Giảng dạy và phân công
