@@ -117,3 +117,12 @@ export const deleteAssignment = async (assignmentId) => {
 };
 
 
+export const getPendingAssignments = async (userId) => {
+  try {
+    const response = await api.get(`${URL_API}/pending`);
+    return response.data.assignments;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách bài tập chưa làm:", error);
+    throw error;
+  }
+};
