@@ -38,6 +38,7 @@ const Schedule = () => {
   };
 
   useEffect(() => {
+    document.title = "Lịch Học - BrainHub";
     fetchSchedule();
   }, []);
 

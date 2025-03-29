@@ -36,6 +36,7 @@ const ChatBox = ({ userId }) => {
 
   // Khởi tạo socket và fetch data
   useEffect(() => {
+    document.title = "Tin nhắn lớp học - BrainHub";
     socket.emit("joinRoom", { classroomId });
 
     fetchMessages(classroomId)
@@ -285,9 +286,11 @@ const ChatBox = ({ userId }) => {
             return (
               <div
                 key={msg.message_id}
-                className={`flex ${
-                  isCurrentUser ? "justify-end" : "justify-start"
-                } mb-4`}
+                className={`flex ${isCurrentUser ? "justify-end" : "justify-start"
+                  } mb-4`}
+                onContextMenu={(e) =>
+                  isCurrentUser && handleContextMenu(e, msg.message_id)
+                }
               >
                 <div
                   className="flex items-end gap-2 max-w-[70%]"
@@ -307,26 +310,23 @@ const ChatBox = ({ userId }) => {
                         />
                       ) : null}
                       <div
-                        className={`w-full h-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-medium shadow-md ${
-                          sender?.avt ? "hidden" : "flex"
-                        }`}
+                        className={`w-full h-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-medium shadow-md ${sender?.avt ? "hidden" : "flex"
+                          }`}
                       >
                         {msg.username?.charAt(0).toUpperCase() || "?"}
                       </div>
                     </div>
                   )}
                   <div
-                    className={`relative p-3 rounded-2xl ${
-                      isCurrentUser
-                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                        : "bg-white text-gray-800 border border-gray-200"
-                    } shadow-md`}
+                    className={`relative p-3 rounded-2xl ${isCurrentUser
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                      : "bg-white text-gray-800 border border-gray-200"
+                      } shadow-md`}
                   >
                     <div className="flex flex-col">
                       <span
-                        className={`text-sm font-semibold ${
-                          isCurrentUser ? "text-indigo-100" : "text-indigo-600"
-                        }`}
+                        className={`text-sm font-semibold ${isCurrentUser ? "text-indigo-100" : "text-indigo-600"
+                          }`}
                       >
                         {!isCurrentUser && (msg.User?.fullname || msg.fullname)}
                       </span>
@@ -350,9 +350,8 @@ const ChatBox = ({ userId }) => {
                         </span>
                       </div>
                       <span
-                        className={`text-xs ${
-                          isCurrentUser ? "text-indigo-200" : "text-gray-500"
-                        }`}
+                        className={`text-xs ${isCurrentUser ? "text-indigo-200" : "text-gray-500"
+                          }`}
                       >
                         {formatTimestamp(msg.timestamp)}
                       </span>
@@ -433,11 +432,10 @@ const ChatBox = ({ userId }) => {
                 <li
                   key={user.user_id}
                   onClick={() => handleSelectUser(user.username)}
-                  className={`px-4 py-2 text-sm cursor-pointer transition-all ${
-                    index === selectedIndex
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "hover:bg-gray-50"
-                  }`}
+                  className={`px-4 py-2 text-sm cursor-pointer transition-all ${index === selectedIndex
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "hover:bg-gray-50"
+                    }`}
                 >
                   <span className="font-medium text-indigo-600">
                     @{user.fullname}

@@ -47,6 +47,7 @@ export const ManagerEntity = ({
   const location = useLocation();
 
   useEffect(() => {
+    document.title = `BrainHub | ${title}`;
     fetchEntitiesData();
   }, [location.pathname]);
 
@@ -192,7 +193,7 @@ export const ManagerEntity = ({
       toast.success(`Thêm nhiều ${entityType.toLowerCase()} bằng file Excel thành công!`);
     } catch (error) {
       toast.error("Có lỗi xảy ra khi upload file Excel!");
-    }finally {
+    } finally {
       setUploadLoading(false);
     }
   };

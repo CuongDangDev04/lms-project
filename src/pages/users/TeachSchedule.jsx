@@ -38,6 +38,7 @@ const TeachSchedule = () => {
     };
 
     useEffect(() => {
+        document.title = "Lịch Dạy - BrainHub";
         fetchSchedule();
     }, []);
 

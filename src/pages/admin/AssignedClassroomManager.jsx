@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ModalCustom } from '../../components/admin/ui/ModalCustom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -54,9 +54,14 @@ const AssignedClassroomManager = () => {
     const [statusFormData, setStatusFormData] = useState({ status_id: '' });
     const [modalView, setModalView] = useState('scheduleList');
 
+    const navigate = useNavigate();
     const location = useLocation();
     const { classrooms, teachers, statuses, loading, fetchData } = useClassroomData('assigned');
     const entitiesPerPage = 6;
+
+    useEffect(() => {
+        document.title = 'Quản lý lớp đã phân công - BrainHub LMS';
+    }, []);
 
     const filteredClassrooms = useMemo(() => {
         return classrooms.filter((c) =>
@@ -310,6 +315,33 @@ const AssignedClassroomManager = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-10">
             <div className="max-w-7xl mx-auto">
+                <nav className="mb-6">
+                    <ol className="flex items-center space-x-2 text-sm text-gray-500">
+                        <li>
+                            <button
+                                onClick={() => navigate('/admin')}
+                                className="hover:text-teal-600 transition-colors duration-200"
+                            >
+                                Trang chủ
+                            </button>
+                        </li>
+                        <li>
+                            <span className="mx-1">/</span>
+                            <button
+                                onClick={() => navigate('/admin/manager-assign')}
+                                className="hover:text-teal-600 transition-colors duration-200"
+                            >
+                                Giảng dạy và phân công
+                            </button>
+                        </li>
+                        <li>
+                            <span className="mx-1">/</span>
+                            <span className="text-teal-600 font-medium">
+                                Lớp đã phân công
+                            </span>
+                        </li>
+                    </ol>
+                </nav>
                 <div className="flex flex-col mt-12 sm:flex-row justify-between items-center mb-6 sm:mb-10 gap-4 sm:gap-6">
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-600 tracking-tight text-center sm:text-left">
                         Quản Lý Lớp Đã Phân Công
