@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaUserPlus, FaEdit } from 'react-icons/fa';
@@ -51,9 +51,14 @@ const UnAssigmentManager = () => {
     const [viewMode, setViewMode] = useState('all');
     const entitiesPerPage = 6;
 
+    const navigate = useNavigate();
     const location = useLocation();
     const { classrooms, teachers, statuses, classes, courses, loading, fetchData } = useClassroomData(viewMode === 'all' ? 'all' : 'unassigned');
     const today = new Date();
+
+    useEffect(() => {
+        document.title = 'Quản Lý Lớp Học Phần - BrainHub';
+    }, []);
 
     const filteredClassrooms = useMemo(() => {
         return classrooms.filter((c) =>
@@ -246,6 +251,33 @@ const UnAssigmentManager = () => {
                 `}
             </style>
             <div className="max-w-7xl mx-auto">
+                <nav className="mb-6">
+                    <ol className="flex items-center space-x-2 text-sm text-gray-500">
+                        <li>
+                            <button
+                                onClick={() => navigate('/admin')}
+                                className="hover:text-teal-600 transition-colors duration-200"
+                            >
+                                Trang chủ
+                            </button>
+                        </li>
+                        <li>
+                            <span className="mx-1">/</span>
+                            <button
+                                onClick={() => navigate('/admin/manager-assign')}
+                                className="hover:text-teal-600 transition-colors duration-200"
+                            >
+                                Giảng dạy và phân công
+                            </button>
+                        </li>
+                        <li>
+                            <span className="mx-1">/</span>
+                            <span className="text-teal-600 font-medium">
+                                Lớp chưa phân công
+                            </span>
+                        </li>
+                    </ol>
+                </nav>
                 <div className="flex flex-col mt-10 sm:flex-row justify-between items-center mb-6 sm:mb-10 gap-4 sm:gap-6">
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 tracking-tight text-center sm:text-left">
                         {viewMode === 'all' ? 'Quản Lý Lớp Học Phần' : 'Lớp Học Phần Chưa Phân Công'}

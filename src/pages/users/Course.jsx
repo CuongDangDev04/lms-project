@@ -29,6 +29,7 @@ export default function Course() {
   const entitiesPerPage = 6;
 
   useEffect(() => {
+    document.title = "Khóa học của tôi - BrainHub";
     const fetchCourses = async () => {
       const course = await fetchStudentCourses();
       setCourses(course);
@@ -90,8 +91,8 @@ export default function Course() {
           key={page}
           onClick={() => onPageChange(page)}
           className={`px-5 py-2 rounded-full transition-all duration-300 shadow-sm ${currentPage === page
-              ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white"
-              : "bg-gradient-to-r from-gray-200 to-gray-100 text-gray-700 hover:from-gray-300 hover:to-gray-200"
+            ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white"
+            : "bg-gradient-to-r from-gray-200 to-gray-100 text-gray-700 hover:from-gray-300 hover:to-gray-200"
             }`}
         >
           {page}

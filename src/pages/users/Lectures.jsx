@@ -243,6 +243,7 @@ export default function Lectures() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
+    document.title = "Danh sách bài giảng - BrainHub";
     const user = JSON.parse(localStorage.getItem("user"));
     if (user) {
       setUserRole(user.role_id);
@@ -274,12 +275,10 @@ export default function Lectures() {
           id: lecture.lecture_id,
           title: lecture.title,
           description: lecture.description,
-          teacher: `Giáo viên: ${
-            lecture.user_participation?.User?.username || "Unknown"
-          }`,
-          className: `Lớp: Classroom ${
-            lecture.user_participation?.classroomId || classroomId
-          }`,
+          teacher: `Giáo viên: ${lecture.user_participation?.User?.username || "Unknown"
+            }`,
+          className: `Lớp: Classroom ${lecture.user_participation?.classroomId || classroomId
+            }`,
           thumbnail: "https://via.placeholder.com/150",
           file_path: parseFilePath(lecture.file_path),
           fileNames: lecture.fileNames || [], // Store the original file names
@@ -345,9 +344,8 @@ export default function Lectures() {
         id: response.data.lecture_id,
         title,
         description,
-        teacher: `Giáo viên: ${
-          JSON.parse(localStorage.getItem("user"))?.username || "Unknown"
-        }`,
+        teacher: `Giáo viên: ${JSON.parse(localStorage.getItem("user"))?.username || "Unknown"
+          }`,
         className: `Lớp: Classroom ${classroomId}`,
         thumbnail: "https://via.placeholder.com/150",
         file_path: response.data.file_path
@@ -435,14 +433,14 @@ export default function Lectures() {
         prevLectures.map((lecture) =>
           lecture.id === editLectureId
             ? {
-                ...lecture,
-                title: editTitle,
-                description: editDescription,
-                file_path:
-                  response.lecture.filePaths ||
-                  parseFilePath(response.lecture.file_path),
-                fileNames: response.lecture.fileNames,
-              }
+              ...lecture,
+              title: editTitle,
+              description: editDescription,
+              file_path:
+                response.lecture.filePaths ||
+                parseFilePath(response.lecture.file_path),
+              fileNames: response.lecture.fileNames,
+            }
             : lecture
         )
       );
@@ -593,9 +591,8 @@ export default function Lectures() {
           <button
             type="submit"
             disabled={isUploading}
-            className={`w-full py-2 px-4 rounded-lg text-white ${
-              isUploading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
-            } transition-all`}
+            className={`w-full py-2 px-4 rounded-lg text-white ${isUploading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
+              } transition-all`}
           >
             {isUploading ? "Đang tải lên..." : "Tải lên"}
           </button>

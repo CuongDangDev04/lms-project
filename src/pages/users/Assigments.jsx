@@ -48,6 +48,7 @@ export default function Assignments() {
 
   // Lấy danh sách bài tập và user_participation_id
   useEffect(() => {
+    document.title = "Danh sách bài tập - BrainHub LMS";
     const fetchData = async () => {
       if (!classroomId || !userId) {
         toast.error("Thiếu thông tin classroom hoặc user.");
@@ -180,10 +181,10 @@ export default function Assignments() {
         prev.map((a) =>
           a.assignment_id === editAssignment.assignment_id
             ? {
-                ...a,
-                ...data,
-                file_path: response.assignment.file_path || a.file_path,
-              }
+              ...a,
+              ...data,
+              file_path: response.assignment.file_path || a.file_path,
+            }
             : a
         )
       );
@@ -518,11 +519,10 @@ export default function Assignments() {
                         Deadline:
                       </span>
                       <span
-                        className={`ml-2 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium ${
-                          isPastDue
+                        className={`ml-2 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium ${isPastDue
                             ? "bg-red-100 text-red-500"
                             : "bg-green-100 text-green-500"
-                        }`}
+                          }`}
                       >
                         {new Date(assignment.end_assignment).toLocaleString()}
                       </span>

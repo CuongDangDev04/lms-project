@@ -21,6 +21,7 @@ const UserClass = () => {
   }, []);
 
   useEffect(() => {
+    document.title = "Danh sách lớp học - BrainHub";
     if (!userId) return; // 🛑 Không gọi API nếu userId chưa có
     const fetchClasses = async () => {
       setLoading(true);

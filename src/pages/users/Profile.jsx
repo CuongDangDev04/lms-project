@@ -14,8 +14,8 @@ export const Profile = () => {
   // Lấy thông tin user từ localStorage
   const userId = useUserId();
 
-  console.log(userId);
   useEffect(() => {
+    document.title = "Thông tin cá nhân - BrainHub";
     if (!userId) return;
     const fetchUser = async () => {
       try {
