@@ -41,9 +41,7 @@ const sendMessage = async (req, res) => {
     if (!message) {
       return res.status(400).json({ error: "Tin nhắn không được để trống!" });
     }
-    if (!reply) {
-      console.log("ĐÉO NHÂN ĐƯỢC REPLY");
-    }
+
     var replyMessage = {};
     var reply_taggedUsers = [];
     if (reply) {
@@ -77,8 +75,6 @@ const sendMessage = async (req, res) => {
         });
       }
     }
-    // console.log("asdadaasda: ", replyMessage.message_id);
-    // return res.status(200).json(replyMessage);
 
     const usersInClass = await User.findAll({
       attributes: ["user_id", "username"],
@@ -173,7 +169,8 @@ const sendMessage = async (req, res) => {
       });
 
     for (const user of taggedUsers) {
-      io.emit("tagNotification", {
+      const receiveTagUser = onlineUsers[user.user_id];
+      io.to(receiveTagUser).emit("tagNotification", {
         messageId: userMessage.message_id,
         sender: userId,
         sendTo: user.user_id,
@@ -182,7 +179,6 @@ const sendMessage = async (req, res) => {
       });
     }
 
-    // console.log("hehehe", classroom);
     for (const user of usersInClass) {
       await UserNotification.create({
         user_id: user.user_id,
@@ -190,15 +186,19 @@ const sendMessage = async (req, res) => {
         status: 0, // Trạng thái mặc định: chưa đọc
       });
       const receiveUserId = onlineUsers[user.user_id];
-
-      io.to(receiveUserId).emit("receiveMessageNotification", {
-        message: userMessage.message_id,
-        sender: userId,
-        sendTo: user.user_id,
-        classroomId,
-        className: classroom.Class.class_name,
-        courseName: classroom.Course.course_name,
-      });
+      const isTagged = taggedUsers.some(
+        (taggedUser) => taggedUser.username === user.username
+      );
+      if (!isTagged) {
+        io.to(receiveUserId).emit("receiveMessageNotification", {
+          message: userMessage.message_id,
+          sender: userId,
+          sendTo: user.user_id,
+          classroomId,
+          className: classroom.Class.class_name,
+          courseName: classroom.Course.course_name,
+        });
+      }
       io.to(receiveUserId).emit("receiveNotification", {
         notification_id: notification.notification_id,
         notification_type: notification.notification_type,
@@ -229,9 +229,11 @@ const getMessages = async (req, res) => {
     const messages = await sequelize.query(
       `SELECT cm.message_id, up.user_id, cm.message,cm.timestamp,cm.tagged_user_ids, up.classroom_id, u.username , u.fullname, CAST(cm.status AS UNSIGNED) AS status , reply_msg.message_id AS reply_message_id,reply_msg.tagged_user_ids AS reply_tagged_user_ids,
     reply_msg.message AS reply_message,
+    CAST(reply_msg.status AS UNSIGNED) AS reply_status,
     reply_user.user_id AS reply_user_id,
     reply_user.username AS reply_username,
     reply_user.fullname AS reply_fullname
+
        FROM chat_messages cm
        JOIN user_participations up ON up.participate_id = cm.participate_id
        JOIN users u ON u.user_id = up.user_id
