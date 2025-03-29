@@ -70,6 +70,7 @@ export const Login = () => {
       setTimeout(() => {
         if (roleId === 1) navigate("/");
         else if (roleId === 3) navigate("/admin");
+        else if (roleId === 4) navigate("/eduAffair");
         else navigate("/");
 
       }, 1000);

@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { ModalCustom } from "./ui/ModalCustom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaUpload } from "react-icons/fa";
+import { FaFileExcel, FaTrash, FaUpload } from "react-icons/fa";
 import Pagination from "./Pagination";
 import { EntityTable } from "./EntityTable";
 import { EntityForm } from "./EntityForm";
@@ -219,44 +219,84 @@ export const ManagerEntity = ({
               open={isOpen}
               onOpenChange={setIsOpen}
             />
+
+
             <ModalCustom
               title={`Upload danh sách ${entityType.toLowerCase()}`}
               triggerText={`Import danh sách ${entityType}`}
               triggerClass="bg-gradient-to-r from-green-800 to-teal-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg font-semibold transform hover:-translate-y-1 text-sm sm:text-base flex items-center gap-2"
               open={isUploadOpen}
-              onOpenChange={setIsUploadOpen}
+              onOpenChange={(open) => {
+                setIsUploadOpen(open);
+                if (!open) {
+                  setSelectedFile(null); // Reset file khi đóng modal
+                }
+              }}
               triggerIcon={<FaUpload />}
             >
-              <form onSubmit={handleUpload} className="space-y-4 sm:space-y-6 p-2 sm:p-4">
-                <div className="relative group">
-                  <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-1.5">
-                    Chọn file Excel
-                  </label>
-                  <div className="relative">
+              <form onSubmit={handleUpload} className="space-y-6 p-4 sm:p-6">
+                <div
+                  className="file-upload-container border-2 border-dashed border-gray-300 rounded-xl p-4 sm:p-6 transition-all duration-300 hover:border-teal-500 bg-gray-50"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add('dragover');
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('dragover');
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('dragover');
+                    const file = e.dataTransfer.files[0];
+                    if (file && (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.type === 'application/vnd.ms-excel')) {
+                      setSelectedFile(file);
+                    } else {
+                      toast.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)!');
+                    }
+                  }}
+                >
+                  <label className="file-upload-label flex flex-col items-center justify-center gap-3 cursor-pointer">
+                    <FaFileExcel className="text-teal-500 w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-300 group-hover:scale-110" />
+                    <p className="text-gray-700 font-medium text-sm sm:text-base">
+                      Kéo và thả file Excel tại đây
+                    </p>
+                    <span className="text-gray-500 text-xs sm:text-sm">
+                      hoặc nhấp để chọn file
+                    </span>
                     <input
                       type="file"
                       accept=".xlsx, .xls"
                       onChange={handleFileChange}
                       className="hidden"
-                      id="file-upload"
                     />
-                    <label
-                      htmlFor="file-upload"
-                      className="w-full p-3 sm:p-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-xl text-center cursor-pointer hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-sm hover:shadow-md text-sm sm:text-base flex items-center justify-center gap-2"
-                    >
-                      <FaUpload size={16} />
-                      {selectedFile ? selectedFile.name : "Chọn file Excel"}
-                    </label>
-                  </div>
+                  </label>
+                  {selectedFile && (
+                    <div className="file-preview mt-4 flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <FaFileExcel className="text-teal-500 w-5 h-5" />
+                        <span className="text-sm text-gray-700 truncate max-w-[200px]">{selectedFile.name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFile(null)}
+                        className="text-red-500 hover:text-red-700 transition-colors duration-200"
+                      >
+                        <FaTrash size={16} />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-2 sm:py-3 rounded-full hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold transform hover:-translate-y-1 text-sm sm:text-base"
+                  className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-2 sm:py-3 rounded-full hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold transform hover:-translate-y-1 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!selectedFile}
                 >
                   Upload
                 </button>
               </form>
             </ModalCustom>
+
           </div>
         </div>
 
