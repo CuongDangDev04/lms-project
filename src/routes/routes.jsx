@@ -31,6 +31,7 @@ import Subject from "../pages/instructor/Subjects";
 import AddStudentToClass from "../pages/academicAffairs/addStudentToClass";
 import { NotFound } from "../pages/errors/NotFound";
 import EduAffairLayout from "../layouts/EduAffairLayout";
+import GradeManagement from "../pages/instructor/GradeManagement";
 
 const AppRoutes = () => {
   return (
@@ -80,6 +81,7 @@ const AppRoutes = () => {
             <Route path="members" element={<Member />} />
             <Route path="assignments" element={<Assigments />} />
             <Route path="lectures" element={<Lectures />} />
+            <Route path="grades" element={<GradeManagement />} />
           </Route>
           <Route path="/profile" element={<Profile />} />
           {/* Route mới cho GradeSubmission */}

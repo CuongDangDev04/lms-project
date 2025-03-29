@@ -22,6 +22,10 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const [error, setError] = useState(null);
   const location = useLocation();
 
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userRole = user?.role_id || null;
+
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -46,12 +50,27 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
     },
   };
 
+  // const sidebarItems = [
+  //   { name: "Tin Nhắn", path: "messages", icon: MessageSquare },
+  //   { name: "Thành viên", path: "members", icon: Users },
+  //   { name: "Bài tập", path: "assignments", icon: ClipboardList },
+  //   { name: "Bài giảng", path: "lectures", icon: Presentation },
+  //   if (userRole === 2) {
+  //     { name: "Điểm", path: "grades", icon: ClipboardList }
+  // ];
   const sidebarItems = [
     { name: "Tin Nhắn", path: "messages", icon: MessageSquare },
     { name: "Thành viên", path: "members", icon: Users },
     { name: "Bài tập", path: "assignments", icon: ClipboardList },
     { name: "Bài giảng", path: "lectures", icon: Presentation },
   ];
+  if (userRole === 2) {
+    sidebarItems.push({
+      name: "Quản lý điểm",
+      path: "grades",
+      icon: ClipboardList,
+    });
+  }
 
   useEffect(() => {
     const getTeacherInfoAndCourse = async () => {
@@ -59,6 +78,7 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
       try {
         setLoading(true);
         const teacherInfo = await fetchTeacherInformation(classroomId);
+        console.log("Teacher Info:", teacherInfo);
         setTeacherData(teacherInfo);
 
         const courseId = teacherInfo?.course_id;
@@ -103,11 +123,10 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   return (
     <motion.div
-      className={`h-[calc(100vh-4rem)] mt-4 bg-white shadow-xl flex flex-col overflow-y-auto ${
-        isSidebarOpen
-          ? "fixed inset-0 z-50 md:static md:max-w-xs"
-          : "hidden md:block"
-      }`}
+      className={`h-[calc(100vh-4rem)] mt-4 bg-white shadow-xl flex flex-col overflow-y-auto ${isSidebarOpen
+        ? "fixed inset-0 z-50 md:static md:max-w-xs"
+        : "hidden md:block"
+        }`}
       style={{
         width: "16rem",
         paddingTop: window.innerWidth < 768 ? "3rem" : "0",
@@ -148,10 +167,9 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`flex items-center rounded-xl cursor-pointer transition-colors duration-200 w-full
-                  ${
-                    isActive
-                      ? "bg-blue-500 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                  ${isActive
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
                   }
                   p-2 md:p-3`}
               >
