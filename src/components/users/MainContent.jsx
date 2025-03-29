@@ -105,7 +105,7 @@ const MainContent = () => {
                     {field === "end_assignment" && item[field]
                       ? new Date(item[field]).toLocaleString()
                       : field === "user_participation.Classroom.Class.class_name"
-                        ? item.user_participation?.Classroom?.Class?.class_name || "N/A"
+                        ? `${item.user_participation?.Classroom?.Class?.class_name} - ${item.user_participation?.Classroom?.Course?.course_name}` || "N/A"
                         : field === "status"
                           ? isOverdue
                             ? <span className="text-white bg-red-500 p-2 rounded-xl font-bold">Quá hạn</span>
