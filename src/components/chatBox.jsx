@@ -109,16 +109,16 @@ const ChatBox = ({ userId }) => {
       if (chatBoxRef.current) chatBoxRef.current.style.overflow = "";
     };
   }, [contextMenu]);
-  const handleDeleteMessage = async () => {
-    if (contextMenu?.message) {
-      await deleteMessage(contextMenu.message.message_id);
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      await deleteMessage(messageId);
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.message_id === contextMenu.message.message_id
-            ? { ...msg, status: 0 }
-            : msg
+          msg.message_id === contextMenu.messageId ? { ...msg, status: 0 } : msg
         )
       );
+    } catch (error) {
+      console.error(error);
     }
     setContextMenu(null);
   };
@@ -373,7 +373,9 @@ const ChatBox = ({ userId }) => {
                     >
                       {isCurrentUser && (
                         <li
-                          onClick={() => handleDeleteMessage(msg.message_id)}
+                          onClick={() =>
+                            handleDeleteMessage(contextMenu.messageId)
+                          }
                           className="px-4 py-2 hover:bg-red-100 hover:text-red-600 cursor-pointer transition-all duration-200"
                         >
                           Thu hồi tin nhắn
