@@ -39,6 +39,7 @@ const ChatBox = ({ userId }) => {
 
   // Khởi tạo socket và fetch data
   useEffect(() => {
+    document.title = "Tin nhắn lớp học - BrainHub";
     socket.emit("joinRoom", { classroomId });
 
     fetchMessages(classroomId)

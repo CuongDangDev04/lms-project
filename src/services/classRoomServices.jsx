@@ -160,3 +160,51 @@ export const postponeAndMakeupSchedule = async (scheduleId, date, classroomId, i
     });
     return response.data;
 };
+
+// Lấy danh sách sinh viên của một lớp học phần
+export const getStudentsByClassroom = async (classroomId) => {
+    try {
+        const response = await api.get(`${API_URL}/classrooms/${classroomId}/students`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`, // Thêm token nếu cần
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw new Error('Lỗi khi lấy danh sách sinh viên: ' + error.message);
+    }
+};
+
+export const addStudentToClassroom = async (classroomId, studentId) => {
+    try {
+        const response = await api.post(`${API_URL}/classrooms/${classroomId}/students`, { student_id: studentId });
+        console.log(studentId);
+        console.log(response.data);
+        return response.data;
+    } catch (error) {
+        if (error.response) {
+            const { status, data } = error.response;
+            throw { status, message: data?.message || 'Lỗi từ server không xác định!' };
+        } else {
+            throw { status: 500, message: 'Lỗi mạng hoặc không thể kết nối đến server!' };
+        }
+    }
+};
+
+
+// Nhập danh sách sinh viên từ file Excel
+export const importStudentsToClassroom = async (classroomId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+        const response = await api.post(`${API_URL}/classrooms/${classroomId}/students/import`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${localStorage.getItem('token')}`, // Thêm token nếu cần
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw new Error('Lỗi khi nhập sinh viên từ file: ' + error.message);
+    }
+};

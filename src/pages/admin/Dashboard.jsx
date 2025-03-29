@@ -16,6 +16,7 @@ export const Dashboard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        document.title = 'Dashboard Quản Trị LMS - BrainHub';
         const fetchStats = async () => {
             try {
                 setLoading(true);
@@ -67,17 +68,17 @@ export const Dashboard = () => {
         maintainAspectRatio: false,
         plugins: {
             legend: { position: 'top', labels: { font: { size: window.innerWidth < 640 ? 12 : 14, family: 'Inter' } } },
-            title: { 
-                display: true, 
-                text: 'Thống Kê Đăng Ký Theo Khóa Học', 
-                font: { size: window.innerWidth < 640 ? 16 : 20, family: 'Inter', weight: 'bold' }, 
-                padding: window.innerWidth < 640 ? 10 : 20 
+            title: {
+                display: true,
+                text: 'Thống Kê Đăng Ký Theo Khóa Học',
+                font: { size: window.innerWidth < 640 ? 16 : 20, family: 'Inter', weight: 'bold' },
+                padding: window.innerWidth < 640 ? 10 : 20
             },
             tooltip: { backgroundColor: '#1f2937', bodyFont: { size: 12 } },
         },
-        scales: { 
-            y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, title: { display: true, text: 'Số lượng sinh viên' } }, 
-            x: { grid: { display: false } } 
+        scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, title: { display: true, text: 'Số lượng sinh viên' } },
+            x: { grid: { display: false } }
         },
         animation: { duration: 1200, easing: 'easeOutQuart' },
     };
@@ -102,17 +103,17 @@ export const Dashboard = () => {
         maintainAspectRatio: false,
         plugins: {
             legend: { position: 'top', labels: { font: { size: window.innerWidth < 640 ? 12 : 14, family: 'Inter' } } },
-            title: { 
-                display: true, 
-                text: 'Top 5 Khóa Học Có Nhiều Lớp Nhất', 
-                font: { size: window.innerWidth < 640 ? 16 : 20, family: 'Inter', weight: 'bold' }, 
-                padding: window.innerWidth < 640 ? 10 : 20 
+            title: {
+                display: true,
+                text: 'Top 5 Khóa Học Có Nhiều Lớp Nhất',
+                font: { size: window.innerWidth < 640 ? 16 : 20, family: 'Inter', weight: 'bold' },
+                padding: window.innerWidth < 640 ? 10 : 20
             },
             tooltip: { backgroundColor: '#1f2937', bodyFont: { size: 12 } },
         },
-        scales: { 
-            y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, title: { display: true, text: 'Số lượng lớp học' } }, 
-            x: { grid: { display: false } } 
+        scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, title: { display: true, text: 'Số lượng lớp học' } },
+            x: { grid: { display: false } }
         },
         animation: { duration: 1200, easing: 'easeOutQuart' },
     };
@@ -130,7 +131,7 @@ export const Dashboard = () => {
                     <div className="text-xs sm:text-sm text-gray-500">
                         Cập nhật: {new Date().toLocaleDateString('vi-VN')}
                     </div>
-                    <button 
+                    <button
                         onClick={handleExport}
                         className="bg-blue-600 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
                     >
@@ -188,5 +189,5 @@ export const Dashboard = () => {
 
 
 
-    
+
 };

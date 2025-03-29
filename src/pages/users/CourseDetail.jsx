@@ -9,6 +9,7 @@ export default function CourseDetail() {
 
   // Đồng bộ trạng thái với kích thước màn hình
   useEffect(() => {
+    document.title = "Chi tiết khóa học - BrainHub";
     const handleResize = () => {
       const shouldCollapse = window.innerWidth < 768;
       setIsCollapsed(shouldCollapse);
@@ -32,9 +33,8 @@ export default function CourseDetail() {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-20 transform transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:top-16 md:z-10`}
+        className={`fixed inset-y-0 left-0 z-20 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0 md:top-16 md:z-10`}
       >
         <SidebarCourseDetail_left
           isSidebarOpen={isSidebarOpen}
@@ -54,9 +54,8 @@ export default function CourseDetail() {
 
       {/* Nội dung chính */}
       <div
-        className={`flex-1 bg-gray-100 overflow-y-auto min-w-0 transition-all duration-300 md:pt-16 ${
-          isCollapsed ? "md:ml-[5rem]" : "md:ml-[16rem]"
-        }`}
+        className={`flex-1 bg-gray-100 overflow-y-auto min-w-0 transition-all duration-300 md:pt-16 ${isCollapsed ? "md:ml-[5rem]" : "md:ml-[16rem]"
+          }`}
       >
         <Outlet />
       </div>

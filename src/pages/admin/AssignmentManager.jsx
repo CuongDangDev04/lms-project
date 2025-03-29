@@ -17,6 +17,13 @@ export const AssignmentManager = () => {
             color: 'purple',
             icon: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.31 0-6 2.69-6 6v2h12v-2c0-3.31-2.69-6-6-6z',
             link: 'assigned-classrooms',
+        },
+        ,
+        {
+            title: 'Thêm sinh viên vào lớp học phần',
+            color: 'blue',
+            icon: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.31 0-6 2.69-6 6v2h12v-2c0-3.31-2.69-6-6-6z',
+            link: 'add-student-to-class',
         }
     ];
 

@@ -71,6 +71,7 @@ const GradeSubmission = () => {
 
   // Lấy userRole từ localStorage
   useEffect(() => {
+    document.title = "Chấm Điểm Bài Nộp";
     const user = JSON.parse(localStorage.getItem("user"));
     if (user) {
       setUserRole(user.role_id);
@@ -231,7 +232,7 @@ const GradeSubmission = () => {
                 </div>
 
                 {/* Hiển thị điểm và phản hồi nếu có */}
-                
+
                 {submission.feedback && (
                   <p className="text-gray-600 mb-4">
                     <span className="font-medium">Phản hồi:</span> {submission.feedback}
@@ -251,8 +252,8 @@ const GradeSubmission = () => {
                         gradingData[submission.submission_id]?.score !== undefined
                           ? gradingData[submission.submission_id].score
                           : submission.score !== null
-                          ? submission.score
-                          : ""
+                            ? submission.score
+                            : ""
                       }
                       onChange={(e) => handleGradeChange(submission.submission_id, "score", e.target.value)}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
