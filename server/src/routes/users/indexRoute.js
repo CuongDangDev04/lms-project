@@ -11,9 +11,10 @@ const lectureRoute = require('../../routes/users/lectureRoute')
 const instructorRoute = require('../../routes/users/instructorRoute')
 const submissionRoute = require('../../routes/users/submissionRoute')
 const { assign } = require('nodemailer/lib/shared');
-
+const gradeRoute = require('./gradeRoute')
 //Xuat route su dung
 router.use('/schedule', scheduleUserRoute);
+router.use('/grade', gradeRoute);
 router.use('/courses', courseRoute);
 // router.use('/messages', messageRoute);
 router.use('/members', memberController);
