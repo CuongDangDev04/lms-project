@@ -28,6 +28,10 @@ const ChatMessage = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: 1,
     },
+    reply: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
     timestamps: false,

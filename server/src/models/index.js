@@ -120,6 +120,17 @@ Notification.belongsToMany(User, {
 UserNotification.belongsTo(User, { foreignKey: "user_id" });
 UserNotification.belongsTo(Notification, { foreignKey: "notification_id" });
 
+//chat_message --> chat_message
+ChatMessage.belongsTo(ChatMessage, {
+  foreignKey: "reply",
+  as: "ParentMessage", // Alias cho tin nhắn gốc
+});
+
+ChatMessage.hasMany(ChatMessage, {
+  foreignKey: "reply",
+  as: "Replies", // Alias cho các tin nhắn trả lời
+});
+
 module.exports = {
   sequelize,
   User,
