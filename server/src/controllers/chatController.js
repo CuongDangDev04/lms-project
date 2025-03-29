@@ -33,7 +33,7 @@ const { QueryTypes } = require("sequelize");
 // };
 const sendMessage = async (req, res) => {
   try {
-    const { userId, classroomId, message } = req.body;
+    const { userId, classroomId, message, reply } = req.body;
 
     if (!classroomId) {
       return res.status(400).json({ error: "Thiếu thông tin lớp học!" });
@@ -41,6 +41,38 @@ const sendMessage = async (req, res) => {
     if (!message) {
       return res.status(400).json({ error: "Tin nhắn không được để trống!" });
     }
+    if (!reply) {
+      console.log("ĐÉO NHÂN ĐƯỢC REPLY");
+    }
+    var replyMessage = {};
+    if (reply) {
+      console.log("Trả lời cho tin nhắn:  ", reply);
+      replyMessage = await ChatMessage.findOne({
+        where: { message_id: reply },
+        attributes: [
+          "message_id",
+          "participate_id",
+          "message",
+          "tagged_user_ids",
+          "timestamp",
+          "status",
+        ],
+        include: [
+          {
+            model: UserParticipation,
+            attributes: ["user_id"],
+            include: {
+              model: User,
+              attributes: ["username", "fullname"],
+              require: true,
+            },
+          },
+        ],
+      });
+    }
+    // console.log("asdadaasda: ", replyMessage.message_id);
+    // return res.status(200).json(replyMessage);
+
     const usersInClass = await User.findAll({
       attributes: ["user_id", "username"],
       include: {
@@ -77,6 +109,7 @@ const sendMessage = async (req, res) => {
       participate_id: isParticipate.participate_id,
       message: cleanMessage,
       tagged_user_ids: taggedUserIds,
+      reply,
     });
 
     let taggedUsers = [];
@@ -110,16 +143,24 @@ const sendMessage = async (req, res) => {
     });
     const io = getIO();
     // Gửi tin nhắn + username về client thông qua socket.io
-    getIO().to(classroomId).emit("receiveMessage", {
-      message_id: userMessage.message_id,
-      message: userMessage.message,
-      userId: isParticipate.User.user_id,
-      username: isParticipate.User.username, // Thêm username vào tin nhắn
-      fullname: isParticipate.User.fullname,
-      taggedUsers,
-      timestamp: userMessage.timestamp,
-      classroomId,
-    });
+    getIO()
+      .to(classroomId)
+      .emit("receiveMessage", {
+        message_id: userMessage.message_id,
+        message: userMessage.message,
+        userId: isParticipate.User.user_id,
+        username: isParticipate.User.username, // Thêm username vào tin nhắn
+        fullname: isParticipate.User.fullname,
+        taggedUsers,
+        timestamp: userMessage.timestamp,
+        classroomId,
+        reply_user_id: replyMessage?.user_participation?.User?.user_id || null,
+        reply_message: replyMessage?.message || null,
+        reply_username:
+          replyMessage?.user_participation?.User?.username || null,
+        reply_fullname:
+          replyMessage?.user_participation?.User?.fullname || null,
+      });
 
     for (const user of taggedUsers) {
       io.emit("tagNotification", {
@@ -175,11 +216,36 @@ const getMessages = async (req, res) => {
         .json({ error: "Thiếu classroomId trong request!" });
     }
 
+    // const messages = await sequelize.query(
+    //   `SELECT cm.message_id, up.user_id, cm.message,cm.timestamp,cm.tagged_user_ids, up.classroom_id, u.username , u.fullname, CAST(cm.status AS UNSIGNED) AS status , reply_msg.message_id AS reply_message_id,
+    // reply_msg.message AS reply_message,
+    // reply_user.user_id AS reply_user_id,
+    // reply_user.username AS reply_username,
+    // reply_user.fullname AS reply_fullname
+    //    FROM chat_messages cm
+    //    JOIN user_participations up ON up.participate_id = cm.participate_id
+    //    JOIN users u ON u.user_id = up.user_id
+    //    LEFT JOIN chat_messages reply_msg ON reply_msg.message_id = cm.reply
+    //    LEFT JOIN user_participations reply_up ON reply_up.participate_id = reply_msg.participate_id
+    //    LEFT JOIN users reply_user ON reply_user.user_id = reply_up.user_id
+    //    WHERE up.classroom_id = :classroomId`,
+    //   {
+    //     type: QueryTypes.SELECT,
+    //     replacements: { classroomId: classroomId }, // Thay thế giá trị động
+    //   }
+    // );
     const messages = await sequelize.query(
-      `SELECT message_id, up.user_id, cm.message,timestamp,tagged_user_ids, up.classroom_id, u.username , u.fullname, CAST(cm.status AS UNSIGNED) AS status 
+      `SELECT cm.message_id, up.user_id, cm.message,cm.timestamp,cm.tagged_user_ids, up.classroom_id, u.username , u.fullname, CAST(cm.status AS UNSIGNED) AS status , reply_msg.message_id AS reply_message_id,
+    reply_msg.message AS reply_message,
+    reply_user.user_id AS reply_user_id,
+    reply_user.username AS reply_username,
+    reply_user.fullname AS reply_fullname
        FROM chat_messages cm
        JOIN user_participations up ON up.participate_id = cm.participate_id
        JOIN users u ON u.user_id = up.user_id
+       LEFT JOIN chat_messages reply_msg ON reply_msg.message_id = cm.reply
+       LEFT JOIN user_participations reply_up ON reply_up.participate_id = reply_msg.participate_id
+       LEFT JOIN users reply_user ON reply_user.user_id = reply_up.user_id
        WHERE up.classroom_id = :classroomId`,
       {
         type: QueryTypes.SELECT,
