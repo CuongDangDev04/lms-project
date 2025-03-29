@@ -234,6 +234,12 @@ const ChatBox = ({ userId }) => {
     setSelectedIndex(0);
     setTimeout(() => inputRef.current?.focus(), 0);
   };
+  const quickReply = (msg, isCurrentUser) => {
+    setReply(msg);
+    if (!isCurrentUser) {
+      addSelectUserInReply(msg.username);
+    }
+  };
   // Xử lý phím
   const handleKeyDown = (e) => {
     if (mentionSuggestions.length > 0) {
@@ -389,34 +395,32 @@ const ChatBox = ({ userId }) => {
                         ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
                         : "bg-white text-gray-800 border border-gray-200"
                     } shadow-md`}
+                    onDoubleClick={() => {
+                      quickReply(msg, isCurrentUser);
+                    }}
                   >
-                    {/* <div
-                    className={`relative p-3 rounded-2xl transition-all duration-500 ${
-                      isCurrentUser
-                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                        : "bg-white text-gray-800 border border-gray-200"
-                    } shadow-md ${
-                      isHighlighted ? "bg-yellow-100 border-yellow-400" : ""
-                    }`}
-                  > */}
                     <div className="flex flex-col">
                       <span
                         className={`text-sm font-semibold ${
                           isCurrentUser ? "text-indigo-100" : "text-indigo-600"
                         }`}
+                        onDoubleClick={(e) => e.stopPropagation()}
                       >
                         {!isCurrentUser && (msg.User?.fullname || msg.fullname)}
                       </span>
 
                       <div
-                        className="flex flex-col items-start"
-                        onClick={() => {
-                          scrollToMessage(msg.reply_message_id);
-                          console.log("hhehehehe: ", msg);
-                        }}
+                        className="flex flex-col items-start "
+                        onDoubleClick={(e) => e.stopPropagation()}
                       >
                         {msg.reply_message && msg.status !== 0 && (
-                          <div className="flex flex-col p-2 mb-2 text-sm rounded-lg bg-gray-200 text-gray-700 border-l-4 border-blue-400">
+                          <div
+                            className="flex flex-col p-2 mb-2 text-sm rounded-lg bg-gray-200 text-gray-700 border-l-4 border-blue-400 cursor-pointer"
+                            onClick={() => {
+                              if (msg.status)
+                                scrollToMessage(msg.reply_message_id);
+                            }}
+                          >
                             <span className="font-semibold text-blue-600">
                               {msg.reply_fullname}
                             </span>
@@ -430,12 +434,20 @@ const ChatBox = ({ userId }) => {
                                     ))}
                                   </span>
                                 )}
-                              <span className="ml-1 italic">
-                                {msg.reply_message}
-                              </span>
+                              {msg.reply_status !== 0 && (
+                                <span className="ml-1 italic">
+                                  {msg.reply_message}
+                                </span>
+                              )}
+                              {msg.reply_status === 0 && (
+                                <span className="ml-1 italic">
+                                  Tin nhắn đã thu hồi
+                                </span>
+                              )}
                             </div>
                           </div>
                         )}
+
                         <div>
                           {msg.taggedUsers &&
                             msg.taggedUsers.length > 0 &&
@@ -490,7 +502,10 @@ const ChatBox = ({ userId }) => {
                         </li>
                       )}
                       <li
-                        onClick={() => setSelectedMessageDetail(msg)}
+                        onClick={() => {
+                          setSelectedMessageDetail(msg);
+                          console.log("hehehe: ", msg);
+                        }}
                         className="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-all duration-200"
                       >
                         Xem chi tiết

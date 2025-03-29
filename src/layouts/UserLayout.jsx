@@ -13,7 +13,6 @@ import useUserId from "../hooks/useUserId";
 const UserLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
   const isInMessagePage = /^\/courseDetail\/\d+(\/messages)?$/.test(
     location.pathname
   );
@@ -56,7 +55,7 @@ const UserLayout = () => {
         if (!isInMessagePage && sender !== userId && sendTo == userId) {
           toast.info(`Bạn được tag trong lớp học!`, {
             position: "top-right",
-            autoClose: 20000,
+            autoClose: 2000,
             className: "cursor-pointer",
             onClick: () => {
               navigate(`/courseDetail/${classroomId}/messages`);
@@ -73,7 +72,7 @@ const UserLayout = () => {
           if (!isInMessagePage && sender !== userId && sendTo == userId) {
             toast.info(`Lớp ${courseName} của bạn có tin nhắn mới!`, {
               position: "top-right",
-              autoClose: 20000,
+              autoClose: 2000,
               className: "cursor-pointer",
               onClick: () => {
                 navigate(`/courseDetail/${classroomId}/messages`);
