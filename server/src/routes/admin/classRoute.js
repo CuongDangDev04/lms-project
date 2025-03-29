@@ -4,11 +4,11 @@ const classController = require("../../controllers/admin/classesController");
 const { verifyTokenAndRole } = require('../../middlewares/auth.middleware');
 const upload = require('../../middlewares/upload');
 
-router.get('/', verifyTokenAndRole(3), classController.getClasses);
-router.get("/:id", verifyTokenAndRole(3), classController.getClassByID);
-router.post("/create", verifyTokenAndRole(3), classController.createClass);
-router.post("/createByExcel", upload.single("file"), classController.createClassByExcel);
-router.put("/:id", verifyTokenAndRole(3), classController.updateClass);
-router.delete('/:id', verifyTokenAndRole(3), classController.deleteClassById);
+router.get('/', classController.getClasses);
+router.get("/:id", classController.getClassByID);
+router.post("/create", classController.createClass);
+router.post("/createByExcel", classController.createClassByExcel);
+router.put("/:id", classController.updateClass);
+router.delete('/:id', classController.deleteClassById);
 
 module.exports = router;

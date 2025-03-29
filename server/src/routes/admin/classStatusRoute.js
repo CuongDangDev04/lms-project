@@ -3,14 +3,14 @@ const router = express.Router();
 const classStatusController = require('../../controllers/admin/classStatusController');
 const { verifyTokenAndRole } = require('../../middlewares/auth.middleware');
 
-router.post('/',verifyTokenAndRole(3), classStatusController.createClassStatus);
+router.post('/', classStatusController.createClassStatus);
 
-router.get('/',verifyTokenAndRole(3), classStatusController.getAllClassStatuses);
+router.get('/', classStatusController.getAllClassStatuses);
 
-router.get('/:id',verifyTokenAndRole(3), classStatusController.getClassStatusById);
+router.get('/:id', classStatusController.getClassStatusById);
 
-router.put('/:id',verifyTokenAndRole(3), classStatusController.updateClassStatus);
+router.put('/:id', classStatusController.updateClassStatus);
 
-router.delete('/:id',verifyTokenAndRole(3), classStatusController.deleteClassStatus);
+router.delete('/:id', classStatusController.deleteClassStatus);
 
 module.exports = router;

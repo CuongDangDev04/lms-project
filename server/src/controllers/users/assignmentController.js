@@ -6,12 +6,15 @@ const {
   Course,
   Notification,
   UserNotification,
+  Submission,
 } = require("../../models/index");
 const fsPromises = require("fs").promises; // Để dùng access và readFile
 const fs = require("fs"); // Để dùng createReadStream
 const path = require("path");
 const archiver = require("archiver");
 const { getIO } = require("../../config/socket");
+const { console } = require("inspector");
+const { Op } = require("sequelize");
 
 // Hàm hỗ trợ để parse file_path an toàn
 const parseFilePath = (filePath) => {
@@ -39,7 +42,7 @@ const parseFilePath = (filePath) => {
 };
 
 // Hàm upload bài tập
-exports.uploadAssignment = async (req, res) => {
+const uploadAssignment = async (req, res) => {
   try {
     const {
       user_participation_id,
@@ -90,7 +93,7 @@ exports.uploadAssignment = async (req, res) => {
 };
 
 // Hàm tải file
-exports.downloadAssignmentFiles = async (req, res) => {
+const downloadAssignmentFiles = async (req, res) => {
   try {
     const { assignment_id } = req.params;
     const { fileIndex } = req.query; // Thêm query parameter để chọn file cụ thể
@@ -161,7 +164,7 @@ exports.downloadAssignmentFiles = async (req, res) => {
 };
 // Hàm lấy tất cả bài tập với classroom_id
 // Hàm lấy bài tập theo classroom_id từ params
-exports.getAllAssignments = async (req, res) => {
+const getAllAssignments = async (req, res) => {
   try {
     const { classroom_id } = req.params; // Lấy classroom_id từ params
 
@@ -204,7 +207,7 @@ exports.getAllAssignments = async (req, res) => {
   }
 };
 
-exports.getUserParticipationId = async (req, res) => {
+const getUserParticipationId = async (req, res) => {
   try {
     const { userId, classroomId } = req.params;
     const participation = await UserParticipation.findOne({
@@ -229,7 +232,7 @@ exports.getUserParticipationId = async (req, res) => {
   }
 };
 
-exports.updateAssignment = async (req, res) => {
+const updateAssignment = async (req, res) => {
   try {
     const { assignment_id } = req.params;
     const {
@@ -304,7 +307,7 @@ exports.updateAssignment = async (req, res) => {
 };
 // Hàm xóa bài tập
 // Hàm xóa bài tập
-exports.deleteAssignment = async (req, res) => {
+const deleteAssignment = async (req, res) => {
   try {
     const { assignment_id } = req.params;
 
@@ -341,4 +344,138 @@ exports.deleteAssignment = async (req, res) => {
     console.error("Lỗi khi xóa bài tập:", error.message, error.stack);
     res.status(500).json({ message: "Có lỗi xảy ra khi xóa bài tập." });
   }
+};
+
+const getPendingAssignments = async (req, res) => {
+  try {
+    // Lấy userId của sinh viên từ params
+    const userId = req.user.id;
+    console.log("userId", userId);
+
+    if (!userId || !Number.isInteger(Number(userId))) {
+      return res.status(400).json({ message: "ID sinh viên không hợp lệ" });
+    }
+
+    // Bước 1: Lấy danh sách lớp của sinh viên
+    const studentParticipations = await UserParticipation.findAll({
+      where: { user_id: userId },
+      attributes: ["classroom_id"],
+      raw: true,
+    });
+
+    const studentClassroomIds = studentParticipations.map((p) => p.classroom_id);
+    console.log("studentClassroomIds", studentClassroomIds);
+
+    if (studentClassroomIds.length === 0) {
+      return res.status(200).json({
+        message: "Sinh viên không tham gia lớp nào",
+        assignments: [],
+      });
+    }
+
+    // Bước 2: Lấy tất cả bài tập và thông tin UserParticipation của giảng viên
+    const assignments = await Assignment.findAll({
+      include: [
+        {
+          model: UserParticipation,
+          attributes: ["classroom_id"], // Lấy classroom_id của giảng viên
+          required: true,
+          include: [
+            {
+              model: Classroom,
+              attributes: ["classroom_id"],
+              include: [
+                {
+                  model: Class,
+                  attributes: ["class_name"],
+                },
+                {
+                  model: Course,
+                  attributes: ["course_name"],
+                },
+              ],
+            }
+          ],
+        },
+        {
+          model: Submission,
+          where: { user_id: userId },
+          required: false,
+        },
+      ],
+      where: {
+        "$submissions.submission_id$": { [Op.is]: null }, // Chỉ lấy bài chưa nộp
+        "$user_participation.classroom_id$": { [Op.in]: studentClassroomIds }, // So sánh classroom_id
+      },
+      attributes: [
+        "assignment_id",
+        "title",
+        "description",
+        "start_assignment",
+        "end_assignment",
+        "file_path",
+      ],
+    });
+
+    console.log("assignments", assignments);
+
+    res.status(200).json({
+      message: "Lấy danh sách bài tập chưa làm thành công!",
+      assignments,
+    });
+    console.log("🚀 Đã gửi phản hồi với danh sách bài tập chưa làm!");
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách bài chưa làm:", error);
+    res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
+// Thêm hàm lấy chi tiết bài tập
+const getAssignmentDetail = async (req, res) => {
+  try {
+    const assignmentId = parseInt(req.params.assignmentId, 10);
+    if (isNaN(assignmentId)) {
+      return res.status(400).json({ message: "ID bài tập không hợp lệ" });
+    }
+
+    const assignment = await Assignment.findOne({
+      where: { assignment_id: assignmentId },
+      include: [
+        {
+          model: UserParticipation,
+          attributes: ["classroom_id"],
+        },
+      ],
+      attributes: [
+        "assignment_id",
+        "title",
+        "description",
+        "start_assignment",
+        "end_assignment",
+        "file_path",
+      ],
+    });
+
+    if (!assignment) {
+      return res.status(404).json({ message: "Không tìm thấy bài tập" });
+    }
+
+    res.status(200).json({
+      message: "Lấy chi tiết bài tập thành công!",
+      assignment,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy chi tiết bài tập:", error);
+    res.status(500).json({ message: "Lỗi server khi lấy chi tiết bài tập" });
+  }
+};
+
+module.exports = {
+  uploadAssignment,
+  downloadAssignmentFiles,
+  getAllAssignments,
+  getUserParticipationId,
+  updateAssignment,
+  deleteAssignment,
+  getPendingAssignments,
+  getAssignmentDetail,
 };

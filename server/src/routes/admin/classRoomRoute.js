@@ -6,19 +6,19 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Tạo lớp học phần (Admin only)
-router.post('/', verifyTokenAndRole(3), classroomController.createClassroom);
+router.post('/', classroomController.createClassroom);
 
 // Lấy danh sách tất cả lớp học phần (Admin only)
-router.get('/', verifyTokenAndRole(3), classroomController.getAllClassrooms);
+router.get('/', classroomController.getAllClassrooms);
 
 // Lấy thông tin lớp học phần theo ID (Admin only)
-router.get('/:id', verifyTokenAndRole(3), classroomController.getClassroomById);
+router.get('/:id', classroomController.getClassroomById);
 
 // Cập nhật lớp học phần (Admin only)
-router.put('/:id', verifyTokenAndRole(3), classroomController.updateClassroom);
+router.put('/:id', classroomController.updateClassroom);
 
 // Xóa lớp học phần (Admin only)
-router.delete('/:id', verifyTokenAndRole(3), classroomController.deleteClassroom);
+router.delete('/:id', classroomController.deleteClassroom);
 
 // Lấy danh sách sinh viên của lớp học phần (Admin only)
 router.get('/:classroomId/students', classroomController.getStudentsByClassroom);
@@ -30,6 +30,6 @@ router.post('/:classroomId/students', classroomController.addStudentToClassroom)
 router.post('/:classroomId/students/import', upload.single('file'), classroomController.importStudentsToClassroom);
 
 // API bổ sung: Lấy danh sách lớp học phần (có thể dùng cho các role khác nếu cần)
-router.get('/list', verifyTokenAndRole(3), classroomController.getClassrooms);
+router.get('/list', classroomController.getClassrooms);
 
 module.exports = router;

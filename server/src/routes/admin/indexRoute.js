@@ -17,8 +17,8 @@ router.use('/users', userAdminRoute);
 router.use('/courses', courseAdminRoute);
 router.use('/classes', classAdminRoute);
 router.use('/classrooms', classRoomAdminRoute, classRoomAssigmentAdminRoute);
-router.use('/classStatus', verifyTokenAndRole(3), classStatusAdminRoute);
-router.use('/user-participations', verifyTokenAndRole(3), userParticipationAdminRoute);
-router.use('/dashboard-stats', verifyTokenAndRole(3), dbReportAdminRoute);
+router.use('/classStatus', verifyTokenAndRole(3, 4), classStatusAdminRoute);
+router.use('/user-participations', verifyTokenAndRole(3, 4), userParticipationAdminRoute);
+router.use('/dashboard-stats', verifyTokenAndRole(3, 4), dbReportAdminRoute);
 
 module.exports = router;
