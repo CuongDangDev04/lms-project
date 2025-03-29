@@ -19,6 +19,7 @@ const ClassDetail = () => {
     }
   }, []);
   useEffect(() => {
+    document.title = "Chi tiết lớp học - BrainHub";
     if (!userId) return;
     const fetchClassInfo = async () => {
       try {

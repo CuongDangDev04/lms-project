@@ -25,6 +25,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
   const [submissionToDelete, setSubmissionToDelete] = useState(null);
   const classRoomId = useParams()
   useEffect(() => {
+    document.title = "Nộp bài - BrainHub";
     fetchSubmissions();
   }, [assignmentId]);
   const fetchSubmissions = async () => {

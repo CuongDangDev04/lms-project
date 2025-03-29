@@ -8,6 +8,7 @@ export default function Member() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
+    document.title = "Danh sách thành viên - BrainHub";
     const fetchMembers = async () => {
       const member = await fetchMemberOnClassroom(classroomId);
       setMembers(member);
@@ -58,6 +59,9 @@ export default function Member() {
               <th className="p-4 border-b text-xs font-semibold uppercase tracking-widest">
                 Giới tính
               </th>
+              <th className="p-4 border-b text-xs font-semibold uppercase tracking-widest">
+                Vai trò
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -71,6 +75,9 @@ export default function Member() {
                 <td className="p-4 border-b text-gray-700">{member.fullname}</td>
                 <td className="p-4 border-b text-gray-700">
                   {member.gender ? "Nam" : "Nữ"}
+                </td>
+                <td className="p-4 border-b text-gray-700">
+                  {member.Role?.role_name ? "Sinh viên" : "Không xác định"}
                 </td>
               </tr>
             ))}
@@ -98,6 +105,10 @@ export default function Member() {
               <p className="text-sm text-gray-700">
                 <span className="font-medium">Giới tính:</span>{" "}
                 {member.gender ? "Nam" : "Nữ"}
+              </p>
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">Vai trò:</span>{" "}
+                {member.Role?.role_name ? "Sinh viên" : "Không xác định"}
               </p>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ModalCustom } from '../../components/admin/ui/ModalCustom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -11,6 +11,7 @@ import {
     addStudentToClassroom,
     importStudentsToClassroom,
 } from '../../services/classRoomServices';
+import { useNavigate } from 'react-router-dom';
 
 const AddStudentToClass = () => {
     const [isViewStudentsOpen, setIsViewStudentsOpen] = useState(false);
@@ -26,6 +27,11 @@ const AddStudentToClass = () => {
 
     const { classrooms, students, loading, fetchData } = useClassroomData('assigned');
     const entitiesPerPage = 6;
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        document.title = 'Thêm Sinh Viên Vào Lớp Học Phần';
+    }, []);
 
     const filteredClassrooms = useMemo(() => {
         if (!Array.isArray(classrooms)) return [];
@@ -116,7 +122,7 @@ const AddStudentToClass = () => {
         {
             label: 'Tên Khóa Học',
             key: 'course_id',
-            render: (c) => c.Course ? `${c.Course.course_code} - ${c.Course.course_name}` : 'Chưa có'
+            render: (c) => c.Course ? `${c.Class.class_name} - ${c.Course.course_name}` : 'Chưa có'
         },
         { label: 'Số Lượng Sinh Viên', key: 'student_count', render: (c) => c.student_count || 0 },
         { label: 'Giảng Viên', key: 'assignedTeacherName', render: (c) => c.assignedTeacherName || 'Chưa phân công' },
@@ -155,6 +161,33 @@ const AddStudentToClass = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-10">
+            <nav className="mb-6">
+                <ol className="flex items-center space-x-2 text-sm text-gray-500">
+                    <li>
+                        <button
+                            onClick={() => navigate('/admin')}
+                            className="hover:text-teal-600 transition-colors duration-200"
+                        >
+                            Trang chủ
+                        </button>
+                    </li>
+                    <li>
+                        <span className="mx-1">/</span>
+                        <button
+                            onClick={() => navigate('/admin/manager-assign')}
+                            className="hover:text-teal-600 transition-colors duration-200"
+                        >
+                            Giảng dạy và phân công
+                        </button>
+                    </li>
+                    <li>
+                        <span className="mx-1">/</span>
+                        <span className="text-teal-600 font-medium">
+                            Thêm sinh viên vào lớp học phần
+                        </span>
+                    </li>
+                </ol>
+            </nav>
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col mt-12 sm:flex-row justify-between items-center mb-6 sm:mb-10 gap-4 sm:gap-6">
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-600 tracking-tight text-center sm:text-left">
