@@ -34,6 +34,10 @@ const Classroom = sequelize.define(
       allowNull: false,
       defaultValue: 30,
     },
+    room_url: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   {
     timestamps: false,

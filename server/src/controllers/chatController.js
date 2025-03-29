@@ -101,7 +101,11 @@ const sendMessage = async (req, res) => {
     });
     const notification = await Notification.create({
       message:
-        "Lớp " + classroom.Course.course_name + " của bạn có tin nhắn mới!",
+        "Lớp " +
+        classroom.Course.course_name +
+        " - " +
+        classroom.Class.class_name +
+        " của bạn có tin nhắn mới!",
       notification_type: "classroom",
     });
     const io = getIO();
@@ -172,7 +176,7 @@ const getMessages = async (req, res) => {
     }
 
     const messages = await sequelize.query(
-      `SELECT message_id, up.user_id, cm.message,timestamp,tagged_user_ids, up.classroom_id, u.username , u.fullname
+      `SELECT message_id, up.user_id, cm.message,timestamp,tagged_user_ids, up.classroom_id, u.username , u.fullname, CAST(cm.status AS UNSIGNED) AS status 
        FROM chat_messages cm
        JOIN user_participations up ON up.participate_id = cm.participate_id
        JOIN users u ON u.user_id = up.user_id
@@ -210,11 +214,14 @@ const deleteMessage = async (req, res) => {
 
   try {
     const message = await ChatMessage.findByPk(messageId);
-    if (message) {
-      console.log("message", message);
+    if (!message) {
+      console.error("Không tìm thấy tin nhắn!");
+      return;
     }
 
-    await message.destroy();
+    await message.update({
+      status: 0,
+    });
 
     // Phát sự kiện socket để tất cả client cập nhật UI
     getIO().emit("messageDeleted", messageId);
