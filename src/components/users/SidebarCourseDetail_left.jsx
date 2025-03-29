@@ -48,6 +48,7 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { name: "Thành viên", path: "members", icon: Users },
     { name: "Bài tập", path: "assignments", icon: ClipboardList },
     { name: "Bài giảng", path: "lectures", icon: Presentation },
+    { name: "Bài thi", path: `list-exam`, icon: ClipboardList },
   ];
 
   useEffect(() => {
@@ -99,9 +100,8 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   return (
     <motion.div
-      className={`h-[calc(100vh-4rem)] mt-4 bg-white shadow-xl flex flex-col overflow-y-auto ${
-        isSidebarOpen ? "fixed inset-0 z-50 md:static md:max-w-xs" : "hidden md:block"
-      }`}
+      className={`h-[calc(100vh-4rem)] mt-4 bg-white shadow-xl flex flex-col overflow-y-auto ${isSidebarOpen ? "fixed inset-0 z-50 md:static md:max-w-xs" : "hidden md:block"
+        }`}
       style={{ width: "16rem", paddingTop: window.innerWidth < 768 ? "3rem" : "0" }}
     >
       <div className="flex items-center justify-between border-b border-gray-100 p-3 md:p-4">
@@ -139,10 +139,9 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`flex items-center rounded-xl cursor-pointer transition-colors duration-200 w-full
-                  ${
-                    isActive
-                      ? "bg-blue-500 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
+                  ${isActive
+                    ? "bg-gradient-to-r from-blue-400 to-blue-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
                   }
                   p-2 md:p-3`}
               >

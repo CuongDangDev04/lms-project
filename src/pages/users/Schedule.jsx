@@ -64,7 +64,7 @@ const Schedule = () => {
         <div className="flex items-center space-x-3">
           <button
             onClick={handleToday}
-            className="px-4 py-1.5 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 text-[14px] font-semibold"
+            className="px-4 py-1.5 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 text-[14px] font-semibold"
           >
             Hôm Nay
           </button>
@@ -112,7 +112,7 @@ const Schedule = () => {
 
             {/* Table Header */}
             <thead>
-              <tr className="bg-blue-600 text-white">
+              <tr className="bg-gradient-to-r from-blue-400 to-blue-600 text-white">
                 <th className="border-b border-blue-700 p-3 text-center font-semibold text-base">
                   Ca Học
                 </th>
@@ -184,7 +184,7 @@ const Schedule = () => {
                                 bgColor = "bg-blue-50";
                                 textColor = "text-blue-900";
                                 borderColor = "border-blue-200";
-                                tagBgColor = "bg-blue-600";
+                                tagBgColor = "bg-gradient-to-r from-blue-400 to-blue-600";
                                 tagText = "Bù";
                               } else if (isNormalExam) {
                                 bgColor = "bg-yellow-50";
@@ -202,7 +202,7 @@ const Schedule = () => {
                                 bgColor = "bg-green-50";
                                 textColor = "text-blue-900";
                                 borderColor = "border-blue-200";
-                                tagBgColor = "bg-blue-600";
+                                tagBgColor = "bg-gradient-to-r from-blue-400 to-blue-600";
                                 tagText = "Thi (Bù)";
                               }
 
