@@ -29,6 +29,7 @@ import TeachSchedule from "../pages/users/TeachSchedule";
 import Classroom from "../components/users/Classroom";
 import Subject from "../pages/instructor/Subjects";
 import AddStudentToClass from "../pages/academicAffairs/addStudentToClass";
+import { NotFound } from "../pages/errors/NotFound";
 
 const AppRoutes = () => {
   return (
@@ -75,11 +76,15 @@ const AppRoutes = () => {
           </Route>
           <Route path="/profile" element={<Profile />} />
           {/* Route mới cho GradeSubmission */}
-          <Route path="/assignments/:assignmentId/grade" element={<GradeSubmission />} />
+          <Route
+            path="/assignments/:assignmentId/grade"
+            element={<GradeSubmission />}
+          />
         </Route>
       </Route>
 
       <Route path="/login" element={<Login />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

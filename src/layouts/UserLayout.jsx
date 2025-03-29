@@ -13,11 +13,23 @@ import useUserId from "../hooks/useUserId";
 const UserLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
   const isInMessagePage = /^\/courseDetail\/\d+(\/messages)?$/.test(
     location.pathname
   );
   const userId = useUserId();
+  useEffect(() => {
+    // Regex kiểm tra hai đường dẫn cần ẩn scrollbar
+    const isCourseDetailPage = /^\/courseDetail\/[^/]+(\/messages)?$/.test(
+      location.pathname
+    );
 
+    if (isCourseDetailPage) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
+    }
+  }, [location.pathname]);
   useEffect(() => {
     if (!userId) return;
     connectSocket();

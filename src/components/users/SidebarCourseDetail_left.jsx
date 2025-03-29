@@ -8,7 +8,10 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { fetchTeacherInformation, getCourseById } from "../../services/courseServices";
+import {
+  fetchTeacherInformation,
+  getCourseById,
+} from "../../services/courseServices";
 
 const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const { classroomId } = useParams();
@@ -94,15 +97,21 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
   }, [setIsSidebarOpen]);
 
   const teachers = teacherData?.Users || [];
-  const teacherName = teachers.length > 0 ? teachers[0].fullname : "Không xác định";
+  const teacherName =
+    teachers.length > 0 ? teachers[0].fullname : "Không xác định";
   const className = teacherData?.Class?.class_name || "Không xác định";
 
   return (
     <motion.div
       className={`h-[calc(100vh-4rem)] mt-4 bg-white shadow-xl flex flex-col overflow-y-auto ${
-        isSidebarOpen ? "fixed inset-0 z-50 md:static md:max-w-xs" : "hidden md:block"
+        isSidebarOpen
+          ? "fixed inset-0 z-50 md:static md:max-w-xs"
+          : "hidden md:block"
       }`}
-      style={{ width: "16rem", paddingTop: window.innerWidth < 768 ? "3rem" : "0" }}
+      style={{
+        width: "16rem",
+        paddingTop: window.innerWidth < 768 ? "3rem" : "0",
+      }}
     >
       <div className="flex items-center justify-between border-b border-gray-100 p-3 md:p-4">
         <motion.div
@@ -147,9 +156,7 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
                   p-2 md:p-3`}
               >
                 <IconComponent className="h-5 w-5 min-w-[20px]" />
-                <motion.span
-                  className="ml-2 md:ml-3 text-sm md:text-base truncate"
-                >
+                <motion.span className="ml-2 md:ml-3 text-sm md:text-base truncate">
                   {item.name}
                 </motion.span>
                 {isActive && (

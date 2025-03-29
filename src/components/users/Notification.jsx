@@ -185,13 +185,19 @@ const Notifications = () => {
         console.error("Message is undefined, cannot navigate.");
         return;
       }
-      const regex = /^Lớp (.+) của bạn có tin nhắn mới!$/;
+
+      const regex = /Lớp (.+?) - (.+?) của bạn có tin nhắn mới!/;
       if (regex.test(message)) {
         let courseName = message.match(regex)[1];
+        let className = message.match(regex)[2];
         let courses = await fetchStudentCourses();
+
         let course = courses.find(
-          (c) => c.Classroom.Course.course_name === courseName
+          (c) =>
+            c.Classroom.Course.course_name === courseName &&
+            c.Classroom.Class.class_name === className
         );
+        console.log("hehehe: ", courseName, className);
         if (course) {
           navigate(`/courseDetail/${course.classroom_id}/messages`);
         } else {

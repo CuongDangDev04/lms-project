@@ -35,6 +35,16 @@ const ClassService = {
       throw error; // Ném lỗi để xử lý ở nơi gọi
     }
   },
+  joinClassroom: async (classroomId) => {
+    try {
+      const response = await api.get(
+        `${API_BASE_URL}/createRoom/${classroomId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi tham gia phòng", error);
+    }
+  },
 };
 
 export default ClassService;

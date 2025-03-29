@@ -158,8 +158,9 @@ const Navbar = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 w-full  bg-white shadow-md z-50 transition-all duration-300 ${isScrolled ? "shadow-lg" : ""
-          }`}
+        className={`navbar fixed top-0 left-0 w-full  bg-white shadow-md z-50 transition-all duration-300 ${
+          isScrolled ? "shadow-lg" : ""
+        }`}
       >
         <div className="relative flex items-center px-4 sm:px-6 py-4 lg:px-14 lg:py-6">
           {/* Logo ở giữa cho mobile, trái cho desktop */}
@@ -180,10 +181,11 @@ const Navbar = () => {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`px-4 py-2 transition-all ${location.pathname === item.to
-                  ? "text-blue-600 font-semibold"
-                  : "hover:text-blue-600"
-                  }`}
+                className={`px-4 py-2 transition-all ${
+                  location.pathname === item.to
+                    ? "text-blue-600 font-semibold"
+                    : "hover:text-blue-600"
+                }`}
               >
                 {item.label}
               </Link>
@@ -202,10 +204,11 @@ const Navbar = () => {
                 }}
               >
                 <Bell
-                  className={`text-gray-600 ${window.innerWidth < 1024
-                    ? "w-4 h-4 sm:w-5 sm:h-5"
-                    : "w-6 h-6"
-                    }`}
+                  className={`text-gray-600 ${
+                    window.innerWidth < 1024
+                      ? "w-4 h-4 sm:w-5 sm:h-5"
+                      : "w-6 h-6"
+                  }`}
                 />
                 {notificationsCount > 0 && (
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -246,8 +249,9 @@ const Navbar = () => {
                   {userProfile.name}
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 text-gray-600 transition-transform ${isDropdownOpen ? "rotate-180" : ""
-                    }`}
+                  className={`w-4 h-4 text-gray-600 transition-transform ${
+                    isDropdownOpen ? "rotate-180" : ""
+                  }`}
                 />
               </div>
               {isDropdownOpen && (

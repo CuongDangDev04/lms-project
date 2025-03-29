@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+
 import { useParams } from "react-router-dom";
 import {
   fetchMessages,
@@ -20,8 +21,9 @@ const ChatBox = ({ userId }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  const [showDeleteId, setShowDeleteId] = useState(null);
-
+  const chatBoxRef = useRef(null);
+  const [contextMenu, setContextMenu] = useState(null);
+  const [selectedMessageDetail, setSelectedMessageDetail] = useState(null);
   // Format thời gian
 
   const formatTimestamp = (timestamp) => {
@@ -48,7 +50,7 @@ const ChatBox = ({ userId }) => {
     socket.on("receiveMessage", (message) => {
       // if (classroomId !== message.classroomId) return;
       setMessages((prev) =>
-        [...prev, message].sort(
+        [...prev, { ...message, status: message.status ?? 1 }].sort(
           (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
         )
       );
@@ -78,11 +80,64 @@ const ChatBox = ({ userId }) => {
     };
   }, [classroomId]);
 
-  // Xử lý xóa tin nhắn qua socket
+  const handleContextMenu = (e, message) => {
+    e.preventDefault();
+    if (!message.userId && !message.user_id) return;
+
+    // if (message.userId !== userId && message.user_id !== userId) return;
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      messageId: message.message_id || message.messageId,
+    });
+  };
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setContextMenu(null);
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+  useEffect(() => {
+    if (contextMenu && chatBoxRef.current) {
+      chatBoxRef.current.style.overflow = "hidden";
+    } else if (chatBoxRef.current) {
+      chatBoxRef.current.style.overflow = "";
+    }
+
+    return () => {
+      if (chatBoxRef.current) chatBoxRef.current.style.overflow = "";
+    };
+  }, [contextMenu]);
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      await deleteMessage(messageId);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.message_id === contextMenu.messageId ? { ...msg, status: 0 } : msg
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    }
+    setContextMenu(null);
+  };
+
   useEffect(() => {
     const handleDeleteMessage = (messageId) => {
-      setMessages((prev) => prev.filter((msg) => msg.message_id !== messageId));
+      fetchMessages(classroomId)
+        .then((data) => {
+          const sortedMessages = data.sort(
+            (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+          );
+          const showMessage = sortedMessages.map((msg) =>
+            msg.message_id === messageId ? { ...msg, status: 0 } : msg
+          );
+          setMessages(showMessage);
+        })
+        .catch((err) => console.error("Lỗi tải tin nhắn:", err));
     };
+
     socket.on("messageDeleted", handleDeleteMessage);
     return () => socket.off("messageDeleted", handleDeleteMessage);
   }, []);
@@ -115,15 +170,19 @@ const ChatBox = ({ userId }) => {
   };
 
   // Xóa tin nhắn
-  const handleDeleteMessage = async (messageId) => {
-    try {
-      await deleteMessage(messageId);
-      socket.emit("deleteMessage", messageId);
-      setShowDeleteId(null);
-    } catch (error) {
-      console.error("Lỗi xóa tin nhắn:", error);
-    }
-  };
+  // const handleDeleteMessage = async (messageId) => {
+  //   try {
+  //     await deleteMessage(messageId);
+  //     setMessages((prev) =>
+  //       prev.map((msg) =>
+  //         msg.message_id === messageId ? { ...msg, status: 0 } : msg
+  //       )
+  //     );
+  //     setShowDeleteId(null);
+  //   } catch (error) {
+  //     console.error("Lỗi xóa tin nhắn:", error);
+  //   }
+  // };
 
   // Xử lý input
   const handleInputChange = (e) => {
@@ -173,16 +232,37 @@ const ChatBox = ({ userId }) => {
     }
   };
 
-  // Context menu cho xóa tin nhắn
-  const handleContextMenu = (e, messageId) => {
-    e.preventDefault();
-    setShowDeleteId(messageId);
-  };
-
   return (
-    <div className="flex flex-col  h-[90vh] w-full max-w-full   mx-auto bg-white shadow-xl border border-gray-100">
+    <div className="flex flex-col  h-[90vh] md:h-[90vh] w-full max-w-full   mx-auto bg-white shadow-xl border border-gray-100 ">
+      {selectedMessageDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-5 rounded-lg shadow-lg w-96">
+            <h2 className="text-lg font-bold text-gray-800 mb-3">
+              Chi tiết tin nhắn
+            </h2>
+            <p className="text-gray-700">{selectedMessageDetail.message}</p>
+            <div className="mt-3 text-sm text-gray-500">
+              <strong>Người gửi:</strong>{" "}
+              {selectedMessageDetail.fullname || selectedMessageDetail.username}
+            </div>
+            <div className="mt-1 text-sm text-gray-500">
+              <strong>Thời gian:</strong>{" "}
+              {formatTimestamp(selectedMessageDetail.timestamp)}
+            </div>
+            <button
+              onClick={() => setSelectedMessageDetail(null)}
+              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
       {/* Messages */}
-      <div className="flex-1 p-5 bg-gradient-to-b from-gray-50 to-gray-100 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent">
+      <div
+        className="flex-1 p-5 bg-gradient-to-b from-gray-50 to-gray-100 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent hidden-scrollbar"
+        ref={chatBoxRef}
+      >
         {messages.length === 0 ? (
           <div className="text-center text-gray-400 text-sm mt-10">
             Chưa có tin nhắn nào...
@@ -208,11 +288,11 @@ const ChatBox = ({ userId }) => {
                 className={`flex ${
                   isCurrentUser ? "justify-end" : "justify-start"
                 } mb-4`}
-                onContextMenu={(e) =>
-                  isCurrentUser && handleContextMenu(e, msg.message_id)
-                }
               >
-                <div className="flex items-end gap-2 max-w-[70%]">
+                <div
+                  className="flex items-end gap-2 max-w-[70%]"
+                  onContextMenu={(e) => handleContextMenu(e, msg)}
+                >
                   {!isCurrentUser && (
                     <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                       {sender?.avt ? (
@@ -260,7 +340,13 @@ const ChatBox = ({ userId }) => {
                           </span>
                         )}
                         <span className="text-sm break-words">
-                          {msg.message}
+                          {msg.status === 0 ? (
+                            <span className="italic text-gray-400">
+                              Tin nhắn đã thu hồi
+                            </span>
+                          ) : (
+                            msg.message
+                          )}
                         </span>
                       </div>
                       <span
@@ -271,16 +357,38 @@ const ChatBox = ({ userId }) => {
                         {formatTimestamp(msg.timestamp)}
                       </span>
                     </div>
-                    {isCurrentUser && showDeleteId === msg.message_id && (
-                      <button
-                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs transition-all shadow-sm"
-                        onClick={() => handleDeleteMessage(msg.message_id)}
-                      >
-                        ✕
-                      </button>
-                    )}
                   </div>
                 </div>
+                {/* Context Menu */}
+                {contextMenu &&
+                  contextMenu.messageId === msg.message_id &&
+                  msg.status === 1 && (
+                    <ul
+                      className="absolute bg-white border border-gray-300 shadow-xl rounded-lg py-2 text-sm w-48 z-50"
+                      style={{
+                        top: contextMenu.y,
+                        left: Math.min(contextMenu.x, window.innerWidth - 250), // Giới hạn vị trí để không tràn
+                        maxWidth: "calc(100vw - 20px)", // Giới hạn để không tràn màn hình
+                      }}
+                    >
+                      {isCurrentUser && (
+                        <li
+                          onClick={() =>
+                            handleDeleteMessage(contextMenu.messageId)
+                          }
+                          className="px-4 py-2 hover:bg-red-100 hover:text-red-600 cursor-pointer transition-all duration-200"
+                        >
+                          Thu hồi tin nhắn
+                        </li>
+                      )}
+                      <li
+                        onClick={() => setSelectedMessageDetail(msg)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-all duration-200"
+                      >
+                        Xem chi tiết
+                      </li>
+                    </ul>
+                  )}
               </div>
             );
           })

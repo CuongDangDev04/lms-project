@@ -1,177 +1,85 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import axios from "axios";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import classroomService from "../../services/ClassService";
+import DailyIframe from "@daily-co/daily-js";
+import useUserId from "../../hooks/useUserId";
 import { getUserById } from "../../services/userServices";
-import { useParams, useNavigate } from "react-router-dom";
-
 const Classroom = () => {
   const { classroomId } = useParams();
+  const [roomUrl, setRoomUrl] = useState("");
+  const videoCallRef = useRef(null);
+  const callFrameRef = useRef(null);
+  const userId = useUserId();
+  const [username, setUsername] = useState(null);
   const navigate = useNavigate();
-  const jitsiContainerRef = useRef(null);
-  const jitsiApiRef = useRef(null);
-  const [roomName, setRoomName] = useState("");
-  const [userName, setUserName] = useState("");
-  const [userId, setUserId] = useState(null);
-  const [hasLeft, setHasLeft] = useState(false);
-  const BASEURL = import.meta.env.VITE_API_BASE_URL;
-  const [containerHeight, setContainerHeight] = useState(
-    window.innerHeight - 100
-  );
-
-  const handleConferenceLeft = useCallback(() => {
-    if (!hasLeft) {
-      setHasLeft(true);
-      navigate(`/class/${classroomId}`);
-    }
-  }, [hasLeft, navigate, classroomId]);
-
   useEffect(() => {
-    if (!classroomId) return;
-    let isMounted = true;
-
-    axios
-      .get(`${BASEURL}/api/class-course/createRoom/${classroomId}`)
-      .then((response) => {
-        if (isMounted) setRoomName(response.data.roomName);
-      })
-      .catch((error) => console.error("Lỗi khi lấy phòng học:", error));
-
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUserId(parsedUser?.id);
-    }
-
-    return () => {
-      isMounted = false;
+    const fetchUser = async () => {
+      if (!userId) return;
+      try {
+        const user = await getUserById(userId);
+        setUsername(user.username);
+      } catch (error) {
+        console.error("Lỗi khi lấy user:", error);
+      }
     };
+
+    fetchUser();
+  }, [userId]);
+  useEffect(() => {
+    const checkUserInClass = async () => {
+      if (!userId || !classroomId) return;
+      try {
+        const data = await classroomService.getAllClassOfUser(userId);
+        const checkUserAccess = data.classCourseOfUser.Classrooms.find(
+          (c) => c.classroom_id == classroomId
+        );
+        if (!checkUserAccess) {
+          navigate("*");
+        }
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra quyền truy cập lớp:", error);
+      }
+    };
+    checkUserInClass();
+  }, [classroomId, navigate, userId]);
+  useEffect(() => {
+    const fetchRoom = async () => {
+      if (!classroomId) return;
+      const data = await classroomService.joinClassroom(classroomId);
+      if (data?.roomUrl) {
+        setRoomUrl(data.roomUrl);
+      }
+    };
+    fetchRoom();
   }, [classroomId]);
 
   useEffect(() => {
-    if (!userId) return;
-    let isMounted = true;
+    if (!roomUrl || !username || callFrameRef.current) return;
 
-    getUserById(userId)
-      .then((user) => {
-        if (isMounted) setUserName(user.username);
-      })
-      .catch((error) =>
-        console.error("Lỗi khi lấy thông tin người dùng:", error)
-      );
-
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
-
-  useEffect(() => {
-    if (!roomName || !userName || !jitsiContainerRef.current) return;
-
-    const loadJitsiScript = () => {
-      if (window.JitsiMeetExternalAPI) {
-        startConference();
-      } else {
-        let script = document.getElementById("jitsi-script");
-        if (!script) {
-          script = document.createElement("script");
-          script.id = "jitsi-script";
-          script.src = "https://meet.jit.si/external_api.js";
-          script.async = true;
-          script.onload = startConference;
-          script.onerror = () => console.error("Lỗi khi tải Jitsi script");
-          document.body.appendChild(script);
-        } else {
-          script.onload = startConference;
-        }
-      }
-    };
-
-    const startConference = () => {
-      if (jitsiApiRef.current || !jitsiContainerRef.current) return;
-
-      jitsiApiRef.current = new window.JitsiMeetExternalAPI("meet.jit.si", {
-        roomName,
-        parentNode: jitsiContainerRef.current,
+    const callFrame = DailyIframe.createFrame(videoCallRef.current, {
+      showLeaveButton: true,
+      showFullscreenButton: true,
+      showParticipantsBar: true,
+      iframeStyle: {
         width: "100%",
-        height: containerHeight,
-        userInfo: { displayName: userName },
-        configOverwrite: {
-          prejoinPageEnabled: false,
-          startWithAudioMuted: true,
-          startWithVideoMuted: true,
-          requireDisplayName: false,
-        },
-        interfaceConfigOverwrite: {
-          SHOW_JITSI_WATERMARK: false,
-          SHOW_WATERMARK_FOR_GUESTS: false,
-          DEFAULT_REMOTE_DISPLAY_NAME: "Người tham gia",
-          DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-          TOOLBAR_BUTTONS: [
-            "microphone",
-            "camera",
-            "hangup",
-            "chat",
-            "etherpad",
-            "settings",
-            "desktop",
-            "raisehand",
-            "videoquality",
-            "feedback",
-            "shortcuts",
-            "closedcaptions",
-          ],
-        },
-      });
+        height: "100vh",
+        border: "none",
+      },
+    });
 
-      jitsiApiRef.current.addEventListener("videoConferenceJoined", () => {
-        setHasLeft(false);
-      });
+    callFrame.join({ url: roomUrl, userName: username || "Guest" });
+    callFrameRef.current = callFrame;
+    callFrame.on("left-meeting", () => {
+      navigate(`/CourseDetail/${classroomId}`);
+    });
 
-      jitsiApiRef.current.addEventListener("readyToClose", () => {
-        handleConferenceLeft();
-      });
-
-      // Xử lý khi người dùng đóng tab hoặc tải lại trang
-      const handleBeforeUnload = () => {
-        handleConferenceLeft();
-      };
-
-      window.addEventListener("beforeunload", handleBeforeUnload);
-
-      return () => {
-        window.removeEventListener("beforeunload", handleBeforeUnload);
-      };
-    };
-
-    loadJitsiScript();
-
-    return () => {
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose();
-        jitsiApiRef.current = null;
-      }
-    };
-  }, [roomName, userName, handleConferenceLeft, hasLeft, containerHeight]);
-
-  useEffect(() => {
-    const updateHeight = () => {
-      setContainerHeight(window.innerHeight - 100);
-    };
-
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
-  }, []);
-
+    return () => callFrame.destroy(); // Cleanup khi component unmount
+  }, [roomUrl, username, navigate, classroomId]);
   return (
-    <div
-      ref={jitsiContainerRef}
-      style={{
-        width: "100%",
-        height: containerHeight,
-        marginTop: "6rem",
-        maxWidth: "1200px",
-        margin: "auto",
-      }}
-    />
+    <div className="fixed top-0 left-0 w-full h-full bg-white z-50 pb-16">
+      {" "}
+      <div ref={videoCallRef} className="w-full h-full"></div>
+    </div>
   );
 };
 
