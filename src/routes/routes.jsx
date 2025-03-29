@@ -18,11 +18,11 @@ import GradeSubmission from "../pages/instructor/GradeSubmission";
 
 import { StudentsManager } from "../pages/admin/StudentsManager";
 import { InstructorsManager } from "../pages/admin/InstructorsManager";
-import { CoursesManager } from "../pages/admin/CoursesManager";
-import { ClassesManager } from "../pages/admin/ClassesManager";
-import { AssignmentManager } from "../pages/admin/AssignmentManager";
-import UnAssigmentManager from "../pages/admin/UnAssigmentManager";
-import AssignedClassroomManager from "../pages/admin/AssignedClassroomManager";
+import { CoursesManager } from "../pages/academicAffairs/CoursesManager";
+import { ClassesManager } from "../pages/academicAffairs/ClassesManager";
+import { AssignmentManager } from "../pages/academicAffairs/AssignmentManager";
+import UnAssigmentManager from "../pages/academicAffairs/UnAssigmentManager";
+import AssignedClassroomManager from "../pages/academicAffairs/AssignedClassroomManager";
 
 import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
@@ -30,6 +30,7 @@ import Classroom from "../components/users/Classroom";
 import Subject from "../pages/instructor/Subjects";
 import AddStudentToClass from "../pages/academicAffairs/addStudentToClass";
 import { NotFound } from "../pages/errors/NotFound";
+import EduAffairLayout from "../layouts/EduAffairLayout";
 
 const AppRoutes = () => {
   return (
@@ -40,6 +41,12 @@ const AppRoutes = () => {
           <Route index element={<Dashboard />} />
           <Route path="manager-students" element={<StudentsManager />} />
           <Route path="manager-instructors" element={<InstructorsManager />} />
+        </Route>
+      </Route>
+
+      <Route path="/eduAffair" element={<PrivateRoute allowedRoles={[4]} />}>
+        <Route element={<EduAffairLayout />}>
+          <Route index element={<Dashboard />} />
           <Route path="manager-courses" element={<CoursesManager />} />
           <Route path="manager-classes" element={<ClassesManager />} />
           <Route path="manager-assign" element={<AssignmentManager />} />
