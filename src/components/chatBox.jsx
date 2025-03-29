@@ -24,6 +24,7 @@ const ChatBox = ({ userId }) => {
   const chatBoxRef = useRef(null);
   const [contextMenu, setContextMenu] = useState(null);
   const [selectedMessageDetail, setSelectedMessageDetail] = useState(null);
+  const [reply, setReply] = useState(null);
   // Format thời gian
 
   const formatTimestamp = (timestamp) => {
@@ -155,7 +156,21 @@ const ChatBox = ({ userId }) => {
     let taggedUserIds = users
       .filter((user) => taggedUsernames.includes(user.username))
       .map((user) => user.user_id);
-    const messageData = { classroomId, userId, message: newMessage };
+    let messageData = {};
+    if (reply) {
+      messageData = {
+        classroomId,
+        userId,
+        message: newMessage,
+        reply: reply.message_id || reply.messageId,
+      };
+    } else if (!reply) {
+      messageData = {
+        classroomId,
+        userId,
+        message: newMessage,
+      };
+    }
     const tagNotificationData = { classroomId, taggedUserIds };
     try {
       await sendMessage(messageData);
@@ -164,6 +179,7 @@ const ChatBox = ({ userId }) => {
       }
       setNewMessage("");
       setMentionSuggestions([]);
+      handleCancelReply();
     } catch (error) {
       console.error("Lỗi gửi tin nhắn:", error);
     }
@@ -209,7 +225,12 @@ const ChatBox = ({ userId }) => {
     setSelectedIndex(0);
     setTimeout(() => inputRef.current?.focus(), 0);
   };
-
+  const addSelectUserInReply = (username) => {
+    setNewMessage((prev) => (prev ? `${prev} @${username} ` : `@${username} `));
+    setMentionSuggestions([]);
+    setSelectedIndex(0);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
   // Xử lý phím
   const handleKeyDown = (e) => {
     if (mentionSuggestions.length > 0) {
@@ -229,11 +250,23 @@ const ChatBox = ({ userId }) => {
       }
     } else if (e.key === "Enter") {
       handleSendMessage();
+    } else if (e.key === "Escape") {
+      handleCancelReply();
     }
   };
-
+  useEffect(() => {
+    if (!reply) return;
+  }, [reply]);
+  const handleCancelReply = () => {
+    try {
+      setReply();
+      setNewMessage("");
+    } catch (error) {
+      console.error("Lỗi rồi bạn êy: ", error);
+    }
+  };
   return (
-    <div className="flex flex-col  h-[90vh] md:h-[90vh] w-full max-w-full   mx-auto bg-white shadow-xl border border-gray-100 ">
+    <div className="flex flex-col  h-[90vh] md:h-[100vh] w-full max-w-full   mx-auto bg-white shadow-xl border border-gray-100 ">
       {selectedMessageDetail && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-5 rounded-lg shadow-lg w-96">
@@ -331,23 +364,37 @@ const ChatBox = ({ userId }) => {
                         {!isCurrentUser && (msg.User?.fullname || msg.fullname)}
                       </span>
 
-                      <div className="flex items-center">
-                        {msg.taggedUsers && msg.taggedUsers.length > 0 && (
-                          <span className="text-cyan-300 font-bold mr-1 inline-flex">
-                            {msg.taggedUsers.map((user, i) => (
-                              <span key={i}>@{user.username}</span>
-                            ))}
-                          </span>
-                        )}
-                        <span className="text-sm break-words">
-                          {msg.status === 0 ? (
-                            <span className="italic text-gray-400">
-                              Tin nhắn đã thu hồi
+                      <div className="flex flex-col items-start">
+                        {msg.reply_message && msg.status !== 0 && (
+                          <div className="flex flex-col p-2 mb-2 text-sm rounded-lg bg-gray-200 text-gray-700 border-l-4 border-blue-400">
+                            <span className="font-semibold text-blue-600">
+                              {msg.reply_fullname}
                             </span>
-                          ) : (
-                            msg.message
-                          )}
-                        </span>
+                            <span className="ml-1 italic">
+                              {msg.reply_message}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          {msg.taggedUsers &&
+                            msg.taggedUsers.length > 0 &&
+                            msg.status !== 0 && (
+                              <span className="text-cyan-300 font-bold mr-1 inline-flex">
+                                {msg.taggedUsers.map((user, i) => (
+                                  <span key={i}>@{user.username}</span>
+                                ))}
+                              </span>
+                            )}
+                          <span className="text-sm break-words">
+                            {msg.status === 0 ? (
+                              <span className="italic text-gray-400">
+                                Tin nhắn đã thu hồi
+                              </span>
+                            ) : (
+                              msg.message
+                            )}
+                          </span>
+                        </div>
                       </div>
                       <span
                         className={`text-xs ${
@@ -387,6 +434,17 @@ const ChatBox = ({ userId }) => {
                       >
                         Xem chi tiết
                       </li>
+                      <li
+                        onClick={() => {
+                          setReply(msg);
+                          if (!isCurrentUser) {
+                            addSelectUserInReply(msg.username);
+                          }
+                        }}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-all duration-200"
+                      >
+                        Trả lời
+                      </li>
                     </ul>
                   )}
               </div>
@@ -399,34 +457,62 @@ const ChatBox = ({ userId }) => {
       {/* Input */}
       <div className="p-4 bg-white border-t border-gray-200 rounded-b-2xl">
         <div className="relative flex gap-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={newMessage}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Gửi tin nhắn..."
-            className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-sm text-gray-800 placeholder-gray-400 transition-all"
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
-            className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-3 rounded-xl hover:from-indigo-600 hover:to-purple-600 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+          <div className="flex-column flex-1">
+            {reply && (
+              <div className="flex items-center bg-gray-100 p-2 rounded-lg relative">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500">
+                    Đang trả lời{" "}
+                    {(reply.userId || reply.user_id) !== userId && (
+                      <span className="font-semibold text-gray-700">
+                        @{reply.fullname}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-sm text-gray-600 truncate">
+                    {reply.message}
+                  </p>
+                </div>
+                <button
+                  onClick={handleCancelReply}
+                  className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 transition"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <div className="flex mt-1">
+              <input
+                ref={inputRef}
+                type="text"
+                value={newMessage}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Gửi tin nhắn..."
+                className="flex-1 p-3 mr-1 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-sm text-gray-800 placeholder-gray-400 transition-all"
               />
-            </svg>
-          </button>
+              <button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim()}
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-3 rounded-xl hover:from-indigo-600 hover:to-purple-600 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
           {mentionSuggestions.length > 0 && (
             <ul className="absolute bottom-full left-0 w-64 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto mb-2 z-20">
               {mentionSuggestions.map((user, index) => (
