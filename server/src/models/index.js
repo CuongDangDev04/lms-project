@@ -20,6 +20,7 @@ const QuestionOption = require("./question_option.model");
 const ExamQuestion = require("./exam_question.model");
 const Result = require("./result.model");
 const ResultAnswer = require("./result_answer.model");
+const ExamProgress = require("./exam_progress.model");
 
 // 1. User - Role (1-N)
 Role.hasMany(User, { foreignKey: "role_id" });
@@ -157,6 +158,13 @@ ResultAnswer.belongsTo(Question, { foreignKey: "question_id" });
 QuestionOption.hasMany(ResultAnswer, { foreignKey: "selected_option_id" });
 ResultAnswer.belongsTo(QuestionOption, { foreignKey: "selected_option_id" });
 
+// 25. User - ExamProgress (1-N)
+User.hasMany(ExamProgress, { foreignKey: 'user_id' });
+ExamProgress.belongsTo(User, { foreignKey: 'user_id' });
+
+// 26. Exam - ExamProgress (1-N)
+Exam.hasMany(ExamProgress, { foreignKey: 'exam_id' });
+ExamProgress.belongsTo(Exam, { foreignKey: 'exam_id' });
 module.exports = {
   sequelize,
   User,
@@ -180,4 +188,5 @@ module.exports = {
   ExamQuestion,
   Result,
   ResultAnswer,
+  ExamProgress
 };

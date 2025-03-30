@@ -34,6 +34,17 @@ const Exam = sequelize.define(
             allowNull: false,
             defaultValue: DataTypes.NOW 
         },
+        deadline: {  
+            type: DataTypes.DATE,
+            allowNull: false, 
+            validate: {
+                isAfterStart(value) {
+                    if (new Date(value) <= new Date(this.start_time)) {
+                        throw new Error('Deadline must be after start_time');
+                    }
+                },
+            },
+        },
         hide_results: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
