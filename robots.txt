@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://lmsclient-nine.vercel.app/sitemap.xml

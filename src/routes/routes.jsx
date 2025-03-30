@@ -37,10 +37,12 @@ import TakeExamPage from "../pages/users/TakeExamPage";
 import ExamResultPage from "../pages/users/ExamResultPage";
 import ExamResults from "../pages/academicAffairs/ExamResults";
 import ListExams from "../pages/users/ListExams";
+import Landing from "../pages/landingpage";
 
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/dashboard" element={<Landing />} />
       {/* Route cho Admin */}
       <Route path="/admin" element={<PrivateRoute allowedRoles={[3]} />}>
         <Route element={<AdminLayout />}>
@@ -50,6 +52,7 @@ const AppRoutes = () => {
         </Route>
       </Route>
 
+      {/**Route cho giáo vụ */}
       <Route path="/eduAffair" element={<PrivateRoute allowedRoles={[4]} />}>
         <Route element={<EduAffairLayout />}>
           <Route index element={<Dashboard />} />
@@ -95,7 +98,6 @@ const AppRoutes = () => {
           <Route path="exam/:examId" element={<TakeExamPage />} />
           <Route path="exam/:examId/result" element={<ExamResultPage />} />
           <Route path="/profile" element={<Profile />} />
-          {/* Route mới cho GradeSubmission */}
           <Route
             path="/assignments/:assignmentId/grade"
             element={<GradeSubmission />}
