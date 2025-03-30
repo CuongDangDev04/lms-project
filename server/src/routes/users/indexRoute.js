@@ -10,6 +10,7 @@ const assignmentRoute = require('./assignmentRoute');
 const lectureRoute = require('../../routes/users/lectureRoute')
 const instructorRoute = require('../../routes/users/instructorRoute')
 const submissionRoute = require('../../routes/users/submissionRoute')
+const quizRoute = require('../../routes/users/quizRoute')
 const { assign } = require('nodemailer/lib/shared');
 const gradeRoute = require('./gradeRoute')
 //Xuat route su dung
@@ -22,6 +23,7 @@ router.use('/assignments', assignmentRoute);
 router.use('/lectures', lectureRoute);
 router.use('/instructor', instructorRoute)
 router.use('/submission', submissionRoute)
+router.use('/quiz',quizRoute )
 module.exports = router;
 
 
