@@ -208,3 +208,17 @@ export const importStudentsToClassroom = async (classroomId, file) => {
         throw new Error('Lỗi khi nhập sinh viên từ file: ' + error.message);
     }
 };
+
+export const removeStudentFromClassroom = async (classroomId, studentId) => {
+    try {
+        const response = await api.delete(`${API_URL}/classrooms/${classroomId}/${studentId}`);
+        return response.data;
+    } catch (error) {
+        if (error.response) {
+            const { status, data } = error.response;
+            throw { status, message: data?.message || 'Lỗi từ server không xác định!' };
+        } else {
+            throw { status: 500, message: 'Lỗi mạng hoặc không thể kết nối đến server!' };
+        }
+    }
+}
