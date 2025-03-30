@@ -76,6 +76,7 @@ const ListExams = () => {
                     <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Tiêu đề bài thi</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Thời gian</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Bắt đầu</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Hạn chót</th> {/* Thêm cột Hạn chót */}
                     <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Hành động</th>
                   </tr>
                 </thead>
@@ -90,6 +91,12 @@ const ListExams = () => {
                       <td className="px-4 py-3 text-sm text-gray-900">{exam.duration} phút</td>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         {new Date(exam.start_time).toLocaleString("vi-VN", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {new Date(exam.deadline).toLocaleString("vi-VN", {
                           dateStyle: "medium",
                           timeStyle: "short",
                         })}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Thêm useNavigate
+import { useNavigate, useParams } from 'react-router-dom';
 import { createExam, createExamFromWord, getAllClassrooms, getExamsByClassroom } from '../../services/quizService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -40,13 +40,14 @@ const modalStyles = `
 `;
 
 const CreateExam = () => {
-  const navigate = useNavigate(); // Khởi tạo useNavigate
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [classroomId, setClassroomId] = useState('');
   const [filterClassroomId, setFilterClassroomId] = useState('');
   const [questions, setQuestions] = useState([]);
   const [duration, setDuration] = useState('');
   const [startTime, setStartTime] = useState('');
+  const [deadline, setDeadline] = useState('');
   const [hideResults, setHideResults] = useState(false);
   const [file, setFile] = useState(null);
   const [classrooms, setClassrooms] = useState([]);
@@ -59,7 +60,7 @@ const CreateExam = () => {
   const [isExamPreviewOpen, setIsExamPreviewOpen] = useState(false);
   const [createdExam, setCreatedExam] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
-
+  const [showButton, setShowButton] = useState(false);
   useEffect(() => {
     const fetchClassrooms = async () => {
       setLoading(true);
@@ -121,13 +122,17 @@ const CreateExam = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title || !classroomId || !duration) {
-      toast.error('Vui lòng nhập tiêu đề, chọn lớp học và thời gian làm bài!');
+    if (!title || !classroomId || !duration || !deadline) {
+      toast.error('Vui lòng nhập tiêu đề, chọn lớp học, thời gian làm bài và hạn chót!');
       return;
     }
     const parsedDuration = parseInt(duration);
     if (isNaN(parsedDuration) || parsedDuration < 1) {
       toast.error('Thời gian làm bài phải là số nguyên lớn hơn hoặc bằng 1 phút!');
+      return;
+    }
+    if (new Date(deadline) <= new Date(startTime || new Date())) {
+      toast.error('Hạn chót phải sau thời gian bắt đầu!');
       return;
     }
     if (questions.length === 0 || questions.every(q => !q.content)) {
@@ -144,18 +149,16 @@ const CreateExam = () => {
     }
     setLoading(true);
     try {
-      console.log('Dữ liệu câu hỏi trước khi gửi:', questions);
       const examData = {
         title,
         classroom_id: parseInt(classroomId),
         questions,
         duration: parsedDuration,
         start_time: startTime || new Date().toISOString(),
+        deadline,
         hide_results: Boolean(hideResults),
       };
-      console.log('Dữ liệu gửi đi:', examData);
       const response = await createExam(examData);
-      console.log('Response từ API:', response);
       toast.success('Tạo bài thi thành công!');
       setCreatedExam(response.exam);
       setIsPreviewOpen(true);
@@ -164,6 +167,7 @@ const CreateExam = () => {
       setQuestions([]);
       setDuration('');
       setStartTime('');
+      setDeadline('');
       setHideResults(false);
       setIsExamFormOpen(false);
     } catch (err) {
@@ -176,13 +180,17 @@ const CreateExam = () => {
 
   const handleFileSubmit = async (e) => {
     e.preventDefault();
-    if (!title || !classroomId || !file || !duration) {
-      toast.error('Vui lòng nhập tiêu đề, chọn lớp học, thời gian làm bài và tải lên file Word!');
+    if (!title || !classroomId || !file || !duration || !deadline) {
+      toast.error('Vui lòng nhập tiêu đề, chọn lớp học, thời gian làm bài, hạn chót và tải lên file Word!');
       return;
     }
     const parsedDuration = parseInt(duration);
     if (isNaN(parsedDuration) || parsedDuration < 1) {
       toast.error('Thời gian làm bài phải là số nguyên lớn hơn hoặc bằng 1 phút!');
+      return;
+    }
+    if (new Date(deadline) <= new Date(startTime || new Date())) {
+      toast.error('Hạn chót phải sau thời gian bắt đầu!');
       return;
     }
     setLoading(true);
@@ -193,6 +201,7 @@ const CreateExam = () => {
       formData.append('file', file);
       formData.append('duration', parsedDuration);
       formData.append('start_time', startTime || new Date().toISOString());
+      formData.append('deadline', deadline);
       formData.append('hide_results', hideResults.toString());
       const response = await createExamFromWord(formData);
       toast.success('Tạo bài thi từ file Word thành công!');
@@ -202,6 +211,7 @@ const CreateExam = () => {
         Questions: response.exam.questions || [],
         duration: response.exam.duration,
         start_time: response.exam.start_time,
+        deadline: response.exam.deadline,
         hide_results: response.exam.hide_results,
         exam_id: response.exam.exam_id,
       };
@@ -212,6 +222,7 @@ const CreateExam = () => {
       setFile(null);
       setDuration('');
       setStartTime('');
+      setDeadline('');
       setHideResults(false);
       setIsUploadOpen(false);
     } catch (err) {
@@ -225,6 +236,10 @@ const CreateExam = () => {
     setSelectedExam(exam);
     setIsExamPreviewOpen(true);
   };
+  const class_room_id = useParams().classroomId;
+  const handleViewResults = () => {
+    navigate(`/courseDetail/${class_room_id}/exam-results/`); // Chuyển hướng đến trang kết quả thi
+  };
 
   return (
     <div className="bg-gray-50 p-4 sm:p-6 lg:p-10">
@@ -237,31 +252,22 @@ const CreateExam = () => {
           <div className="flex gap-4">
             <button
               onClick={() => setIsExamFormOpen(true)}
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold text-sm"
+              className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold text-sm"
             >
               Tạo bằng form
             </button>
-            <WordUploadModal
-              title={title}
-              setTitle={setTitle}
-              classroomId={classroomId}
-              setClassroomId={setClassroomId}
-              duration={duration}
-              setDuration={setDuration}
-              startTime={startTime}
-              setStartTime={setStartTime}
-              hideResults={hideResults}
-              setHideResults={setHideResults}
-              file={file}
-              setFile={setFile}
-              classrooms={classrooms}
-              loading={loading}
-              handleFileSubmit={handleFileSubmit}
-              handleFileChange={handleFileChange}
-              handleRemoveFile={handleRemoveFile}
-              isUploadOpen={isUploadOpen}
-              setIsUploadOpen={setIsUploadOpen}
-            />
+            <button
+              onClick={() => setIsUploadOpen(true)} // Mở modal tải file Word
+              className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold text-sm"
+            >
+              Tạo bằng file Word
+            </button>
+            <button
+              onClick={handleViewResults}
+              className="bg-gradient-to-r  from-blue-400 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold text-sm"
+            >
+              Xem kết quả thi
+            </button>
           </div>
         </div>
 
@@ -299,6 +305,8 @@ const CreateExam = () => {
           setDuration={setDuration}
           startTime={startTime}
           setStartTime={setStartTime}
+          deadline={deadline}
+          setDeadline={setDeadline}
           hideResults={hideResults}
           setHideResults={setHideResults}
           classrooms={classrooms}
@@ -307,6 +315,32 @@ const CreateExam = () => {
           addQuestion={addQuestion}
           isOpen={isExamFormOpen}
           setIsOpen={setIsExamFormOpen}
+        />
+
+        <WordUploadModal
+          title={title}
+          setTitle={setTitle}
+          classroomId={classroomId}
+          setClassroomId={setClassroomId}
+          duration={duration}
+          setDuration={setDuration}
+          startTime={startTime}
+          setStartTime={setStartTime}
+          deadline={deadline}
+          setDeadline={setDeadline}
+          hideResults={hideResults}
+          setHideResults={setHideResults}
+          file={file}
+          setFile={setFile}
+          classrooms={classrooms}
+          loading={loading}
+          setLoading={setLoading}
+          handleFileSubmit={handleFileSubmit}
+          handleFileChange={handleFileChange}
+          handleRemoveFile={handleRemoveFile}
+          isUploadOpen={isUploadOpen}
+          setIsUploadOpen={setIsUploadOpen}
+          showButton={showButton}
         />
 
         <ExamPreviewModal exam={createdExam} open={isPreviewOpen} onOpenChange={setIsPreviewOpen} />

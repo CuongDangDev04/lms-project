@@ -63,7 +63,11 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { name: "Thành viên", path: "members", icon: Users },
     { name: "Bài tập", path: "assignments", icon: ClipboardList },
     { name: "Bài giảng", path: "lectures", icon: Presentation },
-    { name: "Bài thi", path: `list-exam`, icon: ClipboardList },
+    {
+      name: "Bài thi",
+      path: userRole === 2 ? "create-exam" : "list-exam", // Thay đổi path dựa trên userRole
+      icon: ClipboardList
+    },
   ];
   if (userRole === 2) {
     sidebarItems.push({
@@ -190,10 +194,10 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
           );
         })}
       </motion.ul>
-      <div className="p-2 md:p-3 pb-8 border-t border-gray-100">
+      <div className="p-2 md:p-3 pb-8 mb-10 border-t border-gray-100">
         <Link
           to={`/classroom/${classroomId}`}
-          className="flex items-center justify-center bg-blue-600 text-white font-semibold 
+          className="flex items-center justify-center bg-gradient-to-r from-blue-400 to-blue-600 text-white font-semibold 
                w-full py-2 md:py-3 rounded-md hover:bg-blue-700 transition 
                text-sm md:text-base"
         >

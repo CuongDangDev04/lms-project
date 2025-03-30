@@ -4,8 +4,8 @@ import QuestionInput from './QuestionInput';
 
 const ExamFormModal = ({
   title, setTitle, classroomId, setClassroomId, questions, setQuestions,
-  duration, setDuration, startTime, setStartTime, hideResults, setHideResults,
-  classrooms, loading, handleSubmit, addQuestion, isOpen, setIsOpen
+  duration, setDuration, startTime, setStartTime, deadline, setDeadline, // Thêm deadline
+  hideResults, setHideResults, classrooms, loading, handleSubmit, addQuestion, isOpen, setIsOpen
 }) => {
   return (
     <ModalCustom
@@ -69,6 +69,18 @@ const ExamFormModal = ({
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1.5">Hạn chót nộp bài</label>
+          <input
+            type="datetime-local"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-sm"
+            disabled={loading}
+            required // Bắt buộc nhập
+          />
+        </div>
+
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -98,14 +110,14 @@ const ExamFormModal = ({
           <button
             type="button"
             onClick={addQuestion}
-            className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3 rounded-full hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold transform hover:-translate-y-1 text-sm"
+            className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-6 py-3 rounded-full hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold transform hover:-translate-y-1 text-sm"
             disabled={loading}
           >
             Thêm câu hỏi
           </button>
           <button
             type="submit"
-            className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3 rounded-full hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold transform hover:-translate-y-1 text-sm"
+            className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-6 py-3 rounded-full hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold transform hover:-translate-y-1 text-sm"
             disabled={loading}
           >
             {loading ? "Đang tạo..." : "Tạo bài thi"}
