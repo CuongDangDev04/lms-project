@@ -13,6 +13,7 @@
     "@daily-co/daily-js": "^0.77.0",
     "@fontsource/roboto": "^5.2.5",
     "@radix-ui/react-dialog": "^1.1.6",
+    "@vercel/analytics": "^1.5.0",
     "axios": "^1.7.9",
     "chart.js": "^4.4.8",
     "date-fns": "^4.1.0",
