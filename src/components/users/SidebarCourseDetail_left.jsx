@@ -63,6 +63,7 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { name: "Thành viên", path: "members", icon: Users },
     { name: "Bài tập", path: "assignments", icon: ClipboardList },
     { name: "Bài giảng", path: "lectures", icon: Presentation },
+    { name: "Bài thi", path: `list-exam`, icon: ClipboardList },
   ];
   if (userRole === 2) {
     sidebarItems.push({
@@ -168,7 +169,7 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 whileTap={{ scale: 0.95 }}
                 className={`flex items-center rounded-xl cursor-pointer transition-colors duration-200 w-full
                   ${isActive
-                    ? "bg-blue-500 text-white"
+                    ? "bg-gradient-to-r from-blue-400 to-blue-600 text-white"
                     : "text-gray-700 hover:bg-gray-100"
                   }
                   p-2 md:p-3`}

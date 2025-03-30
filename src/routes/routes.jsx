@@ -32,6 +32,11 @@ import AddStudentToClass from "../pages/academicAffairs/addStudentToClass";
 import { NotFound } from "../pages/errors/NotFound";
 import EduAffairLayout from "../layouts/EduAffairLayout";
 import GradeManagement from "../pages/instructor/GradeManagement";
+import CreateExam from "../pages/academicAffairs/CreateExam";
+import TakeExamPage from "../pages/users/TakeExamPage";
+import ExamResultPage from "../pages/users/ExamResultPage";
+import ExamResults from "../pages/academicAffairs/ExamResults";
+import ListExams from "../pages/users/ListExams";
 
 const AppRoutes = () => {
   return (
@@ -51,6 +56,9 @@ const AppRoutes = () => {
           <Route path="manager-courses" element={<CoursesManager />} />
           <Route path="manager-classes" element={<ClassesManager />} />
           <Route path="manager-assign" element={<AssignmentManager />} />
+          <Route path="manager-assign/create-exam" element={<CreateExam />} />
+          <Route path="manager-assign/exam-results" element={<ExamResults />} />
+          <Route path="manager-assign/exam-results/:examId" element={<ExamResults />} />
           <Route
             path="manager-assign/unassigned-classrooms"
             element={<UnAssigmentManager />}
@@ -82,7 +90,10 @@ const AppRoutes = () => {
             <Route path="assignments" element={<Assigments />} />
             <Route path="lectures" element={<Lectures />} />
             <Route path="grades" element={<GradeManagement />} />
+            <Route path="list-exam" element={<ListExams />} />
           </Route>
+          <Route path="exam/:examId" element={<TakeExamPage />} />
+          <Route path="exam/:examId/result" element={<ExamResultPage />} />
           <Route path="/profile" element={<Profile />} />
           {/* Route mới cho GradeSubmission */}
           <Route
