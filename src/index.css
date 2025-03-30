@@ -43,3 +43,24 @@
 .hidden-scrollbar::-webkit-scrollbar {
   display: none; /* Ẩn thanh cuộn trên Chrome, Safari */
 }
+.highlight {
+  animation: fadeHighlight 2s ease-out forwards;
+}
+@keyframes fadeHighlight {
+  0% {
+    background: linear-gradient(
+      to right,
+      #dbeafe,
+      #1e40af
+    ); /* Màu đậm ban đầu */
+    border: 2px solid #1e40af;
+  }
+  50% {
+    background: linear-gradient(to right, #dbeafe, #1e40af); /* Nhạt dần */
+    border: 2px solid #dbeafe;
+  }
+  100% {
+    background: none; /* Trở về màu gốc */
+    border-color: transparent;
+  }
+}

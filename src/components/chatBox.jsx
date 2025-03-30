@@ -25,6 +25,8 @@ const ChatBox = ({ userId }) => {
   const [contextMenu, setContextMenu] = useState(null);
   const [selectedMessageDetail, setSelectedMessageDetail] = useState(null);
   const [reply, setReply] = useState(null);
+  const messageRefs = useRef({});
+  const [highlightedMessageId, setHighlightedMessageId] = useState(null);
   // Format thời gian
 
   const formatTimestamp = (timestamp) => {
@@ -232,6 +234,12 @@ const ChatBox = ({ userId }) => {
     setSelectedIndex(0);
     setTimeout(() => inputRef.current?.focus(), 0);
   };
+  const quickReply = (msg, isCurrentUser) => {
+    setReply(msg);
+    if (!isCurrentUser) {
+      addSelectUserInReply(msg.username);
+    }
+  };
   // Xử lý phím
   const handleKeyDown = (e) => {
     if (mentionSuggestions.length > 0) {
@@ -264,6 +272,32 @@ const ChatBox = ({ userId }) => {
       setNewMessage("");
     } catch (error) {
       console.error("Lỗi rồi bạn êy: ", error);
+    }
+  };
+  const scrollToMessage = (messageId) => {
+    if (!messageId) return;
+    const messageRef = messageRefs.current[messageId];
+    const chatBox = chatBoxRef.current;
+
+    if (messageRef && chatBox) {
+      const messageTop = messageRef.offsetTop - chatBox.offsetTop;
+      const chatBoxHeight = chatBox.clientHeight;
+      const messageHeight = messageRef.offsetHeight;
+
+      const scrollPosition = messageTop - (chatBoxHeight - messageHeight) / 2;
+
+      chatBox.scrollTo({
+        top: scrollPosition,
+        behavior: "smooth",
+      });
+      setHighlightedMessageId(messageId);
+      setTimeout(() => {
+        setHighlightedMessageId(null);
+      }, 2000);
+    } else {
+      console.warn(
+        `Không tìm thấy ref cho tin nhắn với ID: ${messageId} hoặc chatBoxRef`
+      );
     }
   };
   return (
@@ -315,18 +349,22 @@ const ChatBox = ({ userId }) => {
                 u.user_id === msg.user_id ||
                 u.user_id === msg.User?.userId
             );
-
+            const isHighlighted =
+              highlightedMessageId === msg.message_id ||
+              highlightedMessageId === msg.messageId;
             return (
               <div
                 key={msg.message_id}
-                className={`flex ${isCurrentUser ? "justify-end" : "justify-start"
-                  } mb-4`}
-                onContextMenu={(e) =>
-                  isCurrentUser && handleContextMenu(e, msg.message_id)
+                ref={(el) =>
+                  (messageRefs.current[msg.message_id || msg.messageId] = el)
                 }
+                className={`flex ${
+                  isCurrentUser ? "justify-end" : "justify-start"
+                } mb-4 ${isHighlighted ? "bg-[#dbeafe]" : ""}
+                }`}
               >
                 <div
-                  className="flex items-end gap-2 max-w-[70%]"
+                  className={"flex items-end gap-2 max-w-[70%] "}
                   onContextMenu={(e) => handleContextMenu(e, msg)}
                 >
                   {!isCurrentUser && (
@@ -343,38 +381,73 @@ const ChatBox = ({ userId }) => {
                         />
                       ) : null}
                       <div
-                        className={`w-full h-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-medium shadow-md ${sender?.avt ? "hidden" : "flex"
-                          }`}
+                        className={`w-full h-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-medium shadow-md ${
+                          sender?.avt ? "hidden" : "flex"
+                        }`}
                       >
                         {msg.username?.charAt(0).toUpperCase() || "?"}
                       </div>
                     </div>
                   )}
                   <div
-                    className={`relative p-3 rounded-2xl ${isCurrentUser
-                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                      : "bg-white text-gray-800 border border-gray-200"
-                      } shadow-md`}
+                    className={`relative p-3 rounded-2xl ${
+                      isCurrentUser
+                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                        : "bg-white text-gray-800 border border-gray-200"
+                    } shadow-md`}
+                    onDoubleClick={() => {
+                      quickReply(msg, isCurrentUser);
+                    }}
                   >
                     <div className="flex flex-col">
                       <span
-                        className={`text-sm font-semibold ${isCurrentUser ? "text-indigo-100" : "text-indigo-600"
-                          }`}
+                        className={`text-sm font-semibold ${
+                          isCurrentUser ? "text-indigo-100" : "text-indigo-600"
+                        }`}
+                        onDoubleClick={(e) => e.stopPropagation()}
                       >
                         {!isCurrentUser && (msg.User?.fullname || msg.fullname)}
                       </span>
 
-                      <div className="flex flex-col items-start">
+                      <div
+                        className="flex flex-col items-start "
+                        onDoubleClick={(e) => e.stopPropagation()}
+                      >
                         {msg.reply_message && msg.status !== 0 && (
-                          <div className="flex flex-col p-2 mb-2 text-sm rounded-lg bg-gray-200 text-gray-700 border-l-4 border-blue-400">
+                          <div
+                            className="flex flex-col p-2 mb-2 text-sm rounded-lg bg-gray-200 text-gray-700 border-l-4 border-blue-400 cursor-pointer"
+                            onClick={() => {
+                              if (msg.status)
+                                scrollToMessage(msg.reply_message_id);
+                            }}
+                          >
                             <span className="font-semibold text-blue-600">
                               {msg.reply_fullname}
                             </span>
-                            <span className="ml-1 italic">
-                              {msg.reply_message}
-                            </span>
+                            <div>
+                              {msg.reply_taggedUsers &&
+                                msg.reply_taggedUsers.length > 0 &&
+                                msg.reply_status !== 0 && (
+                                  <span className="ml-1 italic">
+                                    {msg.reply_taggedUsers.map((user, i) => (
+                                      <span key={i}>@{user.username}</span>
+                                    ))}
+                                  </span>
+                                )}
+                              {msg.reply_status !== 0 && (
+                                <span className="ml-1 italic">
+                                  {msg.reply_message}
+                                </span>
+                              )}
+                              {msg.reply_status === 0 && (
+                                <span className="ml-1 italic">
+                                  Tin nhắn đã thu hồi
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )}
+
                         <div>
                           {msg.taggedUsers &&
                             msg.taggedUsers.length > 0 &&
@@ -397,8 +470,9 @@ const ChatBox = ({ userId }) => {
                         </div>
                       </div>
                       <span
-                        className={`text-xs ${isCurrentUser ? "text-indigo-200" : "text-gray-500"
-                          }`}
+                        className={`text-xs ${
+                          isCurrentUser ? "text-indigo-200" : "text-gray-500"
+                        }`}
                       >
                         {formatTimestamp(msg.timestamp)}
                       </span>
@@ -428,7 +502,10 @@ const ChatBox = ({ userId }) => {
                         </li>
                       )}
                       <li
-                        onClick={() => setSelectedMessageDetail(msg)}
+                        onClick={() => {
+                          setSelectedMessageDetail(msg);
+                          console.log("hehehe: ", msg);
+                        }}
                         className="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-all duration-200"
                       >
                         Xem chi tiết
@@ -469,6 +546,12 @@ const ChatBox = ({ userId }) => {
                     )}
                   </p>
                   <p className="text-sm text-gray-600 truncate">
+                    {reply.taggedUsers &&
+                      reply.taggedUsers.length > 0 &&
+                      reply.status !== 0 &&
+                      reply.taggedUsers.map((user, i) => (
+                        <span key={i}>@{user.username} </span>
+                      ))}
                     {reply.message}
                   </p>
                 </div>
@@ -518,10 +601,11 @@ const ChatBox = ({ userId }) => {
                 <li
                   key={user.user_id}
                   onClick={() => handleSelectUser(user.username)}
-                  className={`px-4 py-2 text-sm cursor-pointer transition-all ${index === selectedIndex
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "hover:bg-gray-50"
-                    }`}
+                  className={`px-4 py-2 text-sm cursor-pointer transition-all ${
+                    index === selectedIndex
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "hover:bg-gray-50"
+                  }`}
                 >
                   <span className="font-medium text-indigo-600">
                     @{user.fullname}
