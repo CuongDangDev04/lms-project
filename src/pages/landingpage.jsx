@@ -283,7 +283,7 @@ const Landing = () => {
                             <div className="p-4 sm:p-6 bg-white shadow-md rounded-xl text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300 max-w-sm mx-auto" data-aos="fade-up" data-aos-delay={index * 100}>
                                 <img src={testimonial.image} alt={`Ảnh đại diện của ${testimonial.name}`} className="w-16 h-16 rounded-full mx-auto mb-4" loading="lazy" />
                                 <p className="text-gray-600 italic mb-4 text-sm sm:text-base line-clamp-4">"{testimonial.quote}"</p>
-                                <h4 className="text-sm sm:text-base md:text-lg font-semibold text-gray-800">{testimonial.name}</h4>
+                                <p className="text-sm sm:text-base md:text-lg font-semibold text-gray-800">{testimonial.name}</p>
                             </div>
                         </SwiperSlide>
                     ))}
