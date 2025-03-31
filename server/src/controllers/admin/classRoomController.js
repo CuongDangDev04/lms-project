@@ -1,4 +1,4 @@
-const { Classroom, Class, Course, ClassStatus, Schedule, User, UserParticipation } = require('../../models/index');
+const { Classroom, Class, Course, ClassStatus, Schedule, User, UserParticipation, ChatMessage } = require('../../models/index');
 const { Op } = require('sequelize');
 const { parseExcelFile } = require('../../services/excelService');
 
@@ -390,6 +390,59 @@ const importStudentsToClassroom = async (req, res) => {
         res.status(500).json({ message: 'Lỗi khi nhập danh sách sinh viên', error: error.message });
     }
 };
+
+const deleteStudentInClassroom = async (req, res) => {
+    try {
+        const { classroomId, studentId } = req.params;
+
+        // Kiểm tra lớp học phần có tồn tại không
+        const classroom = await Classroom.findByPk(classroomId);
+        if (!classroom) {
+            return res.status(404).json({ message: 'Lớp học phần không tồn tại' });
+        }
+
+        // Kiểm tra sinh viên có tồn tại không
+        const student = await User.findByPk(studentId);
+        if (!student) {
+            return res.status(404).json({ message: 'Sinh viên không tồn tại' });
+        }
+
+        const userParticipation = await UserParticipation.findOne({
+            where: { classroom_id: classroomId, user_id: studentId },
+        });
+
+        if (!userParticipation) {
+            return res.status(404).json({ message: 'Sinh viên không có trong lớp học phần này' });
+        }
+
+        // Lấy tất cả message của sinh viên trong lớp
+        const messages = await ChatMessage.findAll({
+            where: { participate_id: userParticipation.participate_id },
+        });
+
+        // Xóa đệ quy các tin nhắn reply trước
+        for (const message of messages) {
+            await ChatMessage.destroy({
+                where: { reply: message.message_id }, // Xóa các tin nhắn reply đến message này
+            });
+        }
+
+        //xoa reply forgien key
+        await ChatMessage.destroy({
+            where: { reply: userParticipation.participate_id },
+        });
+
+        // Xóa sinh viên khỏi lớp học phần
+        await UserParticipation.destroy({
+            where: { classroom_id: classroomId, user_id: studentId },
+        });
+
+        res.status(200).json({ message: 'Xóa sinh viên khỏi lớp học phần thành công' });
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi khi xóa sinh viên', error: error.message });
+    }
+}
+
 // Lấy danh sách lớp học phần (để hoàn thiện các API khác)
 const getClassrooms = async (req, res) => {
     try {
@@ -432,4 +485,5 @@ module.exports = {
     addStudentToClassroom,
     importStudentsToClassroom,
     getClassrooms,
+    deleteStudentInClassroom
 };

@@ -32,4 +32,6 @@ router.post('/:classroomId/students/import', upload.single('file'), classroomCon
 // API bổ sung: Lấy danh sách lớp học phần (có thể dùng cho các role khác nếu cần)
 router.get('/list', classroomController.getClassrooms);
 
+router.delete('/:classroomId/:studentId', classroomController.deleteStudentInClassroom);
+
 module.exports = router;

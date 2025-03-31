@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { UserParticipation, Assignment, Submission, Grade, User } = require("../../models/index");
+const { UserParticipation, Assignment, Submission, Grade, User, Result, Exam } = require("../../models/index");
 
 const getClassGrades = async (req, res) => {
     try {
@@ -32,26 +32,21 @@ const getClassGrades = async (req, res) => {
             attributes: ["assignment_id", "title"],
         });
 
+        // Lấy danh sách tất cả bài thi của lớp
+        const exams = await Exam.findAll({
+            where: { classroom_id: classroomId },
+            attributes: ["exam_id", "title"],
+        });
+
         // Lấy điểm số của từng sinh viên
         const studentGrades = await Promise.all(
             students.map(async (student) => {
                 const userId = student.User.user_id;
-                console.log("userId", userId);
-                // const grades = await Submission.findAll({
-                //     where: { user_id: userId },
-                //     include: [
-                //         {
-                //             model: Grade,
-                //             attributes: ["score", "feedback"],
-                //         },
-                //         {
-                //             model: Assignment,
-                //             where: { user_participation_id: teacherParticipation.participate_id },
-                //             attributes: ["assignment_id"],
-                //         },
-                //     ],
-                // });
+                const studentParticipation = await UserParticipation.findOne({
+                    where: { user_id: userId, classroom_id: classroomId }
+                });
 
+                // Lấy điểm bài tập
                 const grades = await Grade.findAll({
                     include: [
                         {
@@ -66,34 +61,87 @@ const getClassGrades = async (req, res) => {
                     ],
                 });
 
-                console.log("grades", grades);
+                // Tạo object điểm số cho bài tập
+                const assignmentGradeMap = {};
+                let totalAssignmentScore = 0;
+                let assignmentCount = 0;
 
-                // Tạo object điểm số cho từng bài tập
-                const gradeMap = {};
                 grades.forEach((grade) => {
                     const assignmentId = grade.Assignment.assignment_id;
                     const score = grade.score;
                     const feedback = grade.feedback;
 
-                    if (!gradeMap[assignmentId]) {
-                        gradeMap[assignmentId] = {
+                    if (!assignmentGradeMap[assignmentId]) {
+                        assignmentGradeMap[assignmentId] = {
                             score: null,
                             feedback: null,
                         };
                     }
 
-                    gradeMap[assignmentId].score = score;
-                    gradeMap[assignmentId].feedback = feedback;
+                    assignmentGradeMap[assignmentId].score = score;
+                    assignmentGradeMap[assignmentId].feedback = feedback;
+                    totalAssignmentScore += parseInt(score) || 0;
+                    if (score !== null) assignmentCount++;
                 });
 
-                console.log("gradeMap", gradeMap);
+                // Tính điểm trung bình bài tập
+                const assignmentAverage = assignmentCount > 0 ? totalAssignmentScore / assignmentCount : 0;
+
+                // Lấy điểm bài thi đã làm
+                const examResults = await Result.findAll({
+                    where: { participate_id: studentParticipation.participate_id },
+                    include: [
+                        {
+                            model: Exam,
+                            where: { classroom_id: classroomId },
+                            attributes: ["exam_id", "title"],
+                        },
+                    ],
+                });
+
+                // Tạo object điểm số cho tất cả bài thi (đã làm và chưa làm)
+                const examGradeMap = {};
+                let totalExamScore = 0;
+                let examCount = exams.length;
+
+                // Khởi tạo tất cả bài thi với điểm 0
+                exams.forEach((exam) => {
+                    examGradeMap[exam.exam_id] = {
+                        score: 0,
+                        title: exam.title,
+                        status: "Chưa làm"
+                    };
+                });
+
+                // Cập nhật điểm cho các bài thi đã làm
+                examResults.forEach((result) => {
+                    const examId = result.Exam.exam_id;
+                    const score = result.score;
+
+                    examGradeMap[examId] = {
+                        score: score / 10,
+                        title: result.Exam.title,
+                        status: "Đã làm"
+                    };
+                    totalExamScore += score || 0;
+                });
+
+                // Tính điểm trung bình bài thi (bao gồm cả bài chưa làm = 0)
+                const examAverage = examCount > 0 ? totalExamScore / examCount : 0;
+                const texamAverage = examAverage / 10;
+                // Tính điểm trung bình tổng 
+                const finalAverage = ((assignmentAverage) + (texamAverage * 2)) / 3;
 
                 return {
                     user_id: userId,
                     fullname: student.User.fullname,
                     email: student.User.email,
                     username: student.User.username,
-                    grades: gradeMap,
+                    assignment_grades: assignmentGradeMap,
+                    exam_grades: examGradeMap,
+                    assignment_average: Number(assignmentAverage.toFixed(2)),
+                    exam_average: Number(texamAverage.toFixed(2)),
+                    final_average: Number(finalAverage.toFixed(2)),
                 };
             })
         );
@@ -102,6 +150,7 @@ const getClassGrades = async (req, res) => {
             message: "Lấy danh sách điểm số thành công",
             classroomId,
             assignments,
+            exams,
             students: studentGrades,
         });
     } catch (error) {
