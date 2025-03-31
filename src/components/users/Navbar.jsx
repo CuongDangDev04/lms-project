@@ -107,7 +107,7 @@ const Navbar = () => {
     try {
       await logout();
       toast.success("Đăng xuất thành công!");
-      setTimeout(() => navigate("/login"), 1000);
+      setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error) {
       console.error("Failed to logout:", error);
       toast.error("Đăng xuất thất bại!");
