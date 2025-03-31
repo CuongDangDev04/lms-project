@@ -1,17 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom'; // Thêm useNavigate
+import { useNavigate, useParams } from 'react-router-dom';
 import { ModalCustom } from '../admin/ui/ModalCustom';
 
 const ExamPreviewModal = ({ exam, open, onOpenChange }) => {
-  const navigate = useNavigate(); // Khởi tạo useNavigate
-
-  // Xác định mảng questions từ exam, xử lý cả "questions" hoặc "Questions"
+  const navigate = useNavigate();
   const questions = exam?.questions || exam?.Questions || [];
-
-  // Hàm xử lý khi nhấn nút "Xem kết quả thi"
+  const {classroomId} = useParams()
   const handleViewResults = () => {
     if (exam?.exam_id) {
-      navigate(`/admin/exam-results/${exam.exam_id}`);
+      navigate(`/courseDetail/${classroomId}/exam-results/${exam.exam_id}`);
     }
   };
 
@@ -28,10 +25,13 @@ const ExamPreviewModal = ({ exam, open, onOpenChange }) => {
           <div>
             <h3 className="text-lg font-semibold text-gray-700">Tiêu đề: {exam.title}</h3>
             <p className="text-sm text-gray-600">Thời gian: {exam.duration} phút</p>
-            <p className="text-sm text-gray-600">Ẩn kết quả: {exam.hide_results ? "Có" : "Không"}</p>
             <p className="text-sm text-gray-600">
               Thời gian bắt đầu: {new Date(exam.start_time).toLocaleString()}
             </p>
+            <p className="text-sm text-gray-600">
+              Hạn chót: {new Date(exam.deadline).toLocaleString()} {/* Hiển thị deadline */}
+            </p>
+            <p className="text-sm text-gray-600">Ẩn kết quả: {exam.hide_results ? "Có" : "Không"}</p>
           </div>
           <div>
             <h4 className="text-md font-semibold text-gray-700 mb-2">Danh sách câu hỏi</h4>
@@ -58,11 +58,10 @@ const ExamPreviewModal = ({ exam, open, onOpenChange }) => {
               <p className="text-sm text-gray-600">Không có câu hỏi nào được tạo.</p>
             )}
           </div>
-          {/* Nút Xem kết quả thi */}
           <div className="flex justify-end">
             <button
               onClick={handleViewResults}
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-2 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-sm font-semibold text-sm"
+              className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-6 py-2 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-sm font-semibold text-sm"
             >
               Xem kết quả thi
             </button>

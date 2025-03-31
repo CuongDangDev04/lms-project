@@ -43,6 +43,17 @@ export const getExamsByClassroom = async (classroomId) => {
   }
 };
 
+export const getClassRoomByTeacher = async (teacherId) => {
+  try {
+    const response = await api.get(`api/instructor/courses-by-teacher/${teacherId}`);
+    console.log("Courses by teacher:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách khóa học:", error);
+    throw error;
+  }
+}
+
 // 3. Lấy chi tiết bài thi
 export const getExamDetails = async (examId) => {
   try {
@@ -77,7 +88,9 @@ export const getResult = async (examId) => {
     const response = await api.get(`${URL_API}/exams/result/${examId}`);
     return response.data;
   } catch (error) {
-    console.error("Lỗi khi xem kết quả bài thi:", error);
+    if (error.response?.status !== 404) { // Chỉ log lỗi khác 404
+      console.error("Lỗi khi xem kết quả bài thi:", error);
+    }
     throw error;
   }
 };
@@ -110,6 +123,35 @@ export const getExamsByClassroomSimple = async (classroomId) => {
     return response.data;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách bài thi đơn giản:", error);
+    throw error;
+  }
+};
+// 9. Lưu tiến trình bài thi
+export const saveExamProgress = async (examId, userId, progress) => {
+  try {
+    const response = await api.post(`${URL_API}/exams/${examId}/progress`, {
+      user_id: userId,
+      startTime: progress.startTime,
+      answers: progress.answers,
+    }, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lưu tiến trình bài thi:", error);
+    throw error;
+  }
+};
+
+// 10. Lấy tiến trình bài thi
+export const getExamProgress = async (examId, userId) => {
+  try {
+    const response = await api.get(`${URL_API}/exams/${examId}/progress?user_id=${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy tiến trình bài thi:", error);
     throw error;
   }
 };

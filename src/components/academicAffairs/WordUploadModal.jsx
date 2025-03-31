@@ -4,15 +4,16 @@ import { FaFileWord, FaTrash } from 'react-icons/fa';
 
 const WordUploadModal = ({
   title, setTitle, classroomId, setClassroomId, duration, setDuration,
-  startTime, setStartTime, hideResults, setHideResults, file, setFile,
+  startTime, setStartTime, deadline, setDeadline, // Thêm deadline
+  hideResults, setHideResults, file, setFile,
   classrooms, loading, handleFileSubmit, handleFileChange, handleRemoveFile,
-  isUploadOpen, setIsUploadOpen
+  isUploadOpen, setIsUploadOpen,showButton = true
 }) => {
   return (
     <ModalCustom
       title="Tạo bài thi từ file Word"
-      triggerText="Tạo bài thi từ file Word"
-      triggerClass="bg-gradient-to-r from-green-800 to-teal-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg font-semibold transform hover:-translate-y-1 text-sm sm:text-base flex items-center gap-2"
+      triggerText={showButton ? "Tạo bài thi từ file Word" : ""}
+      triggerClass="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg font-semibold transform hover:-translate-y-1 text-sm sm:text-base flex items-center gap-2"
       open={isUploadOpen}
       onOpenChange={(open) => {
         setIsUploadOpen(open);
@@ -21,6 +22,7 @@ const WordUploadModal = ({
           setLoading(false);
           setDuration("");
           setStartTime("");
+          setDeadline(""); // Reset deadline
           setHideResults(false);
         }
       }}
@@ -76,6 +78,17 @@ const WordUploadModal = ({
             disabled={loading}
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1.5">Hạn chót nộp bài</label>
+          <input
+            type="datetime-local"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-sm"
+            disabled={loading}
+            required // Bắt buộc nhập
+          />
+        </div>
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -125,7 +138,7 @@ const WordUploadModal = ({
         </div>
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-2 rounded-lg hover:from-teal-600 hover:to-cyan-600 disabled:opacity-50 transition-all duration-300"
+          className="w-full bg-gradient-to-r from-blue-400 to-blue-600 text-white py-2 rounded-lg hover:from-teal-600 hover:to-cyan-600 disabled:opacity-50 transition-all duration-300"
           disabled={loading || !file}
         >
           {loading ? "Đang tạo..." : "Tạo bài thi"}

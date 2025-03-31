@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
-import Pagination from '../admin/Pagination'; // Import component Pagination
+import Pagination from '../admin/Pagination';
 
 const ExamList = ({ exams, examLoading, handleExamClick }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const examsPerPage = 5; // Số bài thi mỗi trang, bạn có thể thay đổi
+  const examsPerPage = 5;
 
-  // Tính toán số trang
   const totalPages = Math.ceil(exams.length / examsPerPage);
-
-  // Tính chỉ số bắt đầu và kết thúc của danh sách bài thi trên trang hiện tại
   const indexOfLastExam = currentPage * examsPerPage;
   const indexOfFirstExam = indexOfLastExam - examsPerPage;
   const currentExams = exams.slice(indexOfFirstExam, indexOfLastExam);
 
-  // Hàm xử lý khi thay đổi trang
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
@@ -45,13 +41,15 @@ const ExamList = ({ exams, examLoading, handleExamClick }) => {
                   Bắt đầu: {new Date(exam.start_time).toLocaleString()}
                 </p>
                 <p className="text-sm text-gray-600">
+                  Hạn chót: {new Date(exam.deadline).toLocaleString()} {/* Hiển thị deadline */}
+                </p>
+                <p className="text-sm text-gray-600">
                   Ẩn kết quả: {exam.hide_results ? "Có" : "Không"}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* Sử dụng component Pagination */}
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

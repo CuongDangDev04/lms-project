@@ -43,7 +43,7 @@ const ExamResultPage = () => {
       const userAnswer = result.ResultAnswers.find(
         (ra) => ra.question_id === question.question_id
       );
-      const correctOption = question.options?.find((opt) => opt.is_correct); // Sử dụng 'options'
+      const correctOption = question.options?.find((opt) => opt.is_correct);
 
       if (!userAnswer) {
         unanswered++;
@@ -59,10 +59,10 @@ const ExamResultPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="flex items-center gap-3">
-          <FaSpinner className="animate-spin text-teal-400 text-3xl" />
-          <span className="text-gray-500">Đang tải kết quả...</span>
+          <FaSpinner className="animate-spin text-teal-400 text-2xl sm:text-3xl" />
+          <span className="text-gray-500 text-sm sm:text-base">Đang tải kết quả...</span>
         </div>
       </div>
     );
@@ -70,8 +70,10 @@ const ExamResultPage = () => {
 
   if (!exam || !result) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600 text-lg">Không tìm thấy dữ liệu bài thi hoặc kết quả.</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <p className="text-gray-600 text-base sm:text-lg text-center">
+          Không tìm thấy dữ liệu bài thi hoặc kết quả.
+        </p>
       </div>
     );
   }
@@ -80,16 +82,23 @@ const ExamResultPage = () => {
   const totalQuestions = exam.Questions?.length || 0;
 
   return (
-    <div className="min-h-screen mt-20 bg-gray-50 flex">
-      {/* Phần nội dung chính */}
-      <div className="flex-1 p-6">
-        <header className="bg-white shadow-sm p-4 flex justify-between items-center mb-6 rounded-lg">
-          <h1 className="text-xl font-medium text-gray-700">
-            Kết quả bài thi: {exam.title}
-          </h1>
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row px-4 sm:px-6 lg:px-8 pt-20">
+      <div className="flex-1 p-4 sm:p-6">
+        <header className="bg-white shadow-sm p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 rounded-lg gap-4">
+          <div>
+            <h1 className="text-lg sm:text-xl font-medium text-gray-700">
+              Kết quả bài thi: {exam.title}
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              Hạn chót: {new Date(exam.deadline).toLocaleString("vi-VN", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </p>
+          </div>
           <button
-            onClick={() => navigate('/')}
-            className="px-4 py-2 rounded-full text-gray-600 font-medium border border-gray-200 hover:bg-gray-100 transition-all duration-200 flex items-center gap-2"
+            onClick={() => navigate("/")}
+            className="px-4 py-2 rounded-full text-gray-600 font-medium border border-gray-200 hover:bg-gray-100 transition-all duration-200 flex items-center gap-2 w-full sm:w-auto justify-center"
           >
             <FaArrowLeft /> Quay lại trang chủ
           </button>
@@ -101,7 +110,7 @@ const ExamResultPage = () => {
               (ra) => ra.question_id === question.question_id
             );
             const selectedOptionId = userAnswer ? userAnswer.selected_option_id : null;
-            const correctOption = question.options?.find((opt) => opt.is_correct); // Sử dụng 'options'
+            const correctOption = question.options?.find((opt) => opt.is_correct);
             const status = exam.hide_results
               ? selectedOptionId
                 ? "Đã chọn"
@@ -115,12 +124,12 @@ const ExamResultPage = () => {
             return (
               <div
                 key={question.question_id}
-                className="bg-white p-6 rounded-lg shadow-sm border border-gray-100"
+                className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100"
               >
-                <h2 className="text-lg font-medium text-gray-700 mb-4">
+                <h2 className="text-base sm:text-lg font-medium text-gray-700 mb-4">
                   Câu {qIndex + 1}
                 </h2>
-                <p className="text-gray-600 mb-4">{question.content}</p>
+                <p className="text-gray-600 mb-4 text-sm sm:text-base">{question.content}</p>
                 <div className="space-y-3">
                   {question.options?.map((option, optIndex) => (
                     <label
@@ -170,7 +179,7 @@ const ExamResultPage = () => {
                       )}
                     </label>
                   )) || (
-                    <p className="text-gray-500">Không có lựa chọn nào.</p>
+                    <p className="text-gray-500 text-sm">Không có lựa chọn nào.</p>
                   )}
                   {!selectedOptionId && (
                     <p className="text-sm text-gray-500 italic mt-2">
@@ -184,15 +193,14 @@ const ExamResultPage = () => {
         </div>
       </div>
 
-      {/* Sidebar */}
-      <div className="w-1/4 bg-teal-50 text-gray-700 p-4">
+      <div className="w-full md:w-1/4 bg-teal-50 mb-20 text-gray-700 p-4 md:p-6">
         <div className="mb-4">
           <h2 className="text-lg font-medium text-gray-600">Tổng quan kết quả</h2>
-          <p className="text-2xl font-bold text-teal-600">
+          <p className="text-xl sm:text-2xl font-bold text-teal-600">
             {exam.hide_results ? "Ẩn" : `${result.score}%`}
           </p>
           {!exam.hide_results && (
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               {stats.correct}/{totalQuestions} câu đúng
             </p>
           )}
@@ -205,13 +213,13 @@ const ExamResultPage = () => {
             </p>
           ) : (
             <>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Số câu đúng: <span className="text-green-600 font-semibold">{stats.correct}</span>
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Số câu sai: <span className="text-red-600 font-semibold">{stats.incorrect}</span>
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Số câu chưa trả lời: <span className="text-gray-600 font-semibold">{stats.unanswered}</span>
               </p>
             </>
@@ -219,7 +227,7 @@ const ExamResultPage = () => {
         </div>
         <div>
           <h2 className="text-lg font-medium text-gray-600 mb-2">Phiếu bài làm</h2>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {exam.Questions.map((question, index) => {
               const userAnswer = result.ResultAnswers.find(
                 (ra) => ra.question_id === question.question_id

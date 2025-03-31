@@ -4,7 +4,7 @@ import { getAllClassrooms, getExamsByClassroom, getExamResults } from "../../ser
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaSpinner } from "react-icons/fa";
-import Pagination from "../../components/admin/Pagination"; // Import component Pagination
+import Pagination from "../../components/admin/Pagination";
 
 const ExamResults = () => {
   const [classrooms, setClassrooms] = useState([]);
@@ -13,11 +13,10 @@ const ExamResults = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [resultsLoading, setResultsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1); // Trạng thái trang hiện tại
-  const [itemsPerPage] = useState(5); // Số bài thi trên mỗi trang (có thể tùy chỉnh)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
   const navigate = useNavigate();
   const { examId } = useParams();
-
   // Lấy danh sách lớp học
   useEffect(() => {
     const fetchClassrooms = async () => {
@@ -43,7 +42,7 @@ const ExamResults = () => {
         try {
           const data = await getExamsByClassroom(classroomId);
           setExams(data);
-          setCurrentPage(1); // Reset về trang 1 khi danh sách bài thi thay đổi
+          setCurrentPage(1);
         } catch (error) {
           console.error("Lỗi khi lấy danh sách bài thi:", error);
           toast.error("Lỗi khi tải danh sách bài thi!");
@@ -89,21 +88,19 @@ const ExamResults = () => {
     };
     fetchResults();
   }, [examId, classroomId, exams]);
-
+  const class_room_id = useParams().classroomId;  
   const handleExamClick = (examId) => {
-    navigate(`/admin/exam-results/${examId}`);
+    navigate(`/courseDetail/${class_room_id}/exam-results/${examId}`);
   };
 
-  // Tìm tiêu đề bài thi dựa trên examId
   const selectedExamTitle = exams.find((e) => e.exam_id === parseInt(examId))?.title || "Không xác định";
 
   // Logic phân trang
-  const totalPages = Math.ceil(exams.length / itemsPerPage); // Tính tổng số trang
-  const startIndex = (currentPage - 1) * itemsPerPage; // Chỉ số bắt đầu của trang hiện tại
-  const endIndex = startIndex + itemsPerPage; // Chỉ số kết thúc của trang hiện tại
-  const currentExams = exams.slice(startIndex, endIndex); // Lấy danh sách bài thi cho trang hiện tại
+  const totalPages = Math.ceil(exams.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentExams = exams.slice(startIndex, endIndex);
 
-  // Hàm xử lý thay đổi trang
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -111,12 +108,10 @@ const ExamResults = () => {
   return (
     <div className="bg-gray-100 min-h-screen p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
-        {/* Tiêu đề */}
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-6 text-center">
           Kết quả bài thi
         </h1>
 
-        {/* Dropdown chọn lớp học */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Chọn lớp học
@@ -136,7 +131,6 @@ const ExamResults = () => {
           </select>
         </div>
 
-        {/* Loading tổng thể */}
         {loading && (
           <div className="flex justify-center items-center mb-6">
             <FaSpinner className="animate-spin text-teal-500 text-2xl mr-2" />
@@ -144,10 +138,8 @@ const ExamResults = () => {
           </div>
         )}
 
-        {/* Kết quả và danh sách bài thi */}
         {!loading && (
           <div className="space-y-8">
-            {/* Kết quả chi tiết (hiển thị trước) */}
             {examId && (
               <div>
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
@@ -165,7 +157,7 @@ const ExamResults = () => {
                 ) : (
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-teal-500">
+                      <thead className="bg-gradient-to-r from-blue-400 to-blue-600">
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">STT</th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Tên học viên</th>
@@ -195,7 +187,6 @@ const ExamResults = () => {
               </div>
             )}
 
-            {/* Danh sách bài thi (hiển thị sau) */}
             {classroomId && (
               <div>
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
@@ -209,12 +200,13 @@ const ExamResults = () => {
                   <>
                     <div className="bg-white rounded-lg shadow overflow-hidden">
                       <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-teal-500">
+                        <thead className="bg-gradient-to-r from-blue-400 to-blue-600">
                           <tr>
                             <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">STT</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Tiêu đề bài thi</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Số câu hỏi</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Ngày tạo</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Hạn chót</th> {/* Thêm cột Hạn chót */}
                             <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Hành động</th>
                           </tr>
                         </thead>
@@ -234,10 +226,13 @@ const ExamResults = () => {
                               <td className="px-4 py-3 text-sm text-gray-900">
                                 {new Date(exam.created_at).toLocaleDateString()}
                               </td>
+                              <td className="px-4 py-3 text-sm text-gray-900">
+                                {new Date(exam.deadline).toLocaleString()} {/* Hiển thị deadline */}
+                              </td>
                               <td className="px-4 py-3 text-sm">
                                 <button
                                   onClick={() => handleExamClick(exam.exam_id)}
-                                  className="bg-teal-500 text-white px-4 py-1 rounded-lg hover:bg-teal-600 transition-all duration-300"
+                                  className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-4 py-1 rounded-lg hover:bg-teal-600 transition-all duration-300"
                                 >
                                   Xem kết quả
                                 </button>
@@ -247,7 +242,6 @@ const ExamResults = () => {
                         </tbody>
                       </table>
                     </div>
-                    {/* Gọi component Pagination */}
                     <Pagination
                       currentPage={currentPage}
                       totalPages={totalPages}
@@ -259,8 +253,7 @@ const ExamResults = () => {
             )}
           </div>
         )}
-        
-        {/* Toast */}
+
         <ToastContainer
           position="top-right"
           autoClose={3000}

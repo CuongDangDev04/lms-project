@@ -25,18 +25,7 @@ export const AssignmentManager = () => {
             icon: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.31 0-6 2.69-6 6v2h12v-2c0-3.31-2.69-6-6-6z',
             link: 'add-student-to-class',
         },
-        {
-            title: 'Tạo bài thi',
-            color: 'orange',
-            icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z', // Biểu tượng dấu cộng (tạo mới)
-            link: 'create-exam',
-        },
-        {
-            title: 'Kết quả bài thi',
-            color: 'blue',
-            icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-12h2v8h-2V5z',
-            link: 'exam-results',
-        },
+       
     ];
 
     return (
