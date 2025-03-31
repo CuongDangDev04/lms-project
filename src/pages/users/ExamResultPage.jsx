@@ -116,10 +116,10 @@ const ExamResultPage = () => {
                 ? "Đã chọn"
                 : "Chưa trả lời"
               : selectedOptionId
-              ? selectedOptionId === correctOption?.option_id
-                ? "Đúng"
-                : "Sai"
-              : "Chưa trả lời";
+                ? selectedOptionId === correctOption?.option_id
+                  ? "Đúng"
+                  : "Sai"
+                : "Chưa trả lời";
 
             return (
               <div
@@ -131,56 +131,68 @@ const ExamResultPage = () => {
                 </h2>
                 <p className="text-gray-600 mb-4 text-sm sm:text-base">{question.content}</p>
                 <div className="space-y-3">
-                  {question.options?.map((option, optIndex) => (
-                    <label
-                      key={option.option_id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border border-gray-200 transition-all duration-200 ${
-                        exam.hide_results
-                          ? selectedOptionId === option.option_id
-                            ? "bg-teal-50 border-teal-300"
-                            : "bg-gray-50"
-                          : option.is_correct
-                          ? "bg-green-50 border-green-300"
-                          : selectedOptionId === option.option_id && !option.is_correct
-                          ? "bg-red-50 border-red-300"
-                          : "bg-gray-50"
-                      }`}
-                    >
-                      <span className="text-sm font-medium text-gray-600">
-                        {String.fromCharCode(65 + optIndex)}
-                      </span>
-                      <input
-                        type="radio"
-                        name={`question-${question.question_id}`}
-                        value={option.option_id}
-                        checked={selectedOptionId === option.option_id}
-                        disabled
-                        className="h-5 w-5 text-teal-500 focus:ring-teal-400 border-gray-300 cursor-not-allowed"
-                      />
-                      <span
-                        className={`text-sm text-gray-600 ${
-                          exam.hide_results
+                  {question.options?.map((option, optIndex) => {
+                    const userAnswer = result.ResultAnswers.find(
+                      (ra) => ra.question_id === question.question_id
+                    );
+                    const selectedOptionId = userAnswer ? userAnswer.selected_option_id : null;
+                    const correctOption = question.options?.find((opt) => opt.is_correct);
+
+                    return (
+                      <label
+                        key={option.option_id}
+                        className={`flex items-center gap-3 p-3 rounded-lg border border-gray-200 transition-all duration-200 ${exam.hide_results
                             ? selectedOptionId === option.option_id
-                              ? "text-teal-600 font-semibold"
-                              : ""
+                              ? "bg-teal-50 border-teal-300"
+                              : "bg-gray-50"
                             : option.is_correct
-                            ? "text-green-600 font-semibold"
-                            : selectedOptionId === option.option_id && !option.is_correct
-                            ? "text-red-600"
-                            : ""
-                        }`}
+                              ? "bg-green-50 border-green-300"
+                              : selectedOptionId === option.option_id && !option.is_correct
+                                ? "bg-red-50 border-red-300"
+                                : "bg-gray-50"
+                          }`}
                       >
-                        {option.content}
-                      </span>
-                      {!exam.hide_results && option.is_correct && (
-                        <span className="text-green-600 text-xs font-semibold ml-2">
-                          (Đáp án đúng)
+                        <span className="text-sm font-medium text-gray-600">
+                          {String.fromCharCode(65 + optIndex)}
                         </span>
-                      )}
-                    </label>
-                  )) || (
-                    <p className="text-gray-500 text-sm">Không có lựa chọn nào.</p>
-                  )}
+                        <input
+                          type="radio"
+                          name={`question-${question.question_id}`}
+                          value={option.option_id}
+                          checked={selectedOptionId === option.option_id}
+                          disabled
+                          className="h-5 w-5 text-teal-500 focus:ring-teal-400 border-gray-300 cursor-not-allowed"
+                        />
+                        <span
+                          className={`text-sm text-gray-600 flex-1 ${exam.hide_results
+                              ? selectedOptionId === option.option_id
+                                ? "text-teal-600 font-semibold"
+                                : ""
+                              : option.is_correct
+                                ? "text-green-600 font-semibold"
+                                : selectedOptionId === option.option_id && !option.is_correct
+                                  ? "text-red-600"
+                                  : ""
+                            }`}
+                        >
+                          {option.content}
+                        </span>
+                        {/* Hiển thị chú thích */}
+                        {selectedOptionId === option.option_id && (
+                          <span className="text-xs font-semibold text-teal-600 ml-2">
+                            (Đáp án của bạn)
+                          </span>
+                        )}
+                        {!exam.hide_results && option.is_correct && (
+                          <span className="text-xs font-semibold text-green-600 ml-2">
+                            (Đáp án đúng)
+                          </span>
+                        )}
+                      </label>
+                    );
+                  }) || (
+                      <p className="text-gray-500 text-sm">Không có lựa chọn nào.</p>
+                    )}
                   {!selectedOptionId && (
                     <p className="text-sm text-gray-500 italic mt-2">
                       Bạn chưa chọn đáp án cho câu này.
@@ -239,17 +251,16 @@ const ExamResultPage = () => {
               return (
                 <button
                   key={index}
-                  className={`p-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    exam.hide_results
+                  className={`p-2 rounded-full text-sm font-medium transition-all duration-200 ${exam.hide_results
                       ? isAnswered
                         ? "bg-teal-200 text-teal-800"
                         : "bg-gray-100 text-gray-600"
                       : isCorrect
-                      ? "bg-green-200 text-green-800"
-                      : isAnswered
-                      ? "bg-red-200 text-red-800"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
+                        ? "bg-green-200 text-green-800"
+                        : isAnswered
+                          ? "bg-red-200 text-red-800"
+                          : "bg-gray-100 text-gray-600"
+                    }`}
                   disabled
                 >
                   {index + 1}

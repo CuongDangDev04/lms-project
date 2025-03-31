@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createExam, createExamFromWord, getAllClassrooms, getExamsByClassroom } from '../../services/quizService';
+import { createExam, createExamFromWord, getClassRoomByTeacher, getExamsByClassroom } from '../../services/quizService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ExamFormModal from '../../components/academicAffairs/ExamFormModal';
 import WordUploadModal from '../../components/academicAffairs/WordUploadModal';
 import ExamPreviewModal from '../../components/academicAffairs/ExamPreviewModal';
 import ExamList from '../../components/academicAffairs/ExamList';
+import useUserId from '../../hooks/useUserId';
+import NotificationService from '../../services/notificationService';
 
 const modalStyles = `
   .file-upload-container {
@@ -42,8 +44,8 @@ const modalStyles = `
 const CreateExam = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
-  const [classroomId, setClassroomId] = useState('');
-  const [filterClassroomId, setFilterClassroomId] = useState('');
+  const [classroomId, setClassroomId] = useState(''); // Dùng cho form tạo bài thi
+  const [filterClassroomId, setFilterClassroomId] = useState(''); // Dùng cho lọc bài thi
   const [questions, setQuestions] = useState([]);
   const [duration, setDuration] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -61,21 +63,31 @@ const CreateExam = () => {
   const [createdExam, setCreatedExam] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
   const [showButton, setShowButton] = useState(false);
+  const class_room_id = useParams().classroomId;
+
+  const teacherId = useUserId(); 
+  
   useEffect(() => {
     const fetchClassrooms = async () => {
       setLoading(true);
       try {
-        const data = await getAllClassrooms();
-        setClassrooms(data.data);
+        if (!teacherId) {
+          return
+        }
+        const data = await getClassRoomByTeacher(teacherId);
+        setClassrooms(data.data || []); // Đảm bảo classrooms luôn là mảng
+        console.log('Classrooms:', data.data); // Debug dữ liệu
       } catch (error) {
         console.error('Lỗi khi lấy danh sách lớp học:', error);
         toast.error('Lỗi khi tải danh sách lớp học!');
+        setClassrooms([]); // Reset classrooms nếu lỗi
       } finally {
         setLoading(false);
       }
     };
+
     fetchClassrooms();
-  }, []);
+  }, [teacherId]); // Chạy lại khi teacherId thay đổi
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -83,10 +95,12 @@ const CreateExam = () => {
         setExamLoading(true);
         try {
           const data = await getExamsByClassroom(filterClassroomId);
-          setExams(data);
+          setExams(data || []);
+          console.log('Exams:', data); // Debug dữ liệu exams
         } catch (error) {
           console.error('Lỗi khi lấy danh sách bài thi:', error);
           toast.error('Lỗi khi tải danh sách bài thi!');
+          setExams([]);
         } finally {
           setExamLoading(false);
         }
@@ -95,7 +109,7 @@ const CreateExam = () => {
       }
     };
     fetchExams();
-  }, [filterClassroomId]);
+  }, [filterClassroomId]); // Chạy lại khi filterClassroomId thay đổi
 
   const addQuestion = () => {
     setQuestions([...questions, {
@@ -159,6 +173,14 @@ const CreateExam = () => {
         hide_results: Boolean(hideResults),
       };
       const response = await createExam(examData);
+      const notificationData = {
+        classroom_id: class_room_id,
+        notificationType: "classroom",
+        examTitle: examData.title,
+        action: 7,
+        
+      };
+      await NotificationService.sendNotificationToCourseUsers(notificationData);
       toast.success('Tạo bài thi thành công!');
       setCreatedExam(response.exam);
       setIsPreviewOpen(true);
@@ -236,9 +258,9 @@ const CreateExam = () => {
     setSelectedExam(exam);
     setIsExamPreviewOpen(true);
   };
-  const class_room_id = useParams().classroomId;
+
   const handleViewResults = () => {
-    navigate(`/courseDetail/${class_room_id}/exam-results/`); // Chuyển hướng đến trang kết quả thi
+    navigate(`/courseDetail/${class_room_id}/exam-results/`);
   };
 
   return (
@@ -257,14 +279,14 @@ const CreateExam = () => {
               Tạo bằng form
             </button>
             <button
-              onClick={() => setIsUploadOpen(true)} // Mở modal tải file Word
+              onClick={() => setIsUploadOpen(true)}
               className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold text-sm"
             >
               Tạo bằng file Word
             </button>
             <button
               onClick={handleViewResults}
-              className="bg-gradient-to-r  from-blue-400 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold text-sm"
+              className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg font-semibold text-sm"
             >
               Xem kết quả thi
             </button>
@@ -282,7 +304,7 @@ const CreateExam = () => {
             <option value="">Chọn lớp học</option>
             {classrooms.map((classroom) => (
               <option key={classroom.classroom_id} value={classroom.classroom_id}>
-                {classroom.Class.class_name} - {classroom.Course.course_name}
+                {classroom.class_name} - {classroom.course_name}
               </option>
             ))}
           </select>

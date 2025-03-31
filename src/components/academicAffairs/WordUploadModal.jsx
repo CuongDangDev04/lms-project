@@ -4,10 +4,10 @@ import { FaFileWord, FaTrash } from 'react-icons/fa';
 
 const WordUploadModal = ({
   title, setTitle, classroomId, setClassroomId, duration, setDuration,
-  startTime, setStartTime, deadline, setDeadline, // Thêm deadline
+  startTime, setStartTime, deadline, setDeadline,
   hideResults, setHideResults, file, setFile,
   classrooms, loading, handleFileSubmit, handleFileChange, handleRemoveFile,
-  isUploadOpen, setIsUploadOpen,showButton = true
+  isUploadOpen, setIsUploadOpen, showButton = true
 }) => {
   return (
     <ModalCustom
@@ -22,7 +22,7 @@ const WordUploadModal = ({
           setLoading(false);
           setDuration("");
           setStartTime("");
-          setDeadline(""); // Reset deadline
+          setDeadline("");
           setHideResults(false);
         }
       }}
@@ -51,7 +51,7 @@ const WordUploadModal = ({
             <option value="">Chọn lớp học</option>
             {classrooms.map((classroom) => (
               <option key={classroom.classroom_id} value={classroom.classroom_id}>
-                {classroom.Class.class_name} - {classroom.Course.course_name}
+                {classroom.class_name} - {classroom.course_name}
               </option>
             ))}
           </select>
@@ -86,7 +86,7 @@ const WordUploadModal = ({
             onChange={(e) => setDeadline(e.target.value)}
             className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-sm"
             disabled={loading}
-            required // Bắt buộc nhập
+            required
           />
         </div>
         <div className="flex items-center gap-2">

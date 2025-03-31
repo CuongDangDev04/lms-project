@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAllClassrooms, getExamsByClassroom, getExamResults } from "../../services/quizService";
+import { getClassRoomByTeacher, getExamsByClassroom, getExamResults } from "../../services/quizService";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaSpinner } from "react-icons/fa";
 import Pagination from "../../components/admin/Pagination";
+import useUserId from "../../hooks/useUserId";
 
 const ExamResults = () => {
   const [classrooms, setClassrooms] = useState([]);
@@ -16,23 +17,32 @@ const ExamResults = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const navigate = useNavigate();
+  const userId = useUserId(); // Lấy userId từ hook
+
   const { examId } = useParams();
+
   // Lấy danh sách lớp học
   useEffect(() => {
     const fetchClassrooms = async () => {
       setLoading(true);
       try {
-        const data = await getAllClassrooms();
-        setClassrooms(data.data);
+        if (!userId) {
+          return;
+        }
+        const data = await getClassRoomByTeacher(userId);
+        setClassrooms(data.data || []); // Đảm bảo classrooms luôn là mảng
+        console.log("Classrooms:", data.data); // Debug dữ liệu
       } catch (error) {
         console.error("Lỗi khi lấy danh sách lớp học:", error);
         toast.error("Lỗi khi tải danh sách lớp học!");
+        setClassrooms([]); // Reset nếu lỗi
       } finally {
         setLoading(false);
       }
     };
+
     fetchClassrooms();
-  }, []);
+  }, [userId]); // Thêm userId vào dependency array để chạy lại khi userId thay đổi
 
   // Lấy danh sách bài thi theo lớp học
   useEffect(() => {
@@ -41,11 +51,13 @@ const ExamResults = () => {
         setLoading(true);
         try {
           const data = await getExamsByClassroom(classroomId);
-          setExams(data);
+          setExams(data || []);
           setCurrentPage(1);
+          console.log("Exams:", data); // Debug dữ liệu exams
         } catch (error) {
           console.error("Lỗi khi lấy danh sách bài thi:", error);
           toast.error("Lỗi khi tải danh sách bài thi!");
+          setExams([]);
         } finally {
           setLoading(false);
         }
@@ -63,7 +75,7 @@ const ExamResults = () => {
         setResultsLoading(true);
         try {
           const data = await getExamResults(examId);
-          setResults(data);
+          setResults(data || []);
 
           if (!classroomId && data.length > 0) {
             const exam = exams.find((e) => e.exam_id === parseInt(examId));
@@ -71,7 +83,7 @@ const ExamResults = () => {
               setClassroomId(exam.classroom_id.toString());
             } else {
               const allExams = await getExamsByClassroom(data[0]?.user_participation?.classroom_id);
-              setExams(allExams);
+              setExams(allExams || []);
               setClassroomId(data[0]?.user_participation?.classroom_id.toString() || "");
             }
           }
@@ -88,7 +100,8 @@ const ExamResults = () => {
     };
     fetchResults();
   }, [examId, classroomId, exams]);
-  const class_room_id = useParams().classroomId;  
+
+  const class_room_id = useParams().classroomId;
   const handleExamClick = (examId) => {
     navigate(`/courseDetail/${class_room_id}/exam-results/${examId}`);
   };
@@ -118,14 +131,17 @@ const ExamResults = () => {
           </label>
           <select
             value={classroomId}
-            onChange={(e) => setClassroomId(e.target.value)}
+            onChange={(e) => {
+              setClassroomId(e.target.value);
+              console.log("Selected Classroom ID:", e.target.value); // Debug giá trị được chọn
+            }}
             className="w-full p-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-all duration-300"
             disabled={loading}
           >
             <option value="">Chọn lớp học</option>
             {classrooms.map((classroom) => (
               <option key={classroom.classroom_id} value={classroom.classroom_id}>
-                {classroom.Class.class_name} - {classroom.Course.course_name}
+                {classroom.class_name} - {classroom.course_name}
               </option>
             ))}
           </select>
@@ -206,7 +222,7 @@ const ExamResults = () => {
                             <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Tiêu đề bài thi</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Số câu hỏi</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Ngày tạo</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Hạn chót</th> {/* Thêm cột Hạn chót */}
+                            <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Hạn chót</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Hành động</th>
                           </tr>
                         </thead>
@@ -227,7 +243,7 @@ const ExamResults = () => {
                                 {new Date(exam.created_at).toLocaleDateString()}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-900">
-                                {new Date(exam.deadline).toLocaleString()} {/* Hiển thị deadline */}
+                                {new Date(exam.deadline).toLocaleString()}
                               </td>
                               <td className="px-4 py-3 text-sm">
                                 <button
@@ -262,7 +278,6 @@ const ExamResults = () => {
           pauseOnHover
           draggable
           limit={1}
-          theme="colored"
           className="mt-6"
         />
       </div>

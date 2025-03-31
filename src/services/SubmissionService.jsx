@@ -1,4 +1,4 @@
-import api from "./api"; // Giả định bạn export axios instance với tên 'api' từ api.jsx
+import api from "./api";
 
 const URL_API = "/api/submission";
 
@@ -41,53 +41,37 @@ export const downloadSubmissionFiles = async (submissionId, fileIndex = null) =>
     const url = fileIndex !== null
       ? `${URL_API}/download/${submissionId}?fileIndex=${fileIndex}`
       : `${URL_API}/download/${submissionId}`;
-    const response = await api.get(url, {
-      responseType: "blob",
-    });
-    const blob = new Blob([response.data]);
-    const urlBlob = window.URL.createObjectURL(blob);
+    const response = await api.get(url);
+    
+    // Backend trả về signed URL và tên file
+    const { fileUrl, filename } = response.data;
+
+    // Tạo link tải
     const link = document.createElement("a");
-    link.href = urlBlob;
-
-    // Lấy tên file từ header Content-Disposition
-    let filename;
-    const contentDisposition = response.headers["content-disposition"];
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename="(.+)"/);
-      if (match && match[1]) {
-        filename = match[1]; // Tên file gốc từ backend
-      }
-    }
-    // Fallback nếu không có header
-    if (!filename) {
-      filename = fileIndex !== null
-        ? `submission_${submissionId}_file_${fileIndex}`
-        : `submission_${submissionId}.zip`;
-    }
-
-    link.setAttribute("download", filename);
+    link.href = fileUrl;
+    link.setAttribute("download", filename || `submission_${submissionId}_file_${fileIndex || 0}`);
     document.body.appendChild(link);
     link.click();
     link.remove();
-    window.URL.revokeObjectURL(urlBlob);
 
-    return { message: "Tải file thành công!", filename };
+    return { fileUrl, filename };
   } catch (error) {
     console.error("Lỗi khi tải file bài nộp:", error);
     throw error;
   }
 };
+
 // Chấm điểm bài nộp
 export const gradeSubmission = async (submissionId, score, feedback) => {
   const data = {
     submission_id: submissionId,
     score,
-    feedback,
+    feedback: feedback || "", // Đảm bảo feedback không undefined
   };
 
   try {
     const response = await api.post(`${URL_API}/grade`, data);
-    ("Dữ liệu từ /api/submissions/grade:", response.data);
+    console.log("Dữ liệu từ /api/submission/grade:", response.data);
     return response.data;
   } catch (error) {
     console.error("Lỗi khi chấm điểm bài nộp:", error);

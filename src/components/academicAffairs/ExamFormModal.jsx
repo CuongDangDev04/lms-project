@@ -4,7 +4,7 @@ import QuestionInput from './QuestionInput';
 
 const ExamFormModal = ({
   title, setTitle, classroomId, setClassroomId, questions, setQuestions,
-  duration, setDuration, startTime, setStartTime, deadline, setDeadline, // Thêm deadline
+  duration, setDuration, startTime, setStartTime, deadline, setDeadline,
   hideResults, setHideResults, classrooms, loading, handleSubmit, addQuestion, isOpen, setIsOpen
 }) => {
   return (
@@ -39,7 +39,7 @@ const ExamFormModal = ({
             <option value="">Chọn lớp học</option>
             {classrooms.map((classroom) => (
               <option key={classroom.classroom_id} value={classroom.classroom_id}>
-                {classroom.Class.class_name} - {classroom.Course.course_name}
+                {classroom.class_name} - {classroom.course_name}
               </option>
             ))}
           </select>
@@ -77,7 +77,7 @@ const ExamFormModal = ({
             onChange={(e) => setDeadline(e.target.value)}
             className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-sm"
             disabled={loading}
-            required // Bắt buộc nhập
+            required
           />
         </div>
 
