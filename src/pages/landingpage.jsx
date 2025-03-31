@@ -74,7 +74,7 @@ const Landing = () => {
                 <meta name="keywords" content="BrainHub LMS, học trực tuyến, LMS đại học, quản lý khóa học, thi online, giáo dục 2025" />
                 <meta name="robots" content="index, follow" />
                 <meta name="author" content="BrainHub Team" />
-                <link rel="canonical" href="https://lmsclient-nine.vercel.app/" />
+                <link rel="canonical" href="https://lmsclient-nine.vercel.app" />
                 <meta property="og:title" content="BrainHub - Hệ Thống LMS Trường Đại Học Chuyên Nghiệp 2025" />
                 <meta property="og:description" content="BrainHub mang đến giải pháp học trực tuyến toàn diện cho sinh viên và giảng viên đại học." />
                 <meta property="og:image" content="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80" />
