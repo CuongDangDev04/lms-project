@@ -69,8 +69,8 @@ const createClassByExcel = async (req, res) => {
             return res.status(400).json({ message: "Vui lòng upload file Excel" });
         }
 
-        // Đọc file Excel
-        const workbook = XLSX.readFile(req.file.path);
+        const filePath = req.file.path; // Lưu đường dẫn file
+        const workbook = XLSX.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const workSheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
@@ -85,10 +85,10 @@ const createClassByExcel = async (req, res) => {
                 continue;
             }
 
-            const existingClasses = await Class.findOne({ where: { class_name } });
+            const existingClass = await Class.findOne({ where: { class_name } });
 
-            if (existingClasses) {
-                errors.push(`Dòng ${workSheet.indexOf(row) + 2}: Ten lop ${class_name} đã tồn tại`);
+            if (existingClass) {
+                errors.push(`Dòng ${workSheet.indexOf(row) + 2}: Tên lớp ${class_name} đã tồn tại`);
                 continue;
             }
 
@@ -97,19 +97,30 @@ const createClassByExcel = async (req, res) => {
             });
         }
 
+        // Nếu có lỗi, xóa file và trả về thông báo lỗi
         if (errors.length > 0) {
+            await fs.promises.unlink(filePath);
             return res.status(400).json({ message: errors.join(", ") });
         }
 
-        if (dataNewClasses.length > 0) {
-            await Class.bulkCreate(dataNewClasses);
-            return res.status(201).json({ message: "Thêm nhiều lop học thành công từ file Excel" });
+        // Nếu không có lớp học hợp lệ để thêm
+        if (dataNewClasses.length === 0) {
+            await fs.promises.unlink(filePath);
+            return res.status(400).json({ message: "Không có lớp học nào hợp lệ để thêm" });
         }
 
-        return res.status(400).json({ message: "Không có lop học nào hợp lệ để thêm" });
+        // Thêm lớp học và xóa file sau khi thành công
+        await Class.bulkCreate(dataNewClasses);
+        await fs.promises.unlink(filePath); // Xóa file ngay sau khi thêm thành công
+
+        return res.status(201).json({ message: "Thêm nhiều lớp học thành công từ file Excel" });
 
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        // Xử lý lỗi và xóa file nếu tồn tại
+        if (req.file && req.file.path) {
+            await fs.promises.unlink(req.file.path).catch(err => console.error('Không thể xóa file:', err));
+        }
+        return res.status(500).json({ error: error.message });
     }
 };
 

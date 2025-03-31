@@ -2,7 +2,7 @@ const { Course } = require('../../models/index');
 const { validateId } = require('../../middlewares/validateID');
 const XLSX = require("xlsx");
 const upload = require("../../middlewares/upload");
-const fs = require('fs').promises; 
+const fs = require('fs').promises;
 const getCourses = async (req, res) => {
     try {
         const courses = await Course.findAll();
@@ -90,8 +90,7 @@ const createCourseByExcel = async (req, res) => {
             return res.status(400).json({ message: "Vui lòng upload file Excel" });
         }
 
-        // Đọc file Excel
-        const filePath = req.file.path; // Lưu đường dẫn file để xóa sau
+        const filePath = req.file.path; // Lưu đường dẫn file
         const workbook = XLSX.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const workSheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
@@ -121,31 +120,33 @@ const createCourseByExcel = async (req, res) => {
             });
         }
 
+        // Nếu có lỗi, xóa file và trả về thông báo lỗi
         if (errors.length > 0) {
-            // Xóa file ngay cả khi có lỗi để tránh lưu file tạm không cần thiết
-            await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
+            await fs.promises.unlink(filePath); // Sử dụng fs.promises để đồng bộ
             return res.status(400).json({ message: errors.join(", ") });
         }
 
-        if (dataNewCourses.length > 0) {
-            await Course.bulkCreate(dataNewCourses);
-            // Xóa file sau khi thêm khóa học thành công
-            await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
-            return res.status(201).json({ message: "Thêm nhiều khóa học thành công từ file Excel" });
+        // Nếu không có khóa học hợp lệ để thêm
+        if (dataNewCourses.length === 0) {
+            await fs.promises.unlink(filePath);
+            return res.status(400).json({ message: "Không có khóa học nào hợp lệ để thêm" });
         }
 
-        // Xóa file nếu không có dữ liệu hợp lệ
-        await fs.unlink(filePath).catch(err => console.error('Không thể xóa file:', err));
-        return res.status(400).json({ message: "Không có khóa học nào hợp lệ để thêm" });
+        // Thêm khóa học và xóa file sau khi thành công
+        await Course.bulkCreate(dataNewCourses);
+        await fs.promises.unlink(filePath); // Xóa file ngay sau khi thêm thành công
+
+        return res.status(201).json({ message: "Thêm nhiều khóa học thành công từ file Excel" });
 
     } catch (error) {
-        // Nếu có lỗi trong try block, vẫn cố gắng xóa file trước khi trả về lỗi
+        // Xử lý lỗi và xóa file nếu tồn tại
         if (req.file && req.file.path) {
-            await fs.unlink(req.file.path).catch(err => console.error('Không thể xóa file:', err));
+            await fs.promises.unlink(req.file.path).catch(err => console.error('Không thể xóa file:', err));
         }
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
+
 const updateCourse = async (req, res) => {
     try {
         const courseId = parseInt(req.params.id, 10);
