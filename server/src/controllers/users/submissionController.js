@@ -1,8 +1,47 @@
 const { Submission, Grade, Assignment } = require("../../models/index");
-const fs = require("fs"); // Để dùng createReadStream
-const fsPromises = require("fs").promises; // Để dùng access bất đồng bộ
-const path = require("path");
-const archiver = require("archiver");
+const supabase = require("../../config/supabase"); // Client Supabase
+
+// Hàm hỗ trợ để parse file_path an toàn
+const parseFilePath = (filePath) => {
+  try {
+    if (!filePath || typeof filePath !== "string") return [];
+    if (filePath.startsWith("[") && filePath.endsWith("]")) return JSON.parse(filePath);
+    return [filePath];
+  } catch (error) {
+    console.error("Lỗi khi parse file_path:", error.message, "filePath:", filePath);
+    return typeof filePath === "string" ? [filePath] : [];
+  }
+};
+
+// Hàm hỗ trợ tải file lên Supabase
+const uploadFilesToSupabase = async (files) => {
+  const uploadedFiles = [];
+  for (const file of files) {
+    const fileName = `submission/${Date.now()}-${file.originalname}`; // Lưu vào thư mục submission
+    const { data, error } = await supabase.storage
+      .from('lms-bucket')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+      });
+    if (error) throw error;
+    uploadedFiles.push({ path: fileName });
+  }
+  return uploadedFiles;
+};
+
+// Hàm hỗ trợ lấy URL có chữ ký từ Supabase
+const getSignedUrlFromSupabase = async (bucketName, filePath, expiry = 60) => {
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .createSignedUrl(filePath, expiry);
+
+  if (error) {
+    console.error(`Lỗi khi lấy URL có chữ ký từ Supabase: ${error.message}`);
+    return null;
+  }
+  return data.signedUrl;
+};
+
 // Hàm nộp bài tập
 exports.submitAssignment = async (req, res) => {
   try {
@@ -31,14 +70,14 @@ exports.submitAssignment = async (req, res) => {
       });
     }
 
-    // Lấy danh sách đường dẫn file
-    const file_paths = req.files.map((file) => file.path);
+    // Upload file từ buffer lên Supabase
+    const uploadedFiles = await uploadFilesToSupabase(req.files);
 
     // Tạo bản ghi bài nộp
     const newSubmission = await Submission.create({
       assignment_id,
       user_id,
-      file_path: JSON.stringify(file_paths),
+      file_path: JSON.stringify(uploadedFiles.map(f => f.path)), // Lưu đường dẫn file trên Supabase
       submitted_at: new Date(),
       status: "pending",
     });
@@ -49,7 +88,7 @@ exports.submitAssignment = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi khi nộp bài tập:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi nộp bài tập." });
+    res.status(500).json({ message: "Có lỗi xảy ra khi nộp bài tập.", error: error.message });
   }
 };
 
@@ -77,13 +116,30 @@ exports.getSubmissionsByAssignment = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy bài nộp nào." });
     }
 
+    // Thêm signed URL cho từng file trong submissions
+    const submissionsWithUrls = await Promise.all(
+      submissions.map(async (submission) => {
+        const filePaths = parseFilePath(submission.file_path);
+        const signedUrls = await Promise.all(
+          filePaths.map(async (filePath) => {
+            const signedUrl = await getSignedUrlFromSupabase("lms-bucket", filePath);
+            return { filePath, signedUrl };
+          })
+        );
+        return {
+          ...submission.toJSON(),
+          file_urls: signedUrls,
+        };
+      })
+    );
+
     res.status(200).json({
       message: "Lấy danh sách bài nộp thành công!",
-      submissions,
+      submissions: submissionsWithUrls,
     });
   } catch (error) {
     console.error("Lỗi khi lấy danh sách bài nộp:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi lấy danh sách bài nộp." });
+    res.status(500).json({ message: "Có lỗi xảy ra khi lấy danh sách bài nộp.", error: error.message });
   }
 };
 
@@ -98,61 +154,34 @@ exports.downloadSubmissionFiles = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy bài nộp." });
     }
 
-    const filePaths = JSON.parse(submission.file_path || "[]");
+    const filePaths = parseFilePath(submission.file_path);
     if (filePaths.length === 0) {
       return res.status(400).json({ message: "Không có file nào để tải." });
     }
 
-    console.log(`Số lượng file trong filePaths: ${filePaths.length}`); // Log để kiểm tra
-
-    if (fileIndex !== undefined) {
-      const index = parseInt(fileIndex, 10);
-      if (isNaN(index) || index < 0 || index >= filePaths.length) {
-        return res.status(400).json({ message: "Chỉ số file không hợp lệ." });
-      }
-      const filePath = filePaths[index];
-      const absolutePath = path.resolve(filePath);
-      await fsPromises.access(absolutePath);
-
-      const originalFileName = path.basename(filePath);
-      console.log(`Tải file đơn lẻ (fileIndex): ${originalFileName}`);
-      res.setHeader("Content-Disposition", `attachment; filename="${originalFileName}"`);
-      res.setHeader("Content-Type", "application/octet-stream");
-      return fs.createReadStream(absolutePath).pipe(res);
+    if (fileIndex === undefined) {
+      return res.status(400).json({ message: "Vui lòng cung cấp fileIndex để tải file." });
     }
 
-    if (filePaths.length === 1) {
-      const filePath = filePaths[0];
-      const absolutePath = path.resolve(filePath);
-      await fsPromises.access(absolutePath);
-
-      const originalFileName = path.basename(filePath);
-      console.log(`Tải file đơn lẻ (một file): ${originalFileName}`);
-      res.setHeader("Content-Disposition", `attachment; filename="${originalFileName}"`);
-      res.setHeader("Content-Type", "application/octet-stream");
-      return fs.createReadStream(absolutePath).pipe(res);
+    const index = parseInt(fileIndex, 10);
+    if (isNaN(index) || index < 0 || index >= filePaths.length) {
+      return res.status(400).json({ message: "Chỉ số file không hợp lệ." });
     }
 
-    if (filePaths.length > 1) {
-      res.setHeader("Content-Disposition", `attachment; filename="submission_${submission_id}.zip"`);
-      res.setHeader("Content-Type", "application/zip");
-
-      const archive = archiver("zip", { zlib: { level: 9 } });
-      archive.pipe(res);
-
-      for (const filePath of filePaths) {
-        const absolutePath = path.resolve(filePath);
-        await fsPromises.access(absolutePath);
-        const originalFileName = path.basename(filePath);
-        archive.file(absolutePath, { name: originalFileName });
-      }
-
-      await archive.finalize();
-      return;
+    const filePath = filePaths[index];
+    const signedUrl = await getSignedUrlFromSupabase("lms-bucket", filePath);
+    if (!signedUrl) {
+      return res.status(500).json({ message: "Không thể tạo URL tải file." });
     }
+
+    return res.status(200).json({
+      message: "Lấy URL tải file thành công!",
+      fileUrl: signedUrl,
+      filename: filePath.split('/').pop(), // Lấy tên file từ đường dẫn
+    });
   } catch (error) {
     console.error("Lỗi khi tải file bài nộp:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi tải file bài nộp." });
+    res.status(500).json({ message: "Có lỗi xảy ra khi tải file bài nộp.", error: error.message });
   }
 };
 
@@ -195,7 +224,7 @@ exports.gradeSubmission = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi khi chấm điểm bài nộp:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi chấm điểm bài nộp." });
+    res.status(500).json({ message: "Có lỗi xảy ra khi chấm điểm bài nộp.", error: error.message });
   }
 };
 
@@ -213,22 +242,22 @@ exports.deleteSubmission = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy bài nộp." });
     }
 
-    const filePaths = JSON.parse(submission.file_path || "[]");
-    for (const filePath of filePaths) {
-      try {
-        const absolutePath = path.resolve(filePath);
-        await fs.access(absolutePath);
-        await fs.unlink(absolutePath);
-      } catch (err) {
-        console.error(`Không thể xóa file ${filePath}:`, err.message);
+    // Xóa file trên Supabase
+    const filePaths = parseFilePath(submission.file_path);
+    if (filePaths.length > 0) {
+      const { error } = await supabase.storage.from("lms-bucket").remove(filePaths);
+      if (error) {
+        console.error(`Lỗi khi xóa file trên Supabase: ${error.message}`);
+        return res.status(500).json({ message: "Lỗi khi xóa file trên Supabase.", error: error.message });
       }
     }
 
+    // Xóa bản ghi bài nộp
     await submission.destroy();
 
     res.status(200).json({ message: "Xóa bài nộp thành công!" });
   } catch (error) {
     console.error("Lỗi khi xóa bài nộp:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi xóa bài nộp." });
+    res.status(500).json({ message: "Có lỗi xảy ra khi xóa bài nộp.", error: error.message });
   }
 };
