@@ -1,24 +1,20 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 
-const lectureDir = path.join(__dirname, '../../uploads/lectures');
-if (!fs.existsSync(lectureDir)) {
-  fs.mkdirSync(lectureDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, lectureDir),
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  },
-});
-
+/**
+ * Cấu hình multer để xử lý file upload vào memory thay vì disk
+ * Phù hợp với việc upload file trực tiếp lên Supabase
+ */
 const uploadv2 = multer({
-  storage: storage,
-  limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2GB (2 * 1024 * 1024 * 1024 bytes)
-  
+  storage: multer.memoryStorage(), // Lưu file trong memory dưới dạng buffer
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // Giới hạn kích thước file: 2GB
+  fileFilter: (req, file, cb) => {
+    // (Tùy chọn) Lọc loại file nếu cần
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'video/mp4'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error('Chỉ hỗ trợ file JPG, PNG, PDF, hoặc MP4!'));
+    }
+    cb(null, true);
+  },
 });
 
 module.exports = uploadv2;

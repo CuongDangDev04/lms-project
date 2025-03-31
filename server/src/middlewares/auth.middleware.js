@@ -56,10 +56,7 @@ const getRequestUser = () => (req, res, next) => {
             return res.status(401).json({ message });
         }
 
-        // Kiểm tra token hợp lệ
-        if (!validAccessTokens.has(token)) {
-            return res.status(403).json({ message: 'Token không hợp lệ hoặc đã bị thu hồi' });
-        }
+        
         req.user = decoded;
         next();
     });
