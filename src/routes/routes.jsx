@@ -39,10 +39,16 @@ import Landing from "../pages/landingpage";
 
 import CreateExam from "../pages/instructor/CreateExam";
 import ExamResults from "../pages/instructor/ExamResults";
+import About from "../pages/about";
+import Blog from "../pages/blog";
+import BlogPostDetail from "../pages/BlogPostDetail";
 const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/dashboard" element={<Landing />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogPostDetail />} />
       {/* Route cho Admin */}
       <Route path="/admin" element={<PrivateRoute allowedRoles={[3]} />}>
         <Route element={<AdminLayout />}>

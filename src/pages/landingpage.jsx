@@ -104,7 +104,6 @@ const Landing = () => {
                     <nav className="hidden md:flex space-x-8" role="navigation" aria-label="Main navigation">
                         <Link to="/" className="text-gray-700 hover:text-blue-600 transition-all duration-300 font-medium text-base">Trang Chủ</Link>
                         <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-all duration-300 font-medium text-base">Giới Thiệu</Link>
-                        <Link to="/courses" className="text-gray-700 hover:text-blue-600 transition-all duration-300 font-medium text-base">Khóa Học</Link>
                         <Link to="/blog" className="text-gray-700 hover:text-blue-600 transition-all duration-300 font-medium text-base">Blog</Link>
                     </nav>
                     <Link to="/login" className="hidden md:block px-6 py-2 bg-blue-600 text-white rounded-full shadow-md hover:bg-blue-700 transition-all duration-300 font-semibold text-base" rel="nofollow">Đăng Nhập</Link>
@@ -113,7 +112,6 @@ const Landing = () => {
                     <nav className="flex flex-col items-center space-y-4 py-4" role="navigation" aria-label="Mobile navigation">
                         <Link to="/" className="text-gray-700 hover:text-blue-600 transition-all duration-300 font-medium text-base" onClick={() => setIsMenuOpen(false)}>Trang Chủ</Link>
                         <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-all duration-300 font-medium text-base" onClick={() => setIsMenuOpen(false)}>Giới Thiệu</Link>
-                        <Link to="/courses" className="text-gray-700 hover:text-blue-600 transition-all duration-300 font-medium text-base" onClick={() => setIsMenuOpen(false)}>Khóa Học</Link>
                         <Link to="/blog" className="text-gray-700 hover:text-blue-600 transition-all duration-300 font-medium text-base" onClick={() => setIsMenuOpen(false)}>Blog</Link>
                         <Link to="/login" className="px-6 py-2 bg-blue-600 text-white rounded-full shadow-md hover:bg-blue-700 transition-all duration-300 font-semibold text-base" rel="nofollow" onClick={() => setIsMenuOpen(false)}>Đăng Nhập</Link>
                     </nav>
@@ -344,7 +342,6 @@ const Landing = () => {
                         <ul className="space-y-3">
                             <li><Link to="/" className="text-gray-400 hover:text-blue-400 transition-all duration-300 text-base sm:text-lg">Trang Chủ</Link></li>
                             <li><Link to="/about" className="text-gray-400 hover:text-blue-400 transition-all duration-300 text-base sm:text-lg">Giới Thiệu</Link></li>
-                            <li><Link to="/courses" className="text-gray-400 hover:text-blue-400 transition-all duration-300 text-base sm:text-lg">Khóa Học</Link></li>
                             <li><Link to="/blog" className="text-gray-400 hover:text-blue-400 transition-all duration-300 text-base sm:text-lg">Blog</Link></li>
                         </ul>
                     </div>
