@@ -12,5 +12,6 @@ router.get('/exams/results/:exam_id/', quizController.getExamResults);
 router.get('/all-classrooms', quizController.getAllClassrooms);
 router.post('/exams/uploadword', quizController.importExamFromWord);
 router.get('/listexams/classroom/:classroom_id', quizController.getExamsByClassroomSimple);
-
+router.post('/exams/:exam_id/progress', quizController.saveExamProgress);
+router.get('/exams/:exam_id/progress', quizController.getExamProgress);
 module.exports = router;

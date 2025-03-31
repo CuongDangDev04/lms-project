@@ -85,7 +85,6 @@ const sendNotificationToSpecificUser = async (req, res) => {
   }
 };
 
-// Gửi thông báo cho tất cả user trong một khóa học
 const sendNotificationToClassroomUsers = async (req, res) => {
   try {
     const {
@@ -94,6 +93,7 @@ const sendNotificationToClassroomUsers = async (req, res) => {
       action,
       assignmentTitle,
       lectureTitle,
+      examTitle, // Thêm examTitle vào destructuring
     } = req.body;
     console.log(req.body);
 
@@ -108,9 +108,11 @@ const sendNotificationToClassroomUsers = async (req, res) => {
       return res.status(400).json({ error: "Thiếu hành động" });
     }
 
-    if (!assignmentTitle && !lectureTitle) {
-      return res.status(400).json({ error: "Chưa có bài tập hoặc bài giảng" });
+    // Kiểm tra nếu không có assignmentTitle, lectureTitle hoặc examTitle khi cần
+    if (!assignmentTitle && !lectureTitle && !examTitle) {
+      return res.status(400).json({ error: "Chưa có bài tập, bài giảng hoặc bài thi" });
     }
+
     const classroom = await Classroom.findOne({
       where: { classroom_id: classroom_id },
       include: [
@@ -120,9 +122,10 @@ const sendNotificationToClassroomUsers = async (req, res) => {
         },
       ],
     });
+
     // Lấy danh sách tất cả user tham gia trong classroom_id này
     const participations = await UserParticipation.findAll({
-      where: { classroom_id }, // Chỉ tìm theo classroom_id cụ thể
+      where: { classroom_id },
       attributes: ["user_id"],
     });
 
@@ -132,22 +135,23 @@ const sendNotificationToClassroomUsers = async (req, res) => {
         .json({ error: "Không tìm thấy người dùng nào trong lớp học này!" });
     }
 
-    const userIds = [...new Set(participations.map((p) => p.user_id))]; // Loại bỏ trùng lặp
+    const userIds = [...new Set(participations.map((p) => p.user_id))];
 
     // Lọc chỉ lấy sinh viên có role_id = 1
     const users = await User.findAll({
       where: {
         user_id: userIds,
-        role_id: 1, // Chỉ lấy sinh viên có role_id = 1
+        role_id: 1,
       },
       attributes: ["user_id"],
     });
-    console.log("hjadsjnoadsjklnoadfs:", action === 3);
+
     if (!users || users.length === 0) {
       return res
         .status(404)
         .json({ error: "Không tìm thấy sinh viên nào trong lớp học này!" });
     }
+
     const teacher = await UserParticipation.findOne({
       where: { classroom_id },
       include: {
@@ -156,6 +160,7 @@ const sendNotificationToClassroomUsers = async (req, res) => {
         attributes: ["fullname"],
       },
     });
+
     let message = "";
     switch (action) {
       case 1:
@@ -169,7 +174,6 @@ const sendNotificationToClassroomUsers = async (req, res) => {
           ", vui lòng nộp đúng hạn!";
         break;
       case 2:
-        // message: `Giảng viên ${user.fullname} đã chỉnh sửa bài tập ${title}, vui lòng xem các thay đổi!`,
         message =
           "Giảng viên " +
           teacher.User.fullname +
@@ -215,9 +219,20 @@ const sendNotificationToClassroomUsers = async (req, res) => {
           " của lớp " +
           classroom.Course.course_name;
         break;
+      case 7: 
+        message =
+          "Giảng viên " +
+          teacher.User.fullname +
+          " đã thêm bài thi " +
+          examTitle +
+          " vào lớp " +
+          classroom.Course.course_name +
+          ", vui lòng tham gia đúng thời gian!";
+        break;
       default:
         return res.status(400).json({ error: "Hành động không hợp lệ" });
     }
+
     // Tạo notification
     const notification = await Notification.create({
       notification_type: notificationType,
@@ -228,7 +243,7 @@ const sendNotificationToClassroomUsers = async (req, res) => {
     const notifications = users.map((user) => ({
       user_id: user.user_id,
       notification_id: notification.notification_id,
-      status: 0, // Trạng thái mặc định: chưa đọc
+      status: 0,
     }));
 
     // Lưu tất cả thông báo vào database
@@ -242,24 +257,24 @@ const sendNotificationToClassroomUsers = async (req, res) => {
       });
       const receiverSocketId = onlineUsers[user.user_id];
       if (receiverSocketId) {
-        // Gửi thông báo chi tiết
         io.to(receiverSocketId).emit("receiveNotification", {
           notification_id: notification.notification_id,
           message: notification.message,
           timestamp: new Date().toISOString(),
           status: 0,
-          classroom_id, // Gửi classroom_id thay vì course_id
+          classroom_id,
           assignmentTitle,
           lectureTitle,
+          examTitle, // Thêm examTitle vào thông báo
         });
 
-        // Gửi toast notification
         io.to(receiverSocketId).emit("toastNotification", {
           notificationType,
           message: notification.message,
-          classroom_id, // Gửi classroom_id thay vì course_id
+          classroom_id,
           assignmentTitle,
           lectureTitle,
+          examTitle, // Thêm examTitle vào toast
         });
         io.to(receiverSocketId).emit("unreadNotificationCount", {
           unreadNotificationCount,
