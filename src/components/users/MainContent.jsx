@@ -95,7 +95,7 @@ const MainContent = () => {
 
             return (
               <Link
-                to={`/courseDetail/${item.user_participation.classroom_id}/assignments`}
+                to={`/courseDetail/${item.user_participation?.classroom_id}/assignments`}
                 key={id === "pending-assignments" ? item.assignment_id : item.schedule_id}
                 className={`grid ${id === "pending-assignments" ? "grid-cols-5" : "grid-cols-3"
                   } bg-gray-50 p-3 rounded-lg hover:bg-blue-400 hover:text-white items-center min-w-[600px] mt-2 transition cursor-pointer`}
