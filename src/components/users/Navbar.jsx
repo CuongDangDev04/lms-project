@@ -141,13 +141,13 @@ const Navbar = () => {
   const getNavigationItems = () => {
     if (userProfile.role_id === 2) {
       return [
-        { to: "/home", label: "Tổng quan" },
+        { to: "/", label: "Tổng quan" },
         { to: "/subjects", label: "Môn giảng dạy" },
         { to: "/teaching-schedule", label: "Lịch dạy" },
       ];
     }
     return [
-      { to: "/home", label: "Tổng quan" },
+      { to: "/", label: "Tổng quan" },
       { to: "/courses", label: "Khóa học" },
       { to: "/schedule", label: "Lịch học" },
     ];
