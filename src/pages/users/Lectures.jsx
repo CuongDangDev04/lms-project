@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import eren from '../../../public/eren.jpg'
 import {
   fetchLectureOnClassroom,
   uploadLecture,
@@ -65,13 +66,27 @@ const getFileIcon = (fileName) => {
 
 const parseFilePath = (filePath) => {
   try {
+    // Xử lý null/undefined
+    if (!filePath) return [];
+
+    // Đã là mảng, giữ nguyên
     if (Array.isArray(filePath)) return filePath;
+
+    // Là string JSON, parse thành mảng
+    if (typeof filePath === "string" && filePath.startsWith("[") && filePath.endsWith("]")) {
+      return JSON.parse(filePath);
+    }
+
+    // Là string đơn, đặt trong mảng
     if (typeof filePath === "string") {
-      if (filePath.startsWith("[") && filePath.endsWith("]")) {
-        return JSON.parse(filePath);
+      // Kiểm tra xem có phải định dạng Supabase không (bắt đầu với lecture/)
+      // hoặc định dạng server (bắt đầu với /opt/render/...)
+      if (filePath.startsWith("lecture/") || filePath.includes("/uploads/lectures/")) {
+        return [filePath];
       }
       return [filePath];
     }
+
     return [];
   } catch (error) {
     console.error("Lỗi khi parse file_path:", error, "filePath:", filePath);
@@ -271,23 +286,44 @@ export default function Lectures() {
 
         // Fetch lectures
         const data = await fetchLectureOnClassroom(classroomId);
-        const mappedLectures = data.map((lecture) => ({
-          id: lecture.lecture_id,
-          title: lecture.title,
-          description: lecture.description,
-          teacher: `Giáo viên: ${lecture.user_participation?.User?.username || "Unknown"
-            }`,
-          className: `Lớp: Classroom ${lecture.user_participation?.classroomId || classroomId
-            }`,
-          thumbnail: "https://via.placeholder.com/150",
-          file_path: parseFilePath(lecture.file_path),
-          fileNames: lecture.fileNames || [], // Store the original file names
-        }));
+
+        // Kiểm tra dữ liệu trả về
+        if (!data || !Array.isArray(data)) {
+          console.log("No lectures data returned or invalid format:", data);
+          setLectures([]);
+          setLoading(false);
+          return;
+        }
+
+        console.log(`Fetched ${data.length} lectures for classroom ${classroomId}`);
+
+        const mappedLectures = data.map((lecture) => {
+          // Kiểm tra và đảm bảo các trường dữ liệu
+          if (!lecture) return null;
+
+          return {
+            id: lecture.lecture_id,
+            title: lecture.title || "Không có tiêu đề",
+            description: lecture.description || "",
+            teacher: `Giáo viên: ${lecture.user_participation?.User?.username || "Unknown"}`,
+            className: `Lớp: Classroom ${lecture.user_participation?.classroomId || classroomId}`,
+            thumbnail: "https://via.placeholder.com/150",
+            file_path: parseFilePath(lecture.file_path || []),
+            fileNames: Array.isArray(lecture.fileNames)
+              ? lecture.fileNames
+              : (lecture.file_name
+                ? (typeof lecture.file_name === 'string'
+                  ? JSON.parse(lecture.file_name)
+                  : lecture.file_name)
+                : [])
+          };
+        }).filter(Boolean); // Loại bỏ các phần tử null
+
         setLectures(mappedLectures);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching data:", err);
-        setError("Không thể tải dữ liệu bài giảng");
+        setError("Giáo viên sẽ khởi tạo bài giảng cho lớp");
         setLectures([]);
         setLoading(false);
       }
@@ -325,32 +361,18 @@ export default function Lectures() {
 
     setIsUploading(true);
     try {
-      const response = await uploadLecture(
-        classroomId,
-        uploadFiles,
-        title,
-        description
-      );
-      toast.success("Tải lên bài giảng thành công!");
-      const notificationData = {
-        classroom_id: classroomId,
-        notificationType: "classroom", // Loại thông báo liên quan đến khóa học
-        lectureTitle: title,
-        action: 4,
-      };
-      await NotificationService.sendNotificationToCourseUsers(notificationData);
+      // Gọi service uploadLecture để tải file lên Supabase
+      const response = await uploadLecture(classroomId, uploadFiles, title, description);
 
+      toast.success("Tải lên bài giảng thành công!");
+
+      // Thêm bài giảng mới vào danh sách
       const newLecture = {
         id: response.data.lecture_id,
-        title,
-        description,
-        teacher: `Giáo viên: ${JSON.parse(localStorage.getItem("user"))?.username || "Unknown"
-          }`,
-        className: `Lớp: Classroom ${classroomId}`,
-        thumbnail: "https://via.placeholder.com/150",
-        file_path: response.data.file_path
-          ? JSON.parse(response.data.file_path)
-          : uploadFiles.map((file) => file.name),
+        title: response.data.title,
+        description: response.data.description || "",
+        file_path: JSON.parse(response.data.file_path), // Đường dẫn file từ Supabase
+        fileNames: JSON.parse(response.data.file_name), // Tên file gốc
       };
 
       setLectures([...lectures, newLecture]);
@@ -359,31 +381,35 @@ export default function Lectures() {
       setUploadFiles([]);
       setIsUploadModalOpen(false);
     } catch (error) {
-      toast.error("Tải lên bài giảng thất bại: " + error.message);
+      console.error("Upload error:", error);
+      toast.error("Tải lên bài giảng thất bại: " + (error.message || "Lỗi không xác định"));
     } finally {
       setIsUploading(false);
     }
   };
-  const handleDownload = async (lectureId, fileIndex) => {
+
+  const handleDownload = async (lectureId, fileIndex = null) => {
     setIsDownloading((prev) => ({
       ...prev,
       [`${lectureId}-${fileIndex}`]: true,
     }));
-    try {
-      const lecture = lectures.find((l) => l.id === lectureId);
-      if (!lecture) return;
 
+    try {
+      // Gọi service downloadLecture để lấy URL tải file từ Supabase
       const { fileUrl, filename } = await downloadLecture(lectureId, fileIndex);
+
+      // Tạo link tải file
       const link = document.createElement("a");
       link.href = fileUrl;
       link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
-      link.parentNode.removeChild(link);
+      link.remove();
 
       toast.success(`Đã tải xuống ${filename} thành công!`);
     } catch (error) {
-      toast.error("Không thể tải file: " + error.message);
+      console.error("Download error:", error);
+      toast.error("Không thể tải file: " + (error.message || "Lỗi không xác định"));
     } finally {
       setIsDownloading((prev) => ({
         ...prev,
@@ -436,10 +462,16 @@ export default function Lectures() {
               ...lecture,
               title: editTitle,
               description: editDescription,
-              file_path:
-                response.lecture.filePaths ||
-                parseFilePath(response.lecture.file_path),
-              fileNames: response.lecture.fileNames,
+              file_path: response.data && response.data.file_path ?
+                (typeof response.data.file_path === 'string' ?
+                  JSON.parse(response.data.file_path) :
+                  response.data.file_path) :
+                lecture.file_path,
+              fileNames: response.data && response.data.file_name ?
+                (typeof response.data.file_name === 'string' ?
+                  JSON.parse(response.data.file_name) :
+                  response.data.file_name) :
+                lecture.fileNames,
             }
             : lecture
         )
@@ -750,14 +782,29 @@ export default function Lectures() {
           <span className="ml-3 text-lg text-gray-600">Đang tải...</span>
         </div>
       ) : error ? (
-        <div className="text-center text-red-500 bg-red-50 p-4 rounded-lg">
-          {error}
+        <div className="flex flex-col items-center justify-center min-h-[400px] p-6">
+          {/* Ảnh minh họa */}
+          <img
+            className="w-[500px] h-[500px] mb-4 object-contain"
+            src={eren}
+            alt="Error"
+          />
+          {/* Tiêu đề */}
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">
+          Lớp học chưa có bài giảng nào
+          </h2>
+          {/* Thông báo lỗi */}
+          <p className="text-gray-600 text-sm">
+            {error || "Không thể tải dữ liệu bài giảng. Vui lòng thử lại sau."}
+          </p>
         </div>
       ) : (
         <>
           {filteredLectures.length === 0 ? (
             <div className="text-center text-gray-500 text-xl py-12 bg-white rounded-lg shadow-md">
-              Không tìm thấy bài giảng nào.
+              {lectures.length > 0
+                ? "Không tìm thấy bài giảng nào phù hợp với từ khóa tìm kiếm."
+                : "Lớp học này chưa có bài giảng nào. Hãy thêm bài giảng mới!"}
             </div>
           ) : (
             <div className="space-y-4">
