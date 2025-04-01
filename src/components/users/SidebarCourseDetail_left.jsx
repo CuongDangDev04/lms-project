@@ -1,21 +1,13 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import {
-  ClipboardList,
-  MessageSquare,
-  Presentation,
-  Users,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ClipboardList, MessageSquare, Presentation, Users } from "lucide-react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import {
-  fetchTeacherInformation,
-  getCourseById,
-} from "../../services/courseServices";
+import { fetchTeacherInformation, getCourseById } from "../../services/courseServices";
 
 const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const { classroomId } = useParams();
-  const [activePath, setActivePath] = useState("messages");
+  const [activePath, setActivePath] = useState("");
   const [teacherData, setTeacherData] = useState(null);
   const [courseName, setCourseName] = useState("Không xác định");
   const [loading, setLoading] = useState(true);
@@ -24,7 +16,6 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   const user = JSON.parse(localStorage.getItem("user"));
   const userRole = user?.role_id || null;
-
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -50,14 +41,6 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
     },
   };
 
-  // const sidebarItems = [
-  //   { name: "Tin Nhắn", path: "messages", icon: MessageSquare },
-  //   { name: "Thành viên", path: "members", icon: Users },
-  //   { name: "Bài tập", path: "assignments", icon: ClipboardList },
-  //   { name: "Bài giảng", path: "lectures", icon: Presentation },
-  //   if (userRole === 2) {
-  //     { name: "Điểm", path: "grades", icon: ClipboardList }
-  // ];
   const sidebarItems = [
     { name: "Tin Nhắn", path: "messages", icon: MessageSquare },
     { name: "Thành viên", path: "members", icon: Users },
@@ -65,10 +48,11 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
     { name: "Bài giảng", path: "lectures", icon: Presentation },
     {
       name: "Bài thi",
-      path: userRole === 2 ? "create-exam" : "list-exam", // Thay đổi path dựa trên userRole
-      icon: ClipboardList
+      path: userRole === 2 ? "create-exam" : "list-exam",
+      icon: ClipboardList,
     },
   ];
+
   if (userRole === 2) {
     sidebarItems.push({
       name: "Quản lý điểm",
@@ -102,14 +86,25 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
   }, [classroomId]);
 
   useEffect(() => {
-    const path = location.pathname.split("/").pop();
-    const pathValid =
-      sidebarItems.find((item) => item.path === path)?.path || "messages";
-    setActivePath(pathValid);
+    const pathSegments = location.pathname.split("/");
+    const lastSegment = pathSegments.pop(); // Lấy đoạn cuối của URL
+    const secondLastSegment = pathSegments[pathSegments.length - 1]; // Lấy đoạn trước đoạn cuối
+
+    // Kiểm tra nếu đang ở trang exam-results hoặc liên quan đến bài thi
+    if (lastSegment === "exam-results" || secondLastSegment === "exam-results") {
+      setActivePath(userRole === 2 ? "create-exam" : "list-exam");
+    } else {
+      // Nếu không phải exam-results, tìm path khớp trong sidebarItems
+      const pathValid =
+        sidebarItems.find((item) => item.path === lastSegment)?.path || "messages";
+      setActivePath(pathValid);
+    }
+
+    // Ẩn sidebar trên màn hình nhỏ
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
-  }, [location.pathname, setIsSidebarOpen]);
+  }, [location.pathname, setIsSidebarOpen, userRole, sidebarItems]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -128,10 +123,9 @@ const SidebarCourseDetail_left = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   return (
     <motion.div
-      className={`h-[calc(100vh-4rem)] mt-4 bg-white shadow-xl flex flex-col overflow-y-auto ${isSidebarOpen
-        ? "fixed inset-0 z-50 md:static md:max-w-xs"
-        : "hidden md:block"
-        }`}
+      className={`h-[calc(100vh-4rem)] mt-4 bg-white shadow-xl flex flex-col overflow-y-auto ${
+        isSidebarOpen ? "fixed inset-0 z-50 md:static md:max-w-xs" : "hidden md:block"
+      }`}
       style={{
         width: "16rem",
         paddingTop: window.innerWidth < 768 ? "3rem" : "0",

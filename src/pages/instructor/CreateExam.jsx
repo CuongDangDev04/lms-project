@@ -43,9 +43,8 @@ const modalStyles = `
 
 const CreateExam = () => {
   const navigate = useNavigate();
+  const { classroomId } = useParams(); // Lấy classroomId từ URL
   const [title, setTitle] = useState('');
-  const [classroomId, setClassroomId] = useState('');
-  const [filterClassroomId, setFilterClassroomId] = useState('');
   const [questions, setQuestions] = useState([]);
   const [duration, setDuration] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -63,7 +62,6 @@ const CreateExam = () => {
   const [createdExam, setCreatedExam] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
   const [showButton, setShowButton] = useState(false);
-  const class_room_id = useParams().classroomId;
 
   const teacherId = useUserId();
 
@@ -105,10 +103,10 @@ const CreateExam = () => {
 
   useEffect(() => {
     const fetchExams = async () => {
-      if (filterClassroomId) {
+      if (classroomId) {
         setExamLoading(true);
         try {
-          const data = await getExamsByClassroom(filterClassroomId);
+          const data = await getExamsByClassroom(classroomId);
           setExams(data || []);
           console.log('Exams:', data);
         } catch (error) {
@@ -123,7 +121,7 @@ const CreateExam = () => {
       }
     };
     fetchExams();
-  }, [filterClassroomId]);
+  }, [classroomId]); // Dựa vào classroomId từ useParams
 
   const addQuestion = () => {
     setQuestions([...questions, {
@@ -151,7 +149,7 @@ const CreateExam = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || !classroomId || !duration || !deadline) {
-      toast.error('Vui lòng nhập tiêu đề, chọn lớp học, thời gian làm bài và hạn chót!');
+      toast.error('Vui lòng nhập tiêu đề, thời gian làm bài và hạn chót!');
       return;
     }
     const parsedDuration = parseInt(duration);
@@ -182,13 +180,13 @@ const CreateExam = () => {
         classroom_id: parseInt(classroomId),
         questions,
         duration: parsedDuration,
-        start_time: startTime || getVietnamTime(), // Sử dụng giờ Việt Nam
+        start_time: startTime || getVietnamTime(),
         deadline,
         hide_results: Boolean(hideResults),
       };
       const response = await createExam(examData);
       const notificationData = {
-        classroom_id: class_room_id,
+        classroom_id: classroomId,
         notificationType: "classroom",
         examTitle: examData.title,
         action: 7,
@@ -198,7 +196,6 @@ const CreateExam = () => {
       setCreatedExam(response.exam);
       setIsPreviewOpen(true);
       setTitle('');
-      setClassroomId('');
       setQuestions([]);
       setDuration('');
       setStartTime('');
@@ -216,7 +213,7 @@ const CreateExam = () => {
   const handleFileSubmit = async (e) => {
     e.preventDefault();
     if (!title || !classroomId || !file || !duration || !deadline) {
-      toast.error('Vui lòng nhập tiêu đề, chọn lớp học, thời gian làm bài, hạn chót và tải lên file Word!');
+      toast.error('Vui lòng nhập tiêu đề, thời gian làm bài, hạn chót và tải lên file Word!');
       return;
     }
     const parsedDuration = parseInt(duration);
@@ -235,12 +232,12 @@ const CreateExam = () => {
       formData.append('classroom_id', parseInt(classroomId));
       formData.append('file', file);
       formData.append('duration', parsedDuration);
-      formData.append('start_time', startTime || getVietnamTime()); // Sử dụng giờ Việt Nam
+      formData.append('start_time', startTime || getVietnamTime());
       formData.append('deadline', deadline);
       formData.append('hide_results', hideResults.toString());
       const response = await createExamFromWord(formData);
       const notificationData = {
-        classroom_id: class_room_id,
+        classroom_id: classroomId,
         notificationType: "classroom",
         examTitle: title,
         action: 7,
@@ -260,7 +257,6 @@ const CreateExam = () => {
       setCreatedExam(examData);
       setIsPreviewOpen(true);
       setTitle('');
-      setClassroomId('');
       setFile(null);
       setDuration('');
       setStartTime('');
@@ -280,12 +276,12 @@ const CreateExam = () => {
   };
 
   const handleViewResults = () => {
-    navigate(`/courseDetail/${class_room_id}/exam-results/`);
+    navigate(`/courseDetail/${classroomId}/exam-results/`);
   };
 
   return (
     <div className="bg-gray-50 p-4 sm:p-6 lg:p-10">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-full mx-auto">
         <style>{modalStyles}</style>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-10 gap-4 sm:gap-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 tracking-tight text-center sm:text-left">
@@ -313,23 +309,6 @@ const CreateExam = () => {
           </div>
         </div>
 
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-600 mb-1.5">Chọn lớp học để xem bài thi</label>
-          <select
-            value={filterClassroomId}
-            onChange={(e) => setFilterClassroomId(e.target.value)}
-            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-sm"
-            disabled={loading}
-          >
-            <option value="">Chọn lớp học</option>
-            {classrooms.map((classroom) => (
-              <option key={classroom.classroom_id} value={classroom.classroom_id}>
-                {classroom.class_name} - {classroom.course_name}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {loading && (
           <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
             <div className="bg-teal-500 h-2.5 rounded-full animate-pulse" style={{ width: '50%' }}></div>
@@ -339,8 +318,7 @@ const CreateExam = () => {
         <ExamFormModal
           title={title}
           setTitle={setTitle}
-          classroomId={classroomId}
-          setClassroomId={setClassroomId}
+          classroomId={classroomId} // Truyền trực tiếp từ useParams
           questions={questions}
           setQuestions={setQuestions}
           duration={duration}
@@ -357,15 +335,13 @@ const CreateExam = () => {
           addQuestion={addQuestion}
           isOpen={isExamFormOpen}
           setIsOpen={setIsExamFormOpen}
-          classRoomId={class_room_id}
-
+          classRoomId={classroomId} // Sử dụng classroomId từ useParams
         />
 
         <WordUploadModal
           title={title}
           setTitle={setTitle}
-          classroomId={classroomId}
-          setClassroomId={setClassroomId}
+          classroomId={classroomId} // Truyền trực tiếp từ useParams
           duration={duration}
           setDuration={setDuration}
           startTime={startTime}
@@ -385,7 +361,7 @@ const CreateExam = () => {
           isUploadOpen={isUploadOpen}
           setIsUploadOpen={setIsUploadOpen}
           showButton={showButton}
-          classRoomId={class_room_id}
+          classRoomId={classroomId} // Sử dụng classroomId từ useParams
         />
 
         <ExamPreviewModal exam={createdExam} open={isPreviewOpen} onOpenChange={setIsPreviewOpen} />
