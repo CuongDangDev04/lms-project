@@ -188,21 +188,6 @@ const ChatBox = ({ userId }) => {
     }
   };
 
-  // Xóa tin nhắn
-  // const handleDeleteMessage = async (messageId) => {
-  //   try {
-  //     await deleteMessage(messageId);
-  //     setMessages((prev) =>
-  //       prev.map((msg) =>
-  //         msg.message_id === messageId ? { ...msg, status: 0 } : msg
-  //       )
-  //     );
-  //     setShowDeleteId(null);
-  //   } catch (error) {
-  //     console.error("Lỗi xóa tin nhắn:", error);
-  //   }
-  // };
-
   // Xử lý input
   const handleInputChange = (e) => {
     setNewMessage(e.target.value);
