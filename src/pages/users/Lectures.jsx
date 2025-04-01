@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import eren from '../../../public/eren.jpg'
+import eren from '../../assets/user/eren.jpg'
 import {
   fetchLectureOnClassroom,
   uploadLecture,
@@ -405,7 +405,6 @@ export default function Lectures() {
       link.click();
       link.remove();
 
-      toast.success(`Đã tải xuống ${filename} thành công!`);
     } catch (error) {
       console.error("Download error:", error);
       toast.error("Không thể tải file: " + (error.message || "Lỗi không xác định"));
@@ -781,21 +780,17 @@ export default function Lectures() {
           <span className="ml-3 text-lg text-gray-600">Đang tải...</span>
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center min-h-[400px] p-6">
+        <div className="flex flex-col items-center justify-center min-h-[300px] p-6">
           {/* Ảnh minh họa */}
           <img
-            className="w-[500px] h-[500px] mb-4 object-contain"
+            className="w-[500px] h-[300px] mb-4 object-contain"
             src={eren}
             alt="Error"
           />
           {/* Tiêu đề */}
-          <h2 className="text-lg font-semibold text-gray-800 mb-1">
-          Lớp học chưa có bài giảng nào
-          </h2>
+          
           {/* Thông báo lỗi */}
-          <p className="text-gray-600 text-sm">
-            {error || "Không thể tải dữ liệu bài giảng. Vui lòng thử lại sau."}
-          </p>
+          
         </div>
       ) : (
         <>

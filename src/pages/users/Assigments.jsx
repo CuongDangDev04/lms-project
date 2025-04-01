@@ -13,7 +13,7 @@ import Submission from "./Submission";
 import NotificationService from "../../services/notificationService";
 import { ModalCustom } from "../../components/admin/ui/ModalCustom";
 import LoadingBar from "../../components/users/LoadingBar";
-
+import imgNoAssignment from "../../assets/user/no-assignments.png"
 export default function Assignments() {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -248,7 +248,6 @@ export default function Assignments() {
   return (
     <div className="max-w-7xl mx-auto p-8 bg-gray-50 min-h-screen">
       <ToastContainer position="top-right" autoClose={2000} />
-      <LoadingBar isLoading={isUploading} />
       <h1 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-500 to-teal-500 text-transparent bg-clip-text">
         Danh sách bài tập
       </h1>
@@ -273,7 +272,7 @@ export default function Assignments() {
       </div>
 
       {/* Modal Tạo bài tập */}
-      {isModalOpen && !isUploading &&(
+      {isModalOpen && !isUploading && (
         <ModalCustom
           title="Tải lên bài tập mới"
           open={isModalOpen}
@@ -350,7 +349,7 @@ export default function Assignments() {
       )}
 
       {/* Modal Sửa bài tập */}
-      {editAssignment &&!isUploading && (
+      {editAssignment && !isUploading && (
         <ModalCustom
           title="Chỉnh sửa bài tập"
           open={!!editAssignment}
@@ -461,10 +460,10 @@ export default function Assignments() {
       )}
 
       {/* Modal Xác nhận xóa */}
-      <ModalCustom 
+      <ModalCustom
         title="Xác nhận xóa bài tập"
-        open={deleteModalOpen} 
-        onOpenChange={setDeleteModalOpen} 
+        open={deleteModalOpen}
+        onOpenChange={setDeleteModalOpen}
       >
         <div className="text-gray-700">
           <p>
@@ -497,9 +496,14 @@ export default function Assignments() {
           </span>
         </div>
       ) : filteredAssignments.length === 0 ? (
-        <p className="text-center text-gray-500 text-lg sm:text-xl py-8 sm:py-12 bg-white rounded-2xl shadow-md">
-          Không tìm thấy bài tập nào.
-        </p>
+        <div className="flex  w-full flex-col h-[400px] items-center py-8 sm:py-12 bg-gray-50  ">
+          <img
+            src={imgNoAssignment} // Đặt ảnh trong thư mục public/images/
+            alt="Không tìm thấy bài tập"
+            className="w-full h-[300px] sm:w-full sm:h-[300px] object-contain"
+          />
+          
+        </div>
       ) : (
         <div className="space-y-4 sm:space-y-6">
           {filteredAssignments.map((assignment) => {

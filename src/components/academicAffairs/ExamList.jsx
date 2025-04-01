@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaSpinner, FaEye } from 'react-icons/fa';
 import Pagination from '../users/Pagination';
-
+import imgNoExam from '../../assets/user/no-exam.jpg'
 const ExamList = ({ exams, examLoading, handleExamClick }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const examsPerPage = 6;
@@ -27,9 +27,14 @@ const ExamList = ({ exams, examLoading, handleExamClick }) => {
           <span className="text-gray-600">Đang tải danh sách bài thi...</span>
         </div>
       ) : exams.length === 0 ? (
-        <div className="text-center text-gray-600 p-4 bg-white rounded-lg shadow">
-          Chưa có bài thi nào trong lớp học này.
-        </div>
+       <div className="flex  w-full flex-col h-[400px] items-center py-8 sm:py-12 bg-gray-50  ">
+                 <img
+                   src={imgNoExam} // Đặt ảnh trong thư mục public/images/
+                   alt="Không tìm thấy bài tập"
+                   className="w-full h-[300px] sm:w-full sm:h-[300px] object-contain"
+                 />
+                 
+               </div>
       ) : (
         <>
           <div className="bg-white rounded-lg shadow overflow-hidden">
