@@ -9,6 +9,7 @@ import ExamPreviewModal from '../../components/academicAffairs/ExamPreviewModal'
 import ExamList from '../../components/academicAffairs/ExamList';
 import useUserId from '../../hooks/useUserId';
 import NotificationService from '../../services/notificationService';
+import LoadingBar from '../../components/users/LoadingBar'; // Import LoadingBar (đảm bảo đường dẫn đúng)
 
 const modalStyles = `
   .file-upload-container {
@@ -43,7 +44,7 @@ const modalStyles = `
 
 const CreateExam = () => {
   const navigate = useNavigate();
-  const { classroomId } = useParams(); // Lấy classroomId từ URL
+  const { classroomId } = useParams();
   const [title, setTitle] = useState('');
   const [questions, setQuestions] = useState([]);
   const [duration, setDuration] = useState('');
@@ -65,7 +66,6 @@ const CreateExam = () => {
 
   const teacherId = useUserId();
 
-  // Hàm lấy thời gian Việt Nam
   const getVietnamTime = () => {
     return new Intl.DateTimeFormat('vi-VN', {
       timeZone: 'Asia/Ho_Chi_Minh',
@@ -121,7 +121,7 @@ const CreateExam = () => {
       }
     };
     fetchExams();
-  }, [classroomId]); // Dựa vào classroomId từ useParams
+  }, [classroomId]);
 
   const addQuestion = () => {
     setQuestions([...questions, {
@@ -282,6 +282,9 @@ const CreateExam = () => {
   return (
     <div className="bg-gray-50 p-4 sm:p-6 lg:p-10">
       <div className="max-w-full mx-auto">
+        {/* Thêm LoadingBar */}
+        <LoadingBar isLoading={loading} />
+
         <style>{modalStyles}</style>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-10 gap-4 sm:gap-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 tracking-tight text-center sm:text-left">
@@ -309,16 +312,17 @@ const CreateExam = () => {
           </div>
         </div>
 
-        {loading && (
+        {/* Xóa thanh loading cũ */}
+        {/* {loading && (
           <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
             <div className="bg-teal-500 h-2.5 rounded-full animate-pulse" style={{ width: '50%' }}></div>
           </div>
-        )}
+        )} */}
 
         <ExamFormModal
           title={title}
           setTitle={setTitle}
-          classroomId={classroomId} // Truyền trực tiếp từ useParams
+          classroomId={classroomId}
           questions={questions}
           setQuestions={setQuestions}
           duration={duration}
@@ -333,15 +337,15 @@ const CreateExam = () => {
           loading={loading}
           handleSubmit={handleSubmit}
           addQuestion={addQuestion}
-          isOpen={isExamFormOpen}
+          isOpen={isExamFormOpen && !loading} // Tắt modal khi loading
           setIsOpen={setIsExamFormOpen}
-          classRoomId={classroomId} // Sử dụng classroomId từ useParams
+          classRoomId={classroomId}
         />
 
         <WordUploadModal
           title={title}
           setTitle={setTitle}
-          classroomId={classroomId} // Truyền trực tiếp từ useParams
+          classroomId={classroomId}
           duration={duration}
           setDuration={setDuration}
           startTime={startTime}
@@ -358,15 +362,23 @@ const CreateExam = () => {
           handleFileSubmit={handleFileSubmit}
           handleFileChange={handleFileChange}
           handleRemoveFile={handleRemoveFile}
-          isUploadOpen={isUploadOpen}
+          isUploadOpen={isUploadOpen && !loading} // Tắt modal khi loading
           setIsUploadOpen={setIsUploadOpen}
           showButton={showButton}
-          classRoomId={classroomId} // Sử dụng classroomId từ useParams
+          classRoomId={classroomId}
         />
 
-        <ExamPreviewModal exam={createdExam} open={isPreviewOpen} onOpenChange={setIsPreviewOpen} />
+        <ExamPreviewModal
+          exam={createdExam}
+          open={isPreviewOpen && !loading} // Tắt modal khi loading
+          onOpenChange={setIsPreviewOpen}
+        />
         <ExamList exams={exams} examLoading={examLoading} handleExamClick={handleExamClick} />
-        <ExamPreviewModal exam={selectedExam} open={isExamPreviewOpen} onOpenChange={setIsExamPreviewOpen} />
+        <ExamPreviewModal
+          exam={selectedExam}
+          open={isExamPreviewOpen && !loading} // Tắt modal khi loading
+          onOpenChange={setIsExamPreviewOpen}
+        />
 
         <ToastContainer
           position="top-right"

@@ -45,8 +45,8 @@ const LoadingBar = ({ isLoading = false }) => {
   if (!loading) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center   backdrop-blur-sm z-50">
-      <div className="relative w-24 h-24 flex items-center justify-center">
+    <div className="fixed inset-0 flex items-center justify-center   backdrop-blur-sm z-[1000]">
+      <div className="relative w-24 h-24 flex items-center z-50 justify-center">
         {/* Vòng tròn xoay lớn */}
         <div className="absolute w-full h-full border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         {/* Logo chính giữa */}
