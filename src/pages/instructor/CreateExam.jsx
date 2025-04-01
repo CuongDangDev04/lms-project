@@ -44,8 +44,8 @@ const modalStyles = `
 const CreateExam = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
-  const [classroomId, setClassroomId] = useState(''); // Dùng cho form tạo bài thi
-  const [filterClassroomId, setFilterClassroomId] = useState(''); // Dùng cho lọc bài thi
+  const [classroomId, setClassroomId] = useState('');
+  const [filterClassroomId, setFilterClassroomId] = useState('');
   const [questions, setQuestions] = useState([]);
   const [duration, setDuration] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -65,29 +65,43 @@ const CreateExam = () => {
   const [showButton, setShowButton] = useState(false);
   const class_room_id = useParams().classroomId;
 
-  const teacherId = useUserId(); 
-  
+  const teacherId = useUserId();
+
+  // Hàm lấy thời gian Việt Nam
+  const getVietnamTime = () => {
+    return new Intl.DateTimeFormat('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).format(new Date());
+  };
+
   useEffect(() => {
     const fetchClassrooms = async () => {
       setLoading(true);
       try {
         if (!teacherId) {
-          return
+          return;
         }
         const data = await getClassRoomByTeacher(teacherId);
-        setClassrooms(data.data || []); // Đảm bảo classrooms luôn là mảng
-        console.log('Classrooms:', data.data); // Debug dữ liệu
+        setClassrooms(data.data || []);
+        console.log('Classrooms:', data.data);
       } catch (error) {
         console.error('Lỗi khi lấy danh sách lớp học:', error);
         toast.error('Lỗi khi tải danh sách lớp học!');
-        setClassrooms([]); // Reset classrooms nếu lỗi
+        setClassrooms([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchClassrooms();
-  }, [teacherId]); // Chạy lại khi teacherId thay đổi
+  }, [teacherId]);
 
   useEffect(() => {
     const fetchExams = async () => {
@@ -96,7 +110,7 @@ const CreateExam = () => {
         try {
           const data = await getExamsByClassroom(filterClassroomId);
           setExams(data || []);
-          console.log('Exams:', data); // Debug dữ liệu exams
+          console.log('Exams:', data);
         } catch (error) {
           console.error('Lỗi khi lấy danh sách bài thi:', error);
           toast.error('Lỗi khi tải danh sách bài thi!');
@@ -109,7 +123,7 @@ const CreateExam = () => {
       }
     };
     fetchExams();
-  }, [filterClassroomId]); // Chạy lại khi filterClassroomId thay đổi
+  }, [filterClassroomId]);
 
   const addQuestion = () => {
     setQuestions([...questions, {
@@ -168,7 +182,7 @@ const CreateExam = () => {
         classroom_id: parseInt(classroomId),
         questions,
         duration: parsedDuration,
-        start_time: startTime || new Date().toISOString(),
+        start_time: startTime || getVietnamTime(), // Sử dụng giờ Việt Nam
         deadline,
         hide_results: Boolean(hideResults),
       };
@@ -178,7 +192,6 @@ const CreateExam = () => {
         notificationType: "classroom",
         examTitle: examData.title,
         action: 7,
-        
       };
       await NotificationService.sendNotificationToCourseUsers(notificationData);
       toast.success('Tạo bài thi thành công!');
@@ -222,7 +235,7 @@ const CreateExam = () => {
       formData.append('classroom_id', parseInt(classroomId));
       formData.append('file', file);
       formData.append('duration', parsedDuration);
-      formData.append('start_time', startTime || new Date().toISOString());
+      formData.append('start_time', startTime || getVietnamTime()); // Sử dụng giờ Việt Nam
       formData.append('deadline', deadline);
       formData.append('hide_results', hideResults.toString());
       const response = await createExamFromWord(formData);
