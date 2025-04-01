@@ -239,6 +239,13 @@ const CreateExam = () => {
       formData.append('deadline', deadline);
       formData.append('hide_results', hideResults.toString());
       const response = await createExamFromWord(formData);
+      const notificationData = {
+        classroom_id: class_room_id,
+        notificationType: "classroom",
+        examTitle: title,
+        action: 7,
+      };
+      await NotificationService.sendNotificationToCourseUsers(notificationData);
       toast.success('Tạo bài thi từ file Word thành công!');
       const examData = {
         title: response.exam.title,
@@ -350,6 +357,8 @@ const CreateExam = () => {
           addQuestion={addQuestion}
           isOpen={isExamFormOpen}
           setIsOpen={setIsExamFormOpen}
+          classRoomId={class_room_id}
+
         />
 
         <WordUploadModal
@@ -376,6 +385,7 @@ const CreateExam = () => {
           isUploadOpen={isUploadOpen}
           setIsUploadOpen={setIsUploadOpen}
           showButton={showButton}
+          classRoomId={class_room_id}
         />
 
         <ExamPreviewModal exam={createdExam} open={isPreviewOpen} onOpenChange={setIsPreviewOpen} />

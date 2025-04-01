@@ -100,10 +100,11 @@ const UserLayout = () => {
           classroom_id,
           assignmentTitle,
           lectureTitle,
+          examTitle
         }) => {
           let toastOptions = {
             position: "top-right",
-            autoClose: 5000,
+            autoClose: 2000,
           };
 
           switch (notificationType) {
@@ -119,6 +120,8 @@ const UserLayout = () => {
                     navigate(`/courseDetail/${classroom_id}/assignments`);
                   } else if (lectureTitle) {
                     navigate(`/courseDetail/${classroom_id}/lectures`);
+                  } else if(examTitle){
+                    navigate(`/courseDetail/${classroom_id}/list-exam`)
                   }
                   toast.dismiss();
                 },

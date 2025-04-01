@@ -7,8 +7,15 @@ const WordUploadModal = ({
   startTime, setStartTime, deadline, setDeadline,
   hideResults, setHideResults, file, setFile,
   classrooms, loading, handleFileSubmit, handleFileChange, handleRemoveFile,
-  isUploadOpen, setIsUploadOpen, showButton = true
+  isUploadOpen, setIsUploadOpen, showButton = true, classRoomId // Nhận prop classRoomId
 }) => {
+  // Nếu muốn sử dụng classRoomId làm giá trị mặc định cho classroomId
+  React.useEffect(() => {
+    if (classRoomId && !classroomId) {
+      setClassroomId(classRoomId);
+    }
+  }, [classRoomId, classroomId, setClassroomId]);
+
   return (
     <ModalCustom
       title="Tạo bài thi từ file Word"
@@ -41,20 +48,8 @@ const WordUploadModal = ({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1.5">Lớp học</label>
-          <select
-            value={classroomId}
-            onChange={(e) => setClassroomId(e.target.value)}
-            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-sm"
-            disabled={loading}
-          >
-            <option value="">Chọn lớp học</option>
-            {classrooms.map((classroom) => (
-              <option key={classroom.classroom_id} value={classroom.classroom_id}>
-                {classroom.class_name} - {classroom.course_name}
-              </option>
-            ))}
-          </select>
+              <input disabled hidden value={classRoomId}>
+              </input>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-600 mb-1.5">Thời gian làm bài (phút)</label>

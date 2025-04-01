@@ -5,7 +5,7 @@ import QuestionInput from './QuestionInput';
 const ExamFormModal = ({
   title, setTitle, classroomId, setClassroomId, questions, setQuestions,
   duration, setDuration, startTime, setStartTime, deadline, setDeadline,
-  hideResults, setHideResults, classrooms, loading, handleSubmit, addQuestion, isOpen, setIsOpen
+  hideResults, setHideResults, classrooms, loading, handleSubmit, addQuestion, isOpen, setIsOpen, classRoomId
 }) => {
   return (
     <ModalCustom
@@ -29,20 +29,8 @@ const ExamFormModal = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1.5">Lớp học</label>
-          <select
-            value={classroomId}
-            onChange={(e) => setClassroomId(e.target.value)}
-            className="w-full p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-sm"
-            disabled={loading}
-          >
-            <option value="">Chọn lớp học</option>
-            {classrooms.map((classroom) => (
-              <option key={classroom.classroom_id} value={classroom.classroom_id}>
-                {classroom.class_name} - {classroom.course_name}
-              </option>
-            ))}
-          </select>
+        <input disabled hidden value={classRoomId}>
+        </input>
         </div>
 
         <div>
