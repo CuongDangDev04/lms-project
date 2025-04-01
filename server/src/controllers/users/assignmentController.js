@@ -8,69 +8,68 @@ const {
   UserNotification,
   Submission,
 } = require("../../models/index");
-const fsPromises = require("fs").promises; // Để dùng access và readFile
-const fs = require("fs"); // Để dùng createReadStream
-const path = require("path");
-const archiver = require("archiver");
-const { getIO } = require("../../config/socket");
-const { console } = require("inspector");
+const supabase = require("../../config/supabase"); // Client Supabase
 const { Op } = require("sequelize");
-
+const fs = require('fs').promises;
 // Hàm hỗ trợ để parse file_path an toàn
 const parseFilePath = (filePath) => {
   try {
-    // Nếu filePath rỗng hoặc không phải chuỗi, trả về mảng rỗng
-    if (!filePath || typeof filePath !== "string") {
-      return [];
-    }
-    // Nếu filePath là chuỗi JSON hợp lệ (bắt đầu bằng [ và kết thúc bằng ])
-    if (filePath.startsWith("[") && filePath.endsWith("]")) {
-      return JSON.parse(filePath);
-    }
-    // Nếu không phải JSON, coi như là một đường dẫn đơn và trả về dưới dạng mảng
+    if (!filePath || typeof filePath !== "string") return [];
+    if (filePath.startsWith("[") && filePath.endsWith("]")) return JSON.parse(filePath);
     return [filePath];
   } catch (error) {
-    console.error(
-      "Lỗi khi parse file_path:",
-      error.message,
-      "filePath:",
-      filePath
-    );
-    // Nếu parse thất bại, trả về như một mảng chứa một phần tử
+    console.error("Lỗi khi parse file_path:", error.message, "filePath:", filePath);
     return typeof filePath === "string" ? [filePath] : [];
   }
+};
+
+// Hàm hỗ trợ tải file lên Supabase
+const uploadFilesToSupabase = async (files) => {
+  const uploadedFiles = [];
+  for (const file of files) {
+    const fileName = `assignment/${Date.now()}-${file.originalname}`; // Tạo tên file duy nhất
+    const { data, error } = await supabase.storage
+      .from('lms-bucket')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype, // Đảm bảo loại file đúng
+      });
+    if (error) throw error;
+    uploadedFiles.push({ path: fileName }); // Lưu đường dẫn file trên Supabase
+  }
+  return uploadedFiles;
+};
+
+// Hàm hỗ trợ lấy URL có chữ ký từ Supabase
+const getSignedUrlFromSupabase = async (bucketName, filePath, expiry = 60) => {
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .createSignedUrl(filePath, expiry);
+
+  if (error) {
+    console.error(`Lỗi khi lấy URL có chữ ký từ Supabase: ${error.message}`);
+    return null;
+  }
+  return data.signedUrl;
 };
 
 // Hàm upload bài tập
 const uploadAssignment = async (req, res) => {
   try {
-    const {
-      user_participation_id,
-      title,
-      description,
-      start_assignment,
-      end_assignment,
-      user_id,
-    } = req.body;
+    const { user_participation_id, title, description, start_assignment, end_assignment, user_id } = req.body;
 
-    // Kiểm tra các trường bắt buộc
     if (!user_participation_id || !title || !user_id) {
       return res.status(400).json({
-        message:
-          "Vui lòng cung cấp đầy đủ user_participation_id, title và user_id.",
+        message: "Vui lòng cung cấp đầy đủ user_participation_id, title và user_id.",
       });
     }
 
-    // Kiểm tra xem có file nào được upload không
     if (!req.files || req.files.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Vui lòng upload ít nhất một file." });
+      return res.status(400).json({ message: "Vui lòng upload ít nhất một file." });
     }
 
-    // Lấy danh sách đường dẫn file đã upload
-    const file_paths = req.files.map((file) => file.path);
-    // Tạo bản ghi mới trong bảng assignments
+    // Upload file từ buffer lên Supabase
+    const uploadedFiles = await uploadFilesToSupabase(req.files);
+
     const newAssignment = await Assignment.create({
       user_participation_id,
       title,
@@ -78,8 +77,7 @@ const uploadAssignment = async (req, res) => {
       start_assignment: start_assignment ? new Date(start_assignment) : null,
       end_assignment: end_assignment ? new Date(end_assignment) : null,
       user_id,
-
-      file_path: JSON.stringify(file_paths), // Lưu mảng đường dẫn dưới dạng JSON
+      file_path: JSON.stringify(uploadedFiles.map(f => f.path)),
     });
 
     res.status(201).json({
@@ -88,283 +86,216 @@ const uploadAssignment = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi khi upload bài tập:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi upload bài tập." });
+    res.status(500).json({ message: "Có lỗi xảy ra khi upload bài tập.", error: error.message });
   }
 };
 
-// Hàm tải file
+// Hàm tải file bài tập
 const downloadAssignmentFiles = async (req, res) => {
   try {
     const { assignment_id } = req.params;
-    const { fileIndex } = req.query; // Thêm query parameter để chọn file cụ thể
+    const { fileIndex } = req.query;
 
     const assignment = await Assignment.findByPk(assignment_id);
     if (!assignment) {
       return res.status(404).json({ message: "Không tìm thấy bài tập." });
     }
 
-    const filePaths = JSON.parse(assignment.file_path);
-
-    if (fileIndex !== undefined) {
-      const index = parseInt(fileIndex, 10);
-      if (isNaN(index) || index < 0 || index >= filePaths.length) {
-        return res.status(400).json({ message: "Chỉ số file không hợp lệ." });
-      }
-
-      const filePath = filePaths[index];
-      const absolutePath = path.resolve(filePath);
-      await fsPromises.access(absolutePath);
-
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${path.basename(filePath)}"`
-      );
-      res.setHeader("Content-Type", "application/octet-stream");
-      return fs.createReadStream(absolutePath).pipe(res);
+    let filePaths = parseFilePath(assignment.file_path);
+    if (filePaths.length === 0) {
+      return res.status(404).json({ message: "Không có file nào để tải." });
     }
 
-    if (filePaths.length === 1) {
-      const filePath = filePaths[0];
-      const absolutePath = path.resolve(filePath);
-      await fsPromises.access(absolutePath);
-
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${path.basename(filePath)}"`
-      );
-      res.setHeader("Content-Type", "application/octet-stream");
-      return fs.createReadStream(absolutePath).pipe(res);
+    if (fileIndex === undefined) {
+      return res.status(400).json({ message: "Vui lòng cung cấp fileIndex để tải file." });
     }
 
-    if (filePaths.length > 1) {
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="assignment_${assignment_id}.zip"`
-      );
-      res.setHeader("Content-Type", "application/zip");
-
-      const archive = archiver("zip", { zlib: { level: 9 } });
-      archive.pipe(res);
-
-      for (const filePath of filePaths) {
-        const absolutePath = path.resolve(filePath);
-        await fsPromises.access(absolutePath);
-        archive.file(absolutePath, { name: path.basename(filePath) });
-      }
-
-      await archive.finalize();
-      return;
+    const index = parseInt(fileIndex, 10);
+    if (isNaN(index) || index < 0 || index >= filePaths.length) {
+      return res.status(400).json({ message: "Chỉ số file không hợp lệ." });
     }
 
-    return res.status(400).json({ message: "Không có file nào để tải." });
+    const filePath = filePaths[index];
+    const signedUrl = await getSignedUrlFromSupabase("lms-bucket", filePath);
+    if (!signedUrl) {
+      return res.status(500).json({ message: "Không thể tạo URL tải file." });
+    }
+
+    return res.status(200).json({ signedUrl }); // Trả về signedUrl thay vì redirect
   } catch (error) {
     console.error("Lỗi khi tải dữ liệu file:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi tải dữ liệu file." });
+    res.status(500).json({ message: "Có lỗi xảy ra khi tải dữ liệu file.", error: error.message });
   }
 };
-// Hàm lấy tất cả bài tập với classroom_id
-// Hàm lấy bài tập theo classroom_id từ params
+
+// Hàm lấy tất cả bài tập theo classroom_id
 const getAllAssignments = async (req, res) => {
   try {
-    const { classroom_id } = req.params; // Lấy classroom_id từ params
+    const { classroom_id } = req.params;
 
-    // Kiểm tra xem classroom_id có được cung cấp không
     if (!classroom_id) {
-      return res
-        .status(400)
-        .json({ message: "Vui lòng cung cấp classroom_id." });
+      return res.status(400).json({ message: "Vui lòng cung cấp classroom_id." });
     }
 
-    // Lấy tất cả bài tập theo classroom_id
     const assignments = await Assignment.findAll({
       include: [
         {
           model: UserParticipation,
-          attributes: ["classroom_id"], // Chỉ lấy classroom_id
-          where: { classroom_id: classroom_id }, // Lọc theo classroom_id
-          required: true, // INNER JOIN để chỉ lấy các bài tập có classroom_id khớp
+          attributes: ["classroom_id"],
+          where: { classroom_id },
+          required: true,
         },
       ],
     });
 
-    // Kiểm tra nếu không có bài tập nào
     if (assignments.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy bài tập nào cho classroom_id này." });
+      return res.status(404).json({ message: "Không tìm thấy bài tập nào cho classroom_id này." });
     }
 
-    // Trả về danh sách bài tập
     res.status(200).json({
       message: "Lấy danh sách bài tập thành công!",
-      assignments: assignments,
+      assignments,
     });
   } catch (error) {
     console.error("Lỗi khi lấy danh sách bài tập:", error);
-    res
-      .status(500)
-      .json({ message: "Có lỗi xảy ra khi lấy danh sách bài tập.", error });
+    res.status(500).json({ message: "Có lỗi xảy ra khi lấy danh sách bài tập.", error });
   }
 };
 
+// Hàm lấy user_participation_id
 const getUserParticipationId = async (req, res) => {
   try {
     const { userId, classroomId } = req.params;
     const participation = await UserParticipation.findOne({
-      where: {
-        user_id: userId,
-        classroom_id: classroomId,
-      },
+      where: { user_id: userId, classroom_id: classroomId },
     });
 
     if (!participation) {
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy user_participation_id" });
+      return res.status(404).json({ message: "Không tìm thấy user_participation_id" });
     }
 
-    res
-      .status(200)
-      .json({ user_participation_id: participation.participate_id });
+    res.status(200).json({ user_participation_id: participation.participate_id });
   } catch (error) {
     console.error("Lỗi khi lấy user_participation_id:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
 
+// Hàm cập nhật bài tập
 const updateAssignment = async (req, res) => {
   try {
     const { assignment_id } = req.params;
-    const {
-      title,
-      description,
-      start_assignment,
-      end_assignment,
-      removeFileIndices, // Mảng chỉ số file cần xóa (từ frontend)
-    } = req.body;
+    const { title, description, start_assignment, end_assignment, removeFileIndices } = req.body;
 
-    if (!assignment_id) {
-      return res
-        .status(400)
-        .json({ message: "Vui lòng cung cấp assignment_id." });
+    if (!assignment_id || isNaN(assignment_id)) {
+      return res.status(400).json({ message: "assignment_id không hợp lệ." });
     }
+
     const assignment = await Assignment.findByPk(assignment_id);
-    if (!assignment) {
-      return res.status(404).json({ message: "Không tìm thấy bài tập." });
+    if (!assignment) return res.status(404).json({ message: "Không tìm thấy bài tập." });
+
+  
+
+    if (!title) return res.status(400).json({ message: "Tiêu đề (title) là trường bắt buộc." });
+
+    let filePaths;
+    try {
+      filePaths = assignment.file_path ? JSON.parse(assignment.file_path) : [];
+    } catch (e) {
+      return res.status(500).json({ message: "Dữ liệu file_path không hợp lệ." });
     }
 
-    if (!title) {
-      return res
-        .status(400)
-        .json({ message: "Tiêu đề (title) là trường bắt buộc." });
-    }
-
-    let file_paths = JSON.parse(assignment.file_path || "[]");
-
-    // Xóa file nếu có chỉ số được gửi từ frontend
     if (removeFileIndices) {
-      const indices = JSON.parse(removeFileIndices); // Parse từ chuỗi JSON
-      indices.sort((a, b) => b - a); // Sắp xếp giảm dần để xóa từ cuối mảng
-      for (const index of indices) {
-        if (index >= 0 && index < file_paths.length) {
-          const filePath = file_paths[index];
-          try {
-            await fsPromises.unlink(path.resolve(filePath)); // Xóa file vật lý
-          } catch (err) {
-            console.error(`Không thể xóa file ${filePath}:`, err);
-          }
-          file_paths.splice(index, 1); // Xóa đường dẫn khỏi mảng
+      let indices = [];
+      try {
+        indices = Array.isArray(removeFileIndices) ? removeFileIndices : JSON.parse(removeFileIndices || "[]");
+        if (!indices.every(i => typeof i === "number" && i >= 0)) {
+          return res.status(400).json({ message: "removeFileIndices chứa giá trị không hợp lệ." });
+        }
+      } catch (e) {
+        return res.status(400).json({ message: "removeFileIndices không đúng định dạng JSON." });
+      }
+      for (const index of indices.sort((a, b) => b - a)) {
+        if (index >= 0 && index < filePaths.length) {
+          const filePath = filePaths[index];
+          const { error } = await supabase.storage.from("lms-bucket").remove([filePath]);
+          if (error) throw new Error(`Xóa file thất bại: ${error.message}`);
+          filePaths.splice(index, 1);
         }
       }
     }
 
-    // Thêm file mới nếu có
     if (req.files && req.files.length > 0) {
-      const newFilePaths = req.files.map((file) => file.path);
-      file_paths = [...file_paths, ...newFilePaths]; // Thêm file mới vào mảng
+      const newFiles = await uploadFilesToSupabase(req.files);
+      filePaths = [...filePaths, ...newFiles.map(f => f.path)];
+    }
+
+    const newStart = start_assignment ? new Date(start_assignment) : assignment.start_assignment;
+    const newEnd = end_assignment ? new Date(end_assignment) : assignment.end_assignment;
+    if (start_assignment && isNaN(newStart.getTime())) {
+      return res.status(400).json({ message: "start_assignment không hợp lệ." });
+    }
+    if (end_assignment && isNaN(newEnd.getTime())) {
+      return res.status(400).json({ message: "end_assignment không hợp lệ." });
     }
 
     await assignment.update({
       title,
       description,
-      start_assignment: start_assignment
-        ? new Date(start_assignment)
-        : assignment.start_assignment,
-      end_assignment: end_assignment
-        ? new Date(end_assignment)
-        : assignment.end_assignment,
-      file_path: JSON.stringify(file_paths),
+      start_assignment: newStart,
+      end_assignment: newEnd,
+      file_path: JSON.stringify(filePaths),
     });
+
+    await assignment.reload();
 
     res.status(200).json({
       message: "Chỉnh sửa bài tập thành công!",
-      assignment: assignment,
+      assignment,
     });
   } catch (error) {
     console.error("Lỗi khi chỉnh sửa bài tập:", error);
-    res.status(500).json({ message: "Có lỗi xảy ra khi chỉnh sửa bài tập." });
+    res.status(500).json({ message: "Có lỗi xảy ra khi chỉnh sửa bài tập.", error: error.message });
   }
 };
-// Hàm xóa bài tập
 // Hàm xóa bài tập
 const deleteAssignment = async (req, res) => {
   try {
     const { assignment_id } = req.params;
 
-    if (!assignment_id) {
-      return res
-        .status(400)
-        .json({ message: "Vui lòng cung cấp assignment_id." });
-    }
-
     const assignment = await Assignment.findByPk(assignment_id);
-    if (!assignment) {
-      return res.status(404).json({ message: "Không tìm thấy bài tập." });
-    }
+    if (!assignment) return res.status(404).json({ message: "Không tìm thấy bài tập." });
 
-    // Sử dụng parseFilePath an toàn
     const filePaths = parseFilePath(assignment.file_path);
-
-    // Xóa các file vật lý
-    for (const filePath of filePaths) {
-      try {
-        const absolutePath = path.resolve(filePath);
-        await fsPromises.access(absolutePath); // Kiểm tra file tồn tại
-        await fsPromises.unlink(absolutePath); // Xóa file
-      } catch (err) {
-        console.error(`Không thể xóa file ${filePath}:`, err.message);
-      }
+    if (filePaths.length > 0) {
+      await supabase.storage.from("lms-bucket").remove(filePaths);
     }
 
-    // Xóa bản ghi bài tập
     await assignment.destroy();
 
     res.status(200).json({ message: "Xóa bài tập thành công!" });
   } catch (error) {
-    console.error("Lỗi khi xóa bài tập:", error.message, error.stack);
-    res.status(500).json({ message: "Có lỗi xảy ra khi xóa bài tập." });
+    console.error("Lỗi khi xóa bài tập:", error);
+    res.status(500).json({ message: "Có lỗi xảy ra khi xóa bài tập.", error: error.message });
   }
 };
 
+// Hàm lấy danh sách bài tập chưa nộp
 const getPendingAssignments = async (req, res) => {
   try {
-    // Lấy userId của sinh viên từ params
     const userId = req.user.id;
-    console.log("userId", userId);
 
     if (!userId || !Number.isInteger(Number(userId))) {
       return res.status(400).json({ message: "ID sinh viên không hợp lệ" });
     }
 
-    // Bước 1: Lấy danh sách lớp của sinh viên
     const studentParticipations = await UserParticipation.findAll({
       where: { user_id: userId },
       attributes: ["classroom_id"],
       raw: true,
     });
 
-    const studentClassroomIds = studentParticipations.map((p) => p.classroom_id);
-    console.log("studentClassroomIds", studentClassroomIds);
+    const studentClassroomIds = studentParticipations.map(p => p.classroom_id);
 
     if (studentClassroomIds.length === 0) {
       return res.status(200).json({
@@ -373,28 +304,21 @@ const getPendingAssignments = async (req, res) => {
       });
     }
 
-    // Bước 2: Lấy tất cả bài tập và thông tin UserParticipation của giảng viên
     const assignments = await Assignment.findAll({
       include: [
         {
           model: UserParticipation,
-          attributes: ["classroom_id"], // Lấy classroom_id của giảng viên
+          attributes: ["classroom_id"],
           required: true,
           include: [
             {
               model: Classroom,
               attributes: ["classroom_id"],
               include: [
-                {
-                  model: Class,
-                  attributes: ["class_name"],
-                },
-                {
-                  model: Course,
-                  attributes: ["course_name"],
-                },
+                { model: Class, attributes: ["class_name"] },
+                { model: Course, attributes: ["course_name"] },
               ],
-            }
+            },
           ],
         },
         {
@@ -404,8 +328,8 @@ const getPendingAssignments = async (req, res) => {
         },
       ],
       where: {
-        "$submissions.submission_id$": { [Op.is]: null }, // Chỉ lấy bài chưa nộp
-        "$user_participation.classroom_id$": { [Op.in]: studentClassroomIds }, // So sánh classroom_id
+        "$submissions.submission_id$": { [Op.is]: null },
+        "$user_participation.classroom_id$": { [Op.in]: studentClassroomIds },
       },
       attributes: [
         "assignment_id",
@@ -417,19 +341,17 @@ const getPendingAssignments = async (req, res) => {
       ],
     });
 
-    console.log("assignments", assignments);
-
     res.status(200).json({
       message: "Lấy danh sách bài tập chưa làm thành công!",
       assignments,
     });
-    console.log("🚀 Đã gửi phản hồi với danh sách bài tập chưa làm!");
   } catch (error) {
     console.error("Lỗi khi lấy danh sách bài chưa làm:", error);
     res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
-// Thêm hàm lấy chi tiết bài tập
+
+// Hàm lấy chi tiết bài tập
 const getAssignmentDetail = async (req, res) => {
   try {
     const assignmentId = parseInt(req.params.assignmentId, 10);
@@ -465,10 +387,11 @@ const getAssignmentDetail = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi khi lấy chi tiết bài tập:", error);
-    res.status(500).json({ message: "Lỗi server khi lấy chi tiết bài tập" });
+    res.status(500).json({ message: "Lỗi server khi lấy chi tiết bài tập", error: error.message });
   }
 };
 
+// Xuất module
 module.exports = {
   uploadAssignment,
   downloadAssignmentFiles,

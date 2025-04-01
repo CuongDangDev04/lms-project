@@ -3,37 +3,55 @@ const fs = require('fs'); // Add this import
 const fsPromises = fs.promises; // Add this import
 const archiver = require('archiver');
 const { Lecture, UserParticipation, Classroom, User } = require('../../models/index');
+const supabase = require('../../config/supabase');
+
 
 const uploadLecture = async (req, res) => {
   try {
     const files = validateFiles(req.files);
-    // lặp và lưu file paths/names vào bên trong mảng vừa tạo
-    const { filePaths, fileNames } = extractFileData(files);
-    //lấy user_id từ JWT 
+
     const user_id = req.user.id;
     const { classroom_id } = req.params;
-    const { title, description } = req.body; // Lấy từ form-data
+    const { title, description } = req.body;
+
+    // Kiểm tra participation
     const participation = await fetchParticipationOnClassroom(classroom_id, user_id);
     if (!participation) {
-      return sendErrorResponse(res, 404, 'User not participating in this classroom');
+      return sendErrorResponse(res, 404, "User không tham gia lớp học này.");
     }
+
+    // Upload file lên Supabase
+    const uploadedFiles = await uploadFilesToSupabase(files);
+    // Lưu thông tin bài giảng
     const lecture = await createLecture({
       user_id,
       participation,
       title,
       description,
-      filePaths,
-      fileNames
+      filePaths: uploadedFiles.map(f => f.path),
+      fileNames: uploadedFiles.map(f => f.name),
     });
-    if (!lecture || !lecture.lecture_id) {
-      return sendErrorResponse(res, 500, 'Failed to create lecture record');
-    }
-    return sendSuccessResponse(res, 201, 'Lecture uploaded successfully', lecture);
-  } catch (err) {
-    return sendErrorResponse(res, 500, 'Error uploading lecture', err.message);
+
+    sendSuccessResponse(res, 201, "Upload bài giảng thành công!", lecture);
+  } catch (error) {
+    console.error("Lỗi khi upload bài giảng:", error);
+    sendErrorResponse(res, 500, "Lỗi khi upload bài giảng.", error.message);
   }
 };
+const uploadFilesToSupabase = async (files) => {
+  const uploadedFiles = [];
+  for (const file of files) {
+    // Tạo đường dẫn file trong bucket (thư mục con lecture)
+    const fileName = `lecture/${Date.now()}-${file.originalname}`;
+    const { data, error } = await supabase.storage
+      .from('lms-bucket') // Tên bucket
+      .upload(fileName, file.buffer, { contentType: file.mimetype });
 
+    if (error) throw new Error(`Lỗi khi upload file ${file.originalname}: ${error.message}`);
+    uploadedFiles.push({ path: data.path, name: file.originalname });
+  }
+  return uploadedFiles;
+};
 const validateFiles = (files, res) => {
   if (!files || !Array.isArray(files) || files.length === 0) {
     sendErrorResponse(res, 400, 'Please upload at least one file');
@@ -52,15 +70,110 @@ const createLecture = async ({ user_id, participation, title, description, fileP
     upload_date: new Date(),
   });
 }
+
+// Hàm này sẽ lấy URL có chữ ký từ Supabase
+const getSignedUrlFromSupabase = async (bucketName, filePath, expiry = 60) => {
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .createSignedUrl(filePath, expiry);
+
+  if (error) {
+    console.error(`Lỗi khi lấy URL có chữ ký từ Supabase: ${error.message}`);
+    return null;
+  }
+
+  return data.signedUrl;
+};
+// Hàm này sẽ tải bài giảng về
+const downloadLectureSupabase = async (req, res) => {
+  try {
+    const { lecture_id } = req.params;
+    const { fileIndex } = req.query; // Lấy fileIndex từ query
+
+    // Lấy thông tin bài giảng từ database
+    const lecture = await Lecture.findOne({ where: { lecture_id } });
+    if (!lecture) {
+      return res.status(404).json({ message: "Không tìm thấy bài giảng." });
+    }
+
+    const filePaths = JSON.parse(lecture.file_path || '[]');
+    const fileNames = JSON.parse(lecture.file_name || '[]');
+
+    if (filePaths.length === 0) {
+      return res.status(404).json({ message: "Không có file nào để tải." });
+    }
+
+    if (fileIndex !== undefined) {
+      // Tải xuống một file cụ thể
+      const index = parseInt(fileIndex, 10);
+      if (isNaN(index) || index < 0 || index >= filePaths.length) {
+        return res.status(400).json({ message: "Chỉ số file không hợp lệ." });
+      }
+
+      const filePath = filePaths[index];
+      const fileName = fileNames[index] || `file_${index}`;
+
+      // Lấy URL có chữ ký từ Supabase
+      const signedUrl = await getSignedUrlFromSupabase('lms-bucket', filePath);
+
+      if (!signedUrl) {
+        return res.status(500).json({ message: "Không thể tạo URL tải file." });
+      }
+
+      // Chuyển hướng đến URL tải file
+      return res.redirect(signedUrl);
+    } else {
+      // Tải xuống tất cả file dưới dạng ZIP
+      const zipFileName = `${lecture.title || 'lecture_' + lecture_id}.zip`;
+
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${zipFileName}"`);
+
+      const archive = archiver('zip', { zlib: { level: 9 } });
+      archive.on('error', (err) => {
+        console.error('Lỗi khi tạo tệp ZIP:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ message: 'Lỗi khi tạo tệp ZIP.' });
+        }
+      });
+
+      archive.pipe(res);
+
+      for (let i = 0; i < filePaths.length; i++) {
+        const filePath = filePaths[i];
+        const fileName = fileNames[i] || `file_${i}`;
+
+        // Lấy URL có chữ ký từ Supabase
+        const signedUrl = await getSignedUrlFromSupabase('lms-bucket', filePath);
+
+        if (signedUrl) {
+          archive.append(await fetch(signedUrl).then(res => res.buffer()), { name: fileName });
+        } else {
+          console.warn(`Không thể thêm file vào ZIP: ${filePath}`);
+        }
+      }
+
+      await archive.finalize();
+    }
+  } catch (error) {
+    console.error("Lỗi khi tải bài giảng:", error);
+    res.status(500).json({ message: "Có lỗi xảy ra khi tải bài giảng.", error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
 const extractFileData = (files) => (
   {
     filePaths: files.map(file => file.path),
     fileNames: files.map(file => file.originalname)
   }
 )
-
-
-
 const fetchParticipationOnClassroom = async (classroom_id, user_id) => {
   return await UserParticipation.findOne({
     where: { user_id, classroom_id }
@@ -308,119 +421,119 @@ const getLectureById = async (req, res) => {
 }
 
 
-const downloadLecture = async (req, res, next) => {
-  try {
-    const { lecture_id } = req.params;
-    const { fileIndex } = req.query; // Lấy fileIndex từ query
+// const downloadLecture = async (req, res, next) => {
+//   try {
+//     const { lecture_id } = req.params;
+//     const { fileIndex } = req.query; // Lấy fileIndex từ query
 
-    const lecture = await Lecture.findOne({ where: { lecture_id } });
-    if (!lecture) throw new Error('Lecture not found!');
+//     const lecture = await Lecture.findOne({ where: { lecture_id } });
+//     if (!lecture) throw new Error('Lecture not found!');
 
-    const filePaths = JSON.parse(lecture.file_path || '[]');
-    const fileNames = JSON.parse(lecture.file_name || '[]');
+//     const filePaths = JSON.parse(lecture.file_path || '[]');
+//     const fileNames = JSON.parse(lecture.file_name || '[]');
 
-    if (filePaths.length === 0) throw new Error('No files found for this lecture!');
+//     if (filePaths.length === 0) throw new Error('No files found for this lecture!');
 
-    // For debugging
-    console.log('File paths:', filePaths);
-    console.log('File names:', fileNames);
+//     // For debugging
+//     console.log('File paths:', filePaths);
+//     console.log('File names:', fileNames);
 
-    if (fileIndex !== undefined) {
-      // Tải từng file
-      const index = parseInt(fileIndex, 10);
-      if (isNaN(index) || index < 0 || index >= filePaths.length) {
-        throw new Error('Invalid file index!');
-      }
+//     if (fileIndex !== undefined) {
+//       // Tải từng file
+//       const index = parseInt(fileIndex, 10);
+//       if (isNaN(index) || index < 0 || index >= filePaths.length) {
+//         throw new Error('Invalid file index!');
+//       }
 
-      const filePath = filePaths[index];
-      const fileName = fileNames[index] || path.basename(filePath);
+//       const filePath = filePaths[index];
+//       const fileName = fileNames[index] || path.basename(filePath);
 
-      const absolutePath = path.resolve(process.cwd(), filePath);
-      console.log('Downloading file:', { fileName, absolutePath });
+//       const absolutePath = path.resolve(process.cwd(), filePath);
+//       console.log('Downloading file:', { fileName, absolutePath });
 
-      if (!fs.existsSync(absolutePath)) {
-        console.error(`File not found at: ${absolutePath}`);
-        return res.status(404).json({ message: 'File not found on server' });
-      }
+//       if (!fs.existsSync(absolutePath)) {
+//         console.error(`File not found at: ${absolutePath}`);
+//         return res.status(404).json({ message: 'File not found on server' });
+//       }
 
-      // Set appropriate MIME type based on file extension
-      const mimeType = getMimeType(filePath);
+//       // Set appropriate MIME type based on file extension
+//       const mimeType = getMimeType(filePath);
 
-      // Check if this is a video file and handle streaming
-      if (mimeType.startsWith('video/')) {
-        return streamVideo(req, res, absolutePath, fileName, mimeType);
-      }
+//       // Check if this is a video file and handle streaming
+//       if (mimeType.startsWith('video/')) {
+//         return streamVideo(req, res, absolutePath, fileName, mimeType);
+//       }
 
-      // For non-video files, continue as before
-      res.setHeader('Content-Type', mimeType);
-      res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+//       // For non-video files, continue as before
+//       res.setHeader('Content-Type', mimeType);
+//       res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`);
 
-      const fileStream = fs.createReadStream(absolutePath);
-      fileStream.pipe(res);
+//       const fileStream = fs.createReadStream(absolutePath);
+//       fileStream.pipe(res);
 
-    } else {
-      // Multiple files case - ZIP download
-      if (filePaths.length === 1) {
-        // Single file case
-        const filePath = filePaths[0];
-        const fileName = fileNames[0] || path.basename(filePath);
+//     } else {
+//       // Multiple files case - ZIP download
+//       if (filePaths.length === 1) {
+//         // Single file case
+//         const filePath = filePaths[0];
+//         const fileName = fileNames[0] || path.basename(filePath);
 
-        const absolutePath = path.resolve(process.cwd(), filePath);
-        console.log('Downloading single file:', { fileName, absolutePath });
+//         const absolutePath = path.resolve(process.cwd(), filePath);
+//         console.log('Downloading single file:', { fileName, absolutePath });
 
-        if (!fs.existsSync(absolutePath)) {
-          console.error(`File not found at: ${absolutePath}`);
-          return res.status(404).json({ message: 'File not found on server' });
-        }
+//         if (!fs.existsSync(absolutePath)) {
+//           console.error(`File not found at: ${absolutePath}`);
+//           return res.status(404).json({ message: 'File not found on server' });
+//         }
 
-        const mimeType = getMimeType(filePath);
-        res.setHeader('Content-Type', mimeType);
-        res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+//         const mimeType = getMimeType(filePath);
+//         res.setHeader('Content-Type', mimeType);
+//         res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`);
 
-        const fileStream = fs.createReadStream(absolutePath);
-        fileStream.pipe(res);
+//         const fileStream = fs.createReadStream(absolutePath);
+//         fileStream.pipe(res);
 
-      } else {
-        // Multiple files - ZIP
-        const zipFileName = `${lecture.title || 'lecture_' + lecture_id}.zip`;
-        console.log('Creating ZIP archive:', zipFileName);
+//       } else {
+//         // Multiple files - ZIP
+//         const zipFileName = `${lecture.title || 'lecture_' + lecture_id}.zip`;
+//         console.log('Creating ZIP archive:', zipFileName);
 
-        res.setHeader('Content-Type', 'application/zip');
-        res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(zipFileName)}`);
+//         res.setHeader('Content-Type', 'application/zip');
+//         res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(zipFileName)}`);
 
-        const archive = archiver('zip', { zlib: { level: 9 } });
-        archive.on('error', (err) => {
-          console.error('Archive error:', err);
-          if (!res.headersSent) {
-            res.status(500).json({ message: 'Error creating archive' });
-          }
-        });
+//         const archive = archiver('zip', { zlib: { level: 9 } });
+//         archive.on('error', (err) => {
+//           console.error('Archive error:', err);
+//           if (!res.headersSent) {
+//             res.status(500).json({ message: 'Error creating archive' });
+//           }
+//         });
 
-        archive.pipe(res);
+//         archive.pipe(res);
 
-        for (let i = 0; i < filePaths.length; i++) {
-          const filePath = filePaths[i];
-          const fileName = fileNames[i] || `file_${i}${path.extname(filePath)}`;
-          const absolutePath = path.resolve(process.cwd(), filePath);
+//         for (let i = 0; i < filePaths.length; i++) {
+//           const filePath = filePaths[i];
+//           const fileName = fileNames[i] || `file_${i}${path.extname(filePath)}`;
+//           const absolutePath = path.resolve(process.cwd(), filePath);
 
-          if (fs.existsSync(absolutePath)) {
-            console.log(`Adding to ZIP: ${fileName}`);
-            archive.file(absolutePath, { name: fileName });
-          } else {
-            console.warn(`File not found for ZIP: ${absolutePath}`);
-          }
-        }
+//           if (fs.existsSync(absolutePath)) {
+//             console.log(`Adding to ZIP: ${fileName}`);
+//             archive.file(absolutePath, { name: fileName });
+//           } else {
+//             console.warn(`File not found for ZIP: ${absolutePath}`);
+//           }
+//         }
 
-        await archive.finalize();
-      }
-    }
-  } catch (err) {
-    console.error('Download error:', err);
-    if (!res.headersSent) {
-      res.status(500).json({ message: err.message });
-    }
-  }
-};
+//         await archive.finalize();
+//       }
+//     }
+//   } catch (err) {
+//     console.error('Download error:', err);
+//     if (!res.headersSent) {
+//       res.status(500).json({ message: err.message });
+//     }
+//   }
+// };
 // Helper function to determine MIME type
 const getMimeType = (filePath) => {
   const ext = path.extname(filePath).toLowerCase();
@@ -536,6 +649,8 @@ module.exports = {
   DeleteLectureOnId,
   updateLecture,  // Export the new function
   getLectureById,
-  downloadLecture,
-  streamVideo
+  // downloadLecture,
+  streamVideo,
+  uploadFilesToSupabase,
+  downloadLectureSupabase
 };
