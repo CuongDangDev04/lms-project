@@ -8,6 +8,8 @@ const supabase = require('../../config/supabase');
 
 const uploadLecture = async (req, res) => {
   try {
+    console.log("Request body:", req.body); // Log the request body
+    console.log("uploadLecture được gọi"); // Log the request files
     const files = validateFiles(req.files);
 
     const user_id = req.user.id;
@@ -31,7 +33,6 @@ const uploadLecture = async (req, res) => {
       filePaths: uploadedFiles.map(f => f.path),
       fileNames: uploadedFiles.map(f => f.name),
     });
-
     sendSuccessResponse(res, 201, "Upload bài giảng thành công!", lecture);
   } catch (error) {
     console.error("Lỗi khi upload bài giảng:", error);
@@ -46,9 +47,9 @@ const uploadFilesToSupabase = async (files) => {
     const { data, error } = await supabase.storage
       .from('lms-bucket') // Tên bucket
       .upload(fileName, file.buffer, { contentType: file.mimetype });
-
     if (error) throw new Error(`Lỗi khi upload file ${file.originalname}: ${error.message}`);
     uploadedFiles.push({ path: data.path, name: file.originalname });
+    console.log(`File ${file.originalname} đã được upload lên Supabase với đường dẫn: ${data.path}`);
   }
   return uploadedFiles;
 };
@@ -76,7 +77,8 @@ const getSignedUrlFromSupabase = async (bucketName, filePath, expiry = 60) => {
   const { data, error } = await supabase.storage
     .from(bucketName)
     .createSignedUrl(filePath, expiry);
-
+  
+  // Kiểm tra lỗi khi tạo URL có chữ k
   if (error) {
     console.error(`Lỗi khi lấy URL có chữ ký từ Supabase: ${error.message}`);
     return null;
@@ -88,9 +90,8 @@ const getSignedUrlFromSupabase = async (bucketName, filePath, expiry = 60) => {
 const downloadLectureSupabase = async (req, res) => {
   try {
     const { lecture_id } = req.params;
-    const { fileIndex } = req.query; // Lấy fileIndex từ query
+    const { fileIndex } = req.query;
 
-    // Lấy thông tin bài giảng từ database
     const lecture = await Lecture.findOne({ where: { lecture_id } });
     if (!lecture) {
       return res.status(404).json({ message: "Không tìm thấy bài giảng." });
@@ -104,7 +105,7 @@ const downloadLectureSupabase = async (req, res) => {
     }
 
     if (fileIndex !== undefined) {
-      // Tải xuống một file cụ thể
+      // Tải một file cụ thể
       const index = parseInt(fileIndex, 10);
       if (isNaN(index) || index < 0 || index >= filePaths.length) {
         return res.status(400).json({ message: "Chỉ số file không hợp lệ." });
@@ -112,44 +113,36 @@ const downloadLectureSupabase = async (req, res) => {
 
       const filePath = filePaths[index];
       const fileName = fileNames[index] || `file_${index}`;
-
-      // Lấy URL có chữ ký từ Supabase
       const signedUrl = await getSignedUrlFromSupabase('lms-bucket', filePath);
 
       if (!signedUrl) {
         return res.status(500).json({ message: "Không thể tạo URL tải file." });
       }
 
-      // Chuyển hướng đến URL tải file
-      return res.redirect(signedUrl);
+      // Sửa lỗi: Dùng arrayBuffer thay vì buffer
+      const fileResponse = await fetch(signedUrl);
+      const fileBuffer = Buffer.from(await fileResponse.arrayBuffer()); // Chuyển ArrayBuffer thành Buffer
+      res.setHeader('Content-Type', fileResponse.headers.get('content-type') || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.send(fileBuffer);
     } else {
-      // Tải xuống tất cả file dưới dạng ZIP
+      // Tải tất cả file dưới dạng ZIP
       const zipFileName = `${lecture.title || 'lecture_' + lecture_id}.zip`;
-
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="${zipFileName}"`);
 
       const archive = archiver('zip', { zlib: { level: 9 } });
-      archive.on('error', (err) => {
-        console.error('Lỗi khi tạo tệp ZIP:', err);
-        if (!res.headersSent) {
-          res.status(500).json({ message: 'Lỗi khi tạo tệp ZIP.' });
-        }
-      });
-
       archive.pipe(res);
 
       for (let i = 0; i < filePaths.length; i++) {
         const filePath = filePaths[i];
         const fileName = fileNames[i] || `file_${i}`;
-
-        // Lấy URL có chữ ký từ Supabase
         const signedUrl = await getSignedUrlFromSupabase('lms-bucket', filePath);
 
         if (signedUrl) {
-          archive.append(await fetch(signedUrl).then(res => res.buffer()), { name: fileName });
-        } else {
-          console.warn(`Không thể thêm file vào ZIP: ${filePath}`);
+          const fileResponse = await fetch(signedUrl);
+          const fileBuffer = Buffer.from(await fileResponse.arrayBuffer()); // Chuyển ArrayBuffer thành Buffer
+          archive.append(fileBuffer, { name: fileName });
         }
       }
 
@@ -160,6 +153,12 @@ const downloadLectureSupabase = async (req, res) => {
     res.status(500).json({ message: "Có lỗi xảy ra khi tải bài giảng.", error: error.message });
   }
 };
+
+
+
+
+
+
 
 
 
@@ -296,31 +295,43 @@ const parseFilePath = (filePathString) => {
 
 const DeleteLectureOnId = async (req, res) => {
   try {
-    const { lecture_id } = req.params; // Extract lecture_id correctly
+    const { lecture_id } = req.params;
+    
+    console.log(`Deleting lecture with ID: ${lecture_id}`);
+    
+    const lecture = await Lecture.findOne({ where: { lecture_id } });
+    if (!lecture) {
+      return sendErrorResponse(res, 404, 'Lecture not found!');
+    }
 
-    const lecture = await Lecture.findOne({ where: { lecture_id } }); // Fix where clause
-    if (!lecture) throw new Error('Lecture not found!');
-
-    // Delete files
+    // Xóa files từ Supabase
     const filePaths = parseFilePath(lecture.file_path);
-
-    // Xóa các file vật lý
-    for (const filePath of filePaths) {
+    
+    if (filePaths.length > 0) {
       try {
-        const absolutePath = path.resolve(filePath);
-        await fsPromises.access(absolutePath);
-        await fsPromises.unlink(absolutePath);
-      } catch (err) {
-        console.error(`Không thể xóa file ${filePath}:`, err.message);
+        console.log(`Removing ${filePaths.length} files from Supabase:`, filePaths);
+        
+        const { data, error } = await supabase.storage
+          .from('lms-bucket')
+          .remove(filePaths);
+          
+        if (error) {
+          console.error('Error removing files from Supabase:', error);
+        } else {
+          console.log(`Successfully removed files from Supabase:`, data);
+        }
+      } catch (supaError) {
+        console.error('Supabase removal error:', supaError);
       }
     }
 
-    // Delete record
+    // Delete the database record
     await lecture.destroy();
-
-    res.status(200).json({ message: 'Lecture deleted!' });
+    
+    return sendSuccessResponse(res, 200, 'Lecture deleted successfully');
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error deleting lecture:', err);
+    return sendErrorResponse(res, 500, 'Error deleting lecture', err.message);
   }
 };
 
@@ -331,8 +342,13 @@ const updateLecture = async (req, res) => {
     const { title, description, removeFileIndices = [] } = req.body;
     const newFiles = req.files || [];
 
+    console.log(`Updating lecture ${lecture_id} with ${newFiles.length} new files`);
+    console.log("Remove indices:", removeFileIndices);
+
     const lecture = await Lecture.findOne({ where: { lecture_id } });
-    if (!lecture) throw new Error('Lecture not found!');
+    if (!lecture) {
+      return sendErrorResponse(res, 404, 'Lecture not found!');
+    }
 
     // Parse existing paths and names
     const existingFilePaths = JSON.parse(lecture.file_path || '[]');
@@ -353,27 +369,61 @@ const updateLecture = async (req, res) => {
       indices = [];
     }
 
-    // Delete old files
-    indices.forEach(index => {
+    // Xóa file từ Supabase
+    const filesToRemove = indices.map(index => {
       if (index >= 0 && index < existingFilePaths.length) {
-        const filePath = existingFilePaths[index];
-        const absolutePath = path.resolve(process.cwd(), filePath);
-        if (fs.existsSync(absolutePath)) fs.unlinkSync(absolutePath);
+        return existingFilePaths[index];
       }
-    });
+      return null;
+    }).filter(Boolean);
+
+    if (filesToRemove.length > 0) {
+      console.log("Files to remove from Supabase:", filesToRemove);
+      try {
+        const { data, error } = await supabase.storage
+          .from('lms-bucket')
+          .remove(filesToRemove);
+          
+        if (error) {
+          console.error('Error removing files from Supabase:', error);
+        } else {
+          console.log("Files removed successfully from Supabase");
+        }
+      } catch (error) {
+        console.error('Error removing files from Supabase:', error);
+      }
+    }
 
     // Filter out removed files
     const remainingFilePaths = existingFilePaths.filter((_, index) => !indices.includes(index));
     const remainingFileNames = existingFileNames.filter((_, index) => !indices.includes(index));
 
-    // Add new files
-    const newFilePaths = newFiles.map(file => file.path);
-    const newFileNames = newFiles.map(file => file.originalname);
+    // Upload new files to Supabase
+    let newUploadedFiles = [];
+    if (newFiles.length > 0) {
+      console.log(`Uploading ${newFiles.length} new files to Supabase`);
+      try {
+        newUploadedFiles = await uploadFilesToSupabase(newFiles);
+        console.log("Files uploaded to Supabase:", newUploadedFiles);
+      } catch (error) {
+        console.error("Error uploading files to Supabase:", error);
+        return sendErrorResponse(res, 500, "Error uploading files to Supabase", error.message);
+      }
+    }
 
     // Update lecture with combined data
-    const updatedFilePaths = [...remainingFilePaths, ...newFilePaths];
-    const updatedFileNames = [...remainingFileNames, ...newFileNames];
+    const updatedFilePaths = [
+      ...remainingFilePaths,
+      ...newUploadedFiles.map(f => f.path)
+    ];
+    
+    const updatedFileNames = [
+      ...remainingFileNames,
+      ...newUploadedFiles.map(f => f.name)
+    ];
 
+    console.log("Updated file paths:", updatedFilePaths);
+    
     // Save changes
     lecture.file_path = JSON.stringify(updatedFilePaths);
     lecture.file_name = JSON.stringify(updatedFileNames);
@@ -381,21 +431,20 @@ const updateLecture = async (req, res) => {
     lecture.description = description || lecture.description;
     await lecture.save();
 
-    // Prepare response with file data for frontend
-    const responseData = {
-      message: 'Lecture updated!',
-      lecture: {
-        ...lecture.get({ plain: true }),
-        fileNames: updatedFileNames
-      }
-    };
-
-    res.status(200).json(responseData);
+    // Prepare response
+    return sendSuccessResponse(res, 200, 'Lecture updated successfully', {
+      lecture_id: lecture.lecture_id,
+      title: lecture.title,
+      description: lecture.description,
+      file_path: lecture.file_path,
+      file_name: lecture.file_name
+    });
   } catch (err) {
     console.error('Update error:', err);
-    res.status(500).json({ message: 'Error updating lecture', error: err.message });
+    return sendErrorResponse(res, 500, 'Error updating lecture', err.message);
   }
 };
+
 // Add retrieval of lecture by ID
 const getLectureById = async (req, res) => {
   try {
@@ -627,7 +676,7 @@ const streamVideo = async (req, res, absolutePath, fileName, mimeType) => {
       fileStream.on('error', (error) => {
         console.error('Stream error:', error);
         if (!res.headersSent) {
-          res.status(500).send('Error streaming video');
+          res.status(500).send('Error streaming video file');
         }
       });
 
