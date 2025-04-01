@@ -43,16 +43,7 @@ export const getExamsByClassroom = async (classroomId) => {
   }
 };
 
-export const getClassRoomByTeacher = async (teacherId) => {
-  try {
-    const response = await api.get(`api/instructor/courses-by-teacher/${teacherId}`);
-    console.log("Courses by teacher:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Lỗi khi lấy danh sách khóa học:", error);
-    throw error;
-  }
-}
+
 
 // 3. Lấy chi tiết bài thi
 export const getExamDetails = async (examId) => {
@@ -105,7 +96,16 @@ export const getExamResults = async (examId) => {
     throw error;
   }
 };
-
+export const getClassRoomByTeacher = async (teacherId) => {
+  try {
+    const response = await api.get(`api/instructor/courses-by-teacher/${teacherId}`);
+    console.log("Courses by teacher:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách khóa học:", error);
+    throw error;
+  }
+}
 // 7. Lấy danh sách lớp học
 export const getAllClassrooms = async () => {
   try {

@@ -9,6 +9,7 @@ import {
 import { ModalCustom } from "../../components/admin/ui/ModalCustom";
 import NotificationService from "../../services/notificationService";
 import { useParams } from "react-router-dom";
+import LoadingBar from "../../components/users/LoadingBar";// Giả sử bạn đã có LoadingBar
 
 const Submission = ({ assignmentId, userId, userRole = "student", deadline, assignmentTitle }) => {
   const [files, setFiles] = useState([]);
@@ -23,17 +24,20 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [submissionToGrade, setSubmissionToGrade] = useState(null);
   const [submissionToDelete, setSubmissionToDelete] = useState(null);
-  const classRoomId = useParams()
+  const [isLoading, setIsLoading] = useState(false); // Thêm trạng thái loading
+  const { classroomId } = useParams();
+
   useEffect(() => {
     document.title = "Nộp bài - BrainHub";
     fetchSubmissions();
   }, [assignmentId]);
+
   const fetchSubmissions = async () => {
     try {
       const result = await getSubmissionsByAssignment(assignmentId);
       setSubmissions(result.submissions || []);
     } catch (error) {
-      setMessage("Không thể tải danh sách bài nộp.");
+      setMessage("Chưa có bài nộp.");
     }
   };
 
@@ -42,10 +46,12 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
 
   // Xử lý xác nhận chấm điểm
   const handleGradeConfirm = async () => {
+    setIsLoading(true); // Bật loading
+    setIsGradeModalOpen(false); // Đóng modal ngay lập tức
     try {
       await gradeSubmission(submissionToGrade, parseFloat(score), feedback);
       const gradedSubmission = submissions.find((sub) => sub.submission_id === submissionToGrade);
-      const studentUserId = gradedSubmission.user_id; // Lấy user_id của học sinh
+      const studentUserId = gradedSubmission.user_id;
 
       setSubmissions(
         submissions.map((sub) =>
@@ -59,7 +65,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
       setFeedback("");
 
       const notificationData = {
-        target_user_id: studentUserId, // Sử dụng user_id của học sinh
+        target_user_id: studentUserId,
         notificationType: "classroom",
         message: `Giảng viên chấm điểm thành công cho bạn`,
       };
@@ -68,10 +74,11 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
     } catch (error) {
       setMessage("Lỗi khi chấm điểm: " + error.message);
     } finally {
-      setIsGradeModalOpen(false);
+      setIsLoading(false); // Tắt loading
       setSubmissionToGrade(null);
     }
   };
+
   // Xử lý mở modal xác nhận nộp bài
   const handleSubmitClick = (e) => {
     e.preventDefault();
@@ -92,22 +99,22 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
 
   // Xử lý xác nhận nộp bài
   const handleSubmitConfirm = async () => {
-    setIsSubmitting(true);
+    setIsLoading(true); // Bật loading
+    setIsSubmitModalOpen(false); // Đóng modal ngay lập tức
     try {
       const result = await submitAssignment(assignmentId, userId, files);
-      // Giả định server trả về thông tin bài nộp đầy đủ trong result.submission
       const newSubmission = {
         ...result.submission,
-        user_id: userId, // Đảm bảo có user_id
+        user_id: userId,
         status: "pending",
-        submitted_at: new Date().toISOString(), // Thời gian hiện tại
-        grade: null, // Chưa chấm điểm
+        submitted_at: new Date().toISOString(),
+        grade: null,
       };
-      setSubmissions((prev) => [...prev, newSubmission]); // Cập nhật danh sách ngay lập tức
-      setFiles([]); // Xóa danh sách file đã chọn
+      setSubmissions((prev) => [...prev, newSubmission]);
+      setFiles([]);
 
       const notificationData = {
-        classroom_id: classRoomId.classroomId, // Sử dụng user_id của học sinh
+        classroom_id: classroomId,
         notificationType: "classroom",
         message: `Sinh viên đã nộp bài`,
       };
@@ -116,8 +123,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
     } catch (error) {
       setMessage("Lỗi khi nộp bài: " + error.message);
     } finally {
-      setIsSubmitting(false);
-      setIsSubmitModalOpen(false);
+      setIsLoading(false); // Tắt loading
     }
   };
 
@@ -137,20 +143,21 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
     setIsGradeModalOpen(true);
   };
 
-
-
   const handleCancelGrading = () => {
     setGradingSubmissionId(null);
     setScore("");
     setFeedback("");
   };
 
-  const handleDownload = async (submissionId) => {
+  const handleDownload = async (submissionId, fileIndex = null) => {
+    setIsLoading(true); // Bật loading
     try {
-      await downloadSubmissionFiles(submissionId);
+      const result = await downloadSubmissionFiles(submissionId, fileIndex);
       setMessage("Tải file thành công!");
     } catch (error) {
       setMessage("Lỗi khi tải file: " + error.message);
+    } finally {
+      setIsLoading(false); // Tắt loading
     }
   };
 
@@ -162,6 +169,8 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
 
   // Xử lý xác nhận xóa bài nộp
   const handleDeleteConfirm = async () => {
+    setIsLoading(true); // Bật loading
+    setIsDeleteModalOpen(false); // Đóng modal ngay lập tức
     try {
       await deleteSubmission(submissionToDelete);
       setSubmissions(submissions.filter((sub) => sub.submission_id !== submissionToDelete));
@@ -169,20 +178,20 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
     } catch (error) {
       setMessage("Lỗi khi xóa bài nộp: " + error.message);
     } finally {
-      setIsDeleteModalOpen(false);
+      setIsLoading(false); // Tắt loading
       setSubmissionToDelete(null);
     }
   };
 
   return (
     <div className="p-6 bg-white rounded-2xl shadow-md">
+      <LoadingBar isLoading={isLoading} /> {/* Thêm LoadingBar */}
       <h3 className="text-2xl font-semibold text-blue-500 mb-6">
         {userRole === "student" ? "Nộp bài" : "Quản lý bài nộp"} - {assignmentTitle}
       </h3>
       {message && (
         <p
-          className={`mb-6 text-sm text-center font-medium py-2 px-4 rounded-full shadow-sm ${message.includes("Lỗi") ? "bg-red-100 text-red-500" : "bg-green-100 text-green-500"
-            }`}
+          className={`mb-6 text-sm text-center font-medium py-2 px-4 rounded-full shadow-sm ${message.includes("Lỗi") ? "bg-red-100 text-red-500" : "bg-green-100 text-green-500"}`}
         >
           {message}
         </p>
@@ -196,8 +205,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
               <p className="text-sm text-gray-600">
                 Trạng thái:{" "}
                 <span
-                  className={`font-semibold ${userSubmission.status === "pending" ? "text-blue-500" : "text-green-500"
-                    }`}
+                  className={`font-semibold ${userSubmission.status === "pending" ? "text-blue-500" : "text-green-500"}`}
                 >
                   {userSubmission.status === "pending" ? "Đã nộp" : "Đã chấm"}
                 </span>
@@ -215,12 +223,25 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
                   </p>
                 </div>
               )}
-              <button
-                onClick={() => handleDownload(userSubmission.submission_id)}
-                className="mt-4 px-5 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all duration-300 shadow-md transform hover:scale-105"
-              >
-                Tải file đã nộp
-              </button>
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 font-medium">File đã nộp:</p>
+                {userSubmission.file_urls && userSubmission.file_urls.length > 0 ? (
+                  <ul className="list-disc pl-5">
+                    {userSubmission.file_urls.map((file, index) => (
+                      <li key={index}>
+                        <button
+                          onClick={() => handleDownload(userSubmission.submission_id, index)}
+                          className="text-blue-500 hover:underline"
+                        >
+                          {file.filePath.split('/').pop()}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 italic">Không có file</p>
+                )}
+              </div>
             </div>
           ) : isDeadlinePassed() ? (
             <p className="text-red-500 text-center font-medium bg-red-100 py-3 rounded-full shadow-sm">
@@ -235,15 +256,15 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
                   multiple
                   onChange={(e) => setFiles(Array.from(e.target.files))}
                   className="mt-2 w-full p-3 border border-gray-200 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-500 hover:file:bg-blue-100 shadow-sm transition-all duration-300"
-                  disabled={isSubmitting}
+                  disabled={isLoading}
                 />
               </div>
               <button
                 type="submit"
                 className="w-full py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all duration-300 shadow-md flex items-center justify-center transform hover:scale-105"
-                disabled={isSubmitting}
+                disabled={isLoading}
               >
-                {isSubmitting ? (
+                {isLoading ? (
                   <>
                     <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -261,29 +282,31 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
       )}
 
       {/* Modal xác nhận nộp bài */}
-      <ModalCustom
-        title="Xác nhận nộp bài"
-        open={isSubmitModalOpen}
-        onOpenChange={setIsSubmitModalOpen}
-      >
-        <div className="text-gray-700">
-          <p>Bạn có chắc muốn nộp bài tập này không? Sau khi nộp, bạn không thể chỉnh sửa.</p>
-          <div className="flex justify-end gap-3 mt-6">
-            <button
-              onClick={() => setIsSubmitModalOpen(false)}
-              className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300"
-            >
-              Hủy
-            </button>
-            <button
-              onClick={handleSubmitConfirm}
-              className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600"
-            >
-              Nộp
-            </button>
+      {!isLoading && isSubmitModalOpen && (
+        <ModalCustom
+          title="Xác nhận nộp bài"
+          open={isSubmitModalOpen}
+          onOpenChange={setIsSubmitModalOpen}
+        >
+          <div className="text-gray-700">
+            <p>Bạn có chắc muốn nộp bài tập này không? Sau khi nộp, bạn không thể chỉnh sửa.</p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setIsSubmitModalOpen(false)}
+                className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSubmitConfirm}
+                className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+              >
+                Nộp
+              </button>
+            </div>
           </div>
-        </div>
-      </ModalCustom>
+        </ModalCustom>
+      )}
 
       {/* Giáo viên */}
       {userRole === "teacher" && (
@@ -303,6 +326,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
                     <th className="py-4 px-6 text-left text-sm font-semibold">Trạng thái</th>
                     <th className="py-4 px-6 text-left text-sm font-semibold">Điểm</th>
                     <th className="py-4 px-6 text-left text-sm font-semibold">Nhận xét</th>
+                    <th className="py-4 px-6 text-left text-sm font-semibold">File</th>
                     <th className="py-4 px-6 text-left text-sm font-semibold">Hành động</th>
                   </tr>
                 </thead>
@@ -318,8 +342,7 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
                       </td>
                       <td className="py-4 px-6 text-sm">
                         <span
-                          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${sub.status === "pending" ? "bg-blue-100 text-blue-500" : "bg-green-100 text-green-500"
-                            }`}
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${sub.status === "pending" ? "bg-blue-100 text-blue-500" : "bg-green-100 text-green-500"}`}
                         >
                           {sub.status === "pending" ? "Chưa chấm" : "Đã chấm"}
                         </span>
@@ -357,6 +380,24 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
                           "-"
                         )}
                       </td>
+                      <td className="py-4 px-6 text-sm text-gray-700">
+                        {sub.file_urls && sub.file_urls.length > 0 ? (
+                          <ul className="list-disc pl-5">
+                            {sub.file_urls.map((file, index) => (
+                              <li key={index}>
+                                <button
+                                  onClick={() => handleDownload(sub.submission_id, index)}
+                                  className="text-blue-500 hover:underline"
+                                >
+                                  {file.filePath.split('/').pop()}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="text-gray-500 italic">Không có file</span>
+                        )}
+                      </td>
                       <td className="py-4 px-6 text-sm flex space-x-3">
                         {sub.status === "pending" && gradingSubmissionId !== sub.submission_id ? (
                           <button
@@ -382,12 +423,6 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
                           </div>
                         ) : null}
                         <button
-                          onClick={() => handleDownload(sub.submission_id)}
-                          className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all duration-300 shadow-md transform hover:scale-105"
-                        >
-                          Tải
-                        </button>
-                        <button
                           onClick={() => handleDeleteClick(sub.submission_id)}
                           className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all duration-300 shadow-md transform hover:scale-105"
                         >
@@ -404,54 +439,58 @@ const Submission = ({ assignmentId, userId, userRole = "student", deadline, assi
       )}
 
       {/* Modal xác nhận chấm điểm */}
-      <ModalCustom
-        title="Xác nhận chấm điểm"
-        open={isGradeModalOpen}
-        onOpenChange={setIsGradeModalOpen}
-      >
-        <div className="text-gray-700">
-          <p>Bạn có chắc muốn chấm điểm bài nộp này với điểm số {score} và nhận xét "{feedback}" không?</p>
-          <div className="flex justify-end gap-3 mt-6">
-            <button
-              onClick={() => setIsGradeModalOpen(false)}
-              className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300"
-            >
-              Hủy
-            </button>
-            <button
-              onClick={handleGradeConfirm}
-              className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600"
-            >
-              Chấm
-            </button>
+      {!isLoading && isGradeModalOpen && (
+        <ModalCustom
+          title="Xác nhận chấm điểm"
+          open={isGradeModalOpen}
+          onOpenChange={setIsGradeModalOpen}
+        >
+          <div className="text-gray-700">
+            <p>Bạn có chắc muốn chấm điểm bài nộp này với điểm số {score} và nhận xét "{feedback}" không?</p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setIsGradeModalOpen(false)}
+                className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleGradeConfirm}
+                className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+              >
+                Chấm
+              </button>
+            </div>
           </div>
-        </div>
-      </ModalCustom>
+        </ModalCustom>
+      )}
 
       {/* Modal xác nhận xóa bài nộp */}
-      <ModalCustom
-        title="Xác nhận xóa bài nộp"
-        open={isDeleteModalOpen}
-        onOpenChange={setIsDeleteModalOpen}
-      >
-        <div className="text-gray-700">
-          <p>Bạn có chắc muốn xóa bài nộp này không? Hành động này không thể hoàn tác.</p>
-          <div className="flex justify-end gap-3 mt-6">
-            <button
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300"
-            >
-              Hủy
-            </button>
-            <button
-              onClick={handleDeleteConfirm}
-              className="px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600"
-            >
-              Xóa
-            </button>
+      {!isLoading && isDeleteModalOpen && (
+        <ModalCustom
+          title="Xác nhận xóa bài nộp"
+          open={isDeleteModalOpen}
+          onOpenChange={setIsDeleteModalOpen}
+        >
+          <div className="text-gray-700">
+            <p>Bạn có chắc muốn xóa bài nộp này không? Hành động này không thể hoàn tác.</p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600"
+              >
+                Xóa
+              </button>
+            </div>
           </div>
-        </div>
-      </ModalCustom>
+        </ModalCustom>
+      )}
     </div>
   );
 };

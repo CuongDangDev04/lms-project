@@ -322,8 +322,7 @@ export default function Lectures() {
         setLectures(mappedLectures);
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Giáo viên sẽ khởi tạo bài giảng cho lớp");
+        setError("Không thể tải dữ liệu bài giảng");
         setLectures([]);
         setLoading(false);
       }
