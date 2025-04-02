@@ -47,6 +47,8 @@ const BlogPostDetail = () => {
         },
     ];
 
+
+
     const post = blogPosts.find((p) => p.slug === slug);
     const fallbackImage = "https://via.placeholder.com/1350x600?text=Image+Not+Found";
 
