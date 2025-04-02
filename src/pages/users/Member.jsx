@@ -45,7 +45,7 @@ export default function Member() {
       {/* Dạng bảng cho màn hình lớn (md trở lên) */}
       <div className="hidden md:block overflow-x-auto rounded-lg shadow-lg">
         <table className="w-full text-left bg-white">
-          <thead className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+          <thead className="bg-gradient-to-r from-blue-400 to-blue-600 text-white">
             <tr>
               <th className="p-4 border-b text-xs font-semibold uppercase tracking-widest">
                 Mã số sinh viên

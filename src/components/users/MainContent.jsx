@@ -23,7 +23,6 @@ const MainContent = () => {
   }, []);
 
   useEffect(() => {
-    // Lấy thông tin user từ localStorage
     const userData = JSON.parse(localStorage.getItem("user"));
     if (userData) {
       setUserName(userData.fullname || "Người dùng");
@@ -35,12 +34,21 @@ const MainContent = () => {
       setUserId(null);
     }
 
-    // Lấy lịch học hôm nay
     const fetchClassesToday = async () => {
       try {
         setLoading(true);
         const data = await getScheduleToday();
-        setClassesToday(data);
+        console.log('hehe,', data);
+
+        // Chuẩn hóa dữ liệu
+        const normalizedData = data.map(item => ({
+          ...item,
+          user_participation: {
+            classroom_id: item.classroom_id
+          }
+        }));
+
+        setClassesToday(normalizedData);
       } catch (error) {
         console.error("Lỗi trong component khi lấy lịch học:", error);
         setClassesToday([]);
@@ -49,7 +57,6 @@ const MainContent = () => {
       }
     };
 
-    // Lấy danh sách bài tập chưa làm (chỉ cho sinh viên)
     const fetchPendingAssignments = async () => {
       if (userData && userData.role_id === 1 && userData.id) {
         console.log("userData.id", userData.id);
@@ -77,8 +84,7 @@ const MainContent = () => {
       </h4>
       <div className="bg-white p-4 rounded-xl shadow-lg w-full overflow-x-auto">
         <div
-          className={`grid ${id === "pending-assignments" ? "grid-cols-5" : "grid-cols-3"
-            } bg-gray-100 p-2 rounded-lg text-gray-700 text-sm font-semibold min-w-[600px]`}
+          className={`grid ${id === "pending-assignments" ? "grid-cols-5" : "grid-cols-3"} bg-gray-100 p-2 rounded-lg text-gray-700 text-sm font-semibold min-w-[600px]`}
         >
           {headers.map((header, headerIndex) => (
             <span key={headerIndex} className="text-center">{header}</span>
@@ -97,8 +103,7 @@ const MainContent = () => {
               <Link
                 to={`/courseDetail/${item.user_participation?.classroom_id}/assignments`}
                 key={id === "pending-assignments" ? item.assignment_id : item.schedule_id}
-                className={`grid ${id === "pending-assignments" ? "grid-cols-5" : "grid-cols-3"
-                  } bg-gray-50 p-3 rounded-lg hover:bg-blue-400 hover:text-white items-center min-w-[600px] mt-2 transition cursor-pointer`}
+                className={`grid ${id === "pending-assignments" ? "grid-cols-5" : "grid-cols-3"} bg-gray-50 p-3 rounded-lg hover:bg-blue-400 hover:text-white items-center min-w-[600px] mt-2 transition cursor-pointer`}
               >
                 {fields.map((field, fieldIndex) => (
                   <span key={fieldIndex} className="text-center text-sm font-medium">
@@ -138,15 +143,14 @@ const MainContent = () => {
       <h1 className="text-3xl text-center text-yellow-500 font-semibold my-5">
         {roleId === 1 ? "Lớp học trực tuyến" : "Lịch dạy trực tuyến"}
       </h1>
-
       {roleId === 1 ? (
         [
           [
             "class-today",
             "📅 Lịch học hôm nay",
             classesToday,
-            ["⏰ Thời gian", "🏫 Lớp học", "📌 Trạng thái"],
-            ["time", "class", "type"],
+            ["⏰ Thời gian", "📚 Khóa học", "🏫 Lớp học"], // Thống nhất cột
+            ["time", "subject", "class"], // Thống nhất trường dữ liệu
           ],
           [
             "pending-assignments",
@@ -164,8 +168,8 @@ const MainContent = () => {
             "class-today",
             "📅 Lịch dạy hôm nay",
             classesToday,
-            ["⏰ Thời gian", "📚 Khóa học", "🏫 Lớp học"],
-            ["time", "course_name", "class"],
+            ["⏰ Thời gian", "📚 Khóa học", "🏫 Lớp học"], // Thống nhất cột
+            ["time", "subject", "class"], // Thống nhất trường dữ liệu
           ],
         ].map((tableData, tableIndex) => (
           <div key={tableIndex}>{renderTable(...tableData, tableIndex)}</div>

@@ -26,7 +26,7 @@ const SideBarMobile = () => {
 
   // Base menu items (cho sinh viên)
   const baseMenuItems = [
-    { name: "Trang chủ", icon: <Home size={24} />, path: "/home" },
+    { name: "Trang chủ", icon: <Home size={24} />, path: "/" },
     { name: "Khóa học", icon: <BookOpen size={24} />, path: "/courses" },
     { name: "Lịch học", icon: <Calendar size={24} />, path: "/schedule" },
     { name: "Hồ sơ", icon: <User size={24} />, path: "/profile" },
@@ -34,7 +34,7 @@ const SideBarMobile = () => {
 
   // Teacher menu items (cho giảng viên)
   const teacherMenuItems = [
-    { name: "Trang chủ", icon: <Home size={24} />, path: "/home" },
+    { name: "Trang chủ", icon: <Home size={24} />, path: "/" },
     { name: "Môn giảng dạy", icon: <BookOpen size={24} />, path: "/subjects" },
     {
       name: "Lịch dạy",

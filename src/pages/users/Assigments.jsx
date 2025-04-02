@@ -264,7 +264,7 @@ export default function Assignments() {
         {userRole === "teacher" && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg transition-colors"
+            className="w-full md:w-auto bg-gradient-to-r from-blue-400 to-blue-600 hover:bg-gray-200  text-white py-2 px-6 rounded-lg transition-colors"
           >
             Tạo bài tập mới
           </button>
