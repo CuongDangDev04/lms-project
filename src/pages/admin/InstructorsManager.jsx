@@ -13,7 +13,7 @@ export const InstructorsManager = (props) => {
         entityType: "Giảng Viên",
         fields: [
             { name: "username", label: "Mã giảng viên", type: "text" },
-            { name: "password", label: "Mật khẩu", type: "password", hidden: true, editable: true },
+            { name: "password", label: "Mật khẩu", type: "password", hidden: true, editable: false },
             { name: "email", label: "Email", type: "email" },
             { name: "fullname", label: "Họ và Tên", type: "text" },
             { name: "birth", label: "Ngày Sinh", type: "date" },
