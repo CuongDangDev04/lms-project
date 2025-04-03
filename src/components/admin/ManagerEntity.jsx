@@ -182,7 +182,7 @@ export const ManagerEntity = ({
         value = "";
       }
       return { ...acc, [field.name]: value };
-    }, { [idField]: entity[idField] });  
+    }, { [idField]: entity[idField] });
     setEditFormData(formattedData);
     setIsEditOpen(true);
   };
@@ -339,6 +339,7 @@ export const ManagerEntity = ({
               onSubmit={handleCreate}
               isOpen={isOpen}
               onOpenChange={setIsOpen}
+              isEditMode={false} // Modal tạo
             />
             <EntityForm
               title={`Chỉnh Sửa ${entityType}`}
@@ -348,6 +349,7 @@ export const ManagerEntity = ({
               onSubmit={handleUpdate}
               isOpen={isEditOpen}
               onOpenChange={setIsEditOpen}
+              isEditMode={true} // Modal chỉnh sửa
             />
             {deleteEntity && (
               <ModalCustom

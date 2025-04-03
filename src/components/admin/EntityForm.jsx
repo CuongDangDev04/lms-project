@@ -8,11 +8,19 @@ export const EntityForm = ({
   onSubmit,
   isOpen,
   onOpenChange,
+  isEditMode = false, // Thêm prop isEditMode với giá trị mặc định là false
 }) => (
   <ModalCustom title={title} triggerText="" open={isOpen} onOpenChange={onOpenChange}>
     <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6 p-2 sm:p-4">
       {fields
-        .filter((field) => field.editable !== false)
+        .filter((field) => {
+          // Ẩn field password trong modal chỉnh sửa
+          if (field.name === "password" && isEditMode) {
+            return false;
+          }
+          // Giữ logic lọc ban đầu cho các field không editable
+          return field.editable !== false;
+        })
         .map((field) => (
           <div key={field.name} className="relative group">
             <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-1.5">
@@ -21,12 +29,11 @@ export const EntityForm = ({
             {field.type === "select" ? (
               <select
                 name={field.name}
-                value={formData[field.name] === undefined ? "" : formData[field.name]} // Đảm bảo giá trị là boolean hoặc chuỗi rỗng
+                value={formData[field.name] === undefined ? "" : formData[field.name]}
                 onChange={onChange}
                 className="w-full p-3 sm:p-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md text-sm sm:text-base"
                 required={!field.optional}
               >
-                {/* Thêm tùy chọn mặc định nếu cần */}
                 <option value="">Chọn {field.label}</option>
                 {field.options.map((option) => (
                   <option key={option.value} value={option.value}>

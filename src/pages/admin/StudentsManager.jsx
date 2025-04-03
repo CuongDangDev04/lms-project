@@ -16,7 +16,7 @@ export const StudentsManager = (props) => {
             { name: "username", label: "Mã sinh viên", type: "text" },
             { name: "email", label: "Email", type: "email" },
             { name: "fullname", label: "Họ và Tên", type: "text" },
-            { name: "password", label: "Mật khẩu", type: "password", hidden: true, editable: false },
+            { name: "password", label: "Mật khẩu", type: "password", hidden: true },
             { name: "birth", label: "Ngày Sinh", type: "date" },
             {
                 name: "gender",
