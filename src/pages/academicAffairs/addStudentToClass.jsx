@@ -13,6 +13,7 @@ import {
     removeStudentFromClassroom
 } from '../../services/classRoomServices';
 import { useNavigate } from 'react-router-dom';
+import LoadingBar from '../../components/users/LoadingBar'; // Import LoadingBar
 
 const AddStudentToClass = () => {
     const [isViewStudentsOpen, setIsViewStudentsOpen] = useState(false);
@@ -28,6 +29,7 @@ const AddStudentToClass = () => {
     const [searchSelected, setSearchSelected] = useState('');
     const [importFile, setImportFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isLoadingAction, setIsLoadingAction] = useState(false); // Trạng thái loading cho các tác vụ
 
     const { classrooms, students, loading, fetchData } = useClassroomData('assigned');
     const entitiesPerPage = 6;
@@ -36,6 +38,16 @@ const AddStudentToClass = () => {
     useEffect(() => {
         document.title = 'Thêm Sinh Viên Vào Lớp Học Phần';
     }, []);
+
+    // Đóng tất cả modal khi loading hoặc isUploading
+    useEffect(() => {
+        if (loading || isUploading || isLoadingAction) {
+            setIsViewStudentsOpen(false);
+            setIsAddStudentOpen(false);
+            setIsImportStudentsOpen(false);
+            setIsConfirmOpen(false);
+        }
+    }, [loading, isUploading, isLoadingAction]);
 
     const filteredClassrooms = useMemo(() => {
         if (!Array.isArray(classrooms)) return [];
@@ -48,6 +60,7 @@ const AddStudentToClass = () => {
     const totalPages = Math.ceil(filteredClassrooms.length / entitiesPerPage);
 
     const fetchClassroomStudents = async (classroomId) => {
+        setIsLoadingAction(true);
         try {
             const students = await getStudentsByClassroom(classroomId);
             setCurrentClassroomStudents(Array.isArray(students) ? students : []);
@@ -55,6 +68,8 @@ const AddStudentToClass = () => {
         } catch (error) {
             toast.warning('Không thể lấy danh sách sinh viên!');
             setCurrentClassroomStudents([]);
+        } finally {
+            setIsLoadingAction(false);
         }
     };
 
@@ -75,6 +90,7 @@ const AddStudentToClass = () => {
     };
 
     const confirmSaveStudents = async () => {
+        setIsLoadingAction(true);
         try {
             for (const student of selectedStudents) {
                 const studentId = parseInt(student.username, 10);
@@ -85,13 +101,13 @@ const AddStudentToClass = () => {
             }
             fetchClassroomStudents(currentClassroom.classroom_id);
             fetchData();
-            setIsAddStudentOpen(false);
-            setIsConfirmOpen(false);
             setSelectedStudents([]);
             toast.success('Thêm sinh viên thành công!');
         } catch (error) {
             console.error('Lỗi khi lưu sinh viên:', error);
             toast.error(error.message || 'Lỗi khi thêm sinh viên!');
+        } finally {
+            setIsLoadingAction(false);
         }
     };
 
@@ -103,7 +119,6 @@ const AddStudentToClass = () => {
             await importStudentsToClassroom(currentClassroom.classroom_id, importFile);
             fetchClassroomStudents(currentClassroom.classroom_id);
             fetchData();
-            setIsImportStudentsOpen(false);
             setImportFile(null);
             toast.success('Nhập danh sách sinh viên thành công!');
         } catch (error) {
@@ -128,6 +143,7 @@ const AddStudentToClass = () => {
     };
 
     const handleRemoveStudent = async (studentId) => {
+        setIsLoadingAction(true);
         try {
             await removeStudentFromClassroom(currentClassroom.classroom_id, studentId);
             setCurrentClassroomStudents((prev) => prev.filter((student) => student.id !== studentId));
@@ -135,6 +151,8 @@ const AddStudentToClass = () => {
         } catch (error) {
             console.error('Lỗi khi xóa sinh viên:', error);
             toast.error('Lỗi khi xóa sinh viên!');
+        } finally {
+            setIsLoadingAction(false);
         }
     };
 
@@ -170,14 +188,12 @@ const AddStudentToClass = () => {
         }
     };
 
-    // Lọc danh sách sinh viên chưa có trong lớp
     const availableStudents = useMemo(() => {
         if (!Array.isArray(students) || !Array.isArray(currentClassroomStudents)) return [];
         const currentStudentIds = new Set(currentClassroomStudents.map((student) => student.id));
         return students.filter((student) => !currentStudentIds.has(student.id));
     }, [students, currentClassroomStudents]);
 
-    // Lọc sinh viên chưa thêm theo search
     const filteredAvailableStudents = useMemo(() => {
         return availableStudents.filter((student) =>
             (student.fullname || '').toLowerCase().includes(searchAvailable.toLowerCase()) ||
@@ -185,7 +201,6 @@ const AddStudentToClass = () => {
         );
     }, [availableStudents, searchAvailable]);
 
-    // Lọc sinh viên đã chọn theo search
     const filteredSelectedStudents = useMemo(() => {
         return selectedStudents.filter((student) =>
             (student.fullname || '').toLowerCase().includes(searchSelected.toLowerCase()) ||
@@ -288,6 +303,8 @@ const AddStudentToClass = () => {
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-600 tracking-tight text-center sm:text-left">
                         Thêm sinh viên vào lớp học phần
                     </h2>
+                    {/* Thêm LoadingBar */}
+                    <LoadingBar isLoading={loading || isUploading || isLoadingAction} />
                 </div>
                 <div className="mb-6">
                     <input

@@ -7,7 +7,6 @@ import { FaFileExcel, FaTrash, FaUpload } from "react-icons/fa";
 import Pagination from "./Pagination";
 import { EntityTable } from "./EntityTable";
 import { EntityForm } from "./EntityForm";
-import { fi } from "date-fns/locale";
 import LoadingBar from "../users/LoadingBar";
 
 export const ManagerEntity = ({
@@ -15,7 +14,7 @@ export const ManagerEntity = ({
   fetchEntities,
   createEntity,
   updateEntity,
-  deleteEntity, // Có thể undefined nếu không được truyền
+  deleteEntity,
   uploadEntities,
   deactivateAccount,
   entityType,
@@ -50,6 +49,16 @@ export const ManagerEntity = ({
     document.title = `BrainHub | ${title}`;
     fetchEntitiesData();
   }, [location.pathname]);
+
+  // Thêm useEffect để đóng modal khi loading hoặc uploadLoading được kích hoạt
+  useEffect(() => {
+    if (loading || uploadLoading) {
+      setIsOpen(false);       // Đóng modal thêm mới
+      setIsEditOpen(false);   // Đóng modal chỉnh sửa
+      setIsDeleteOpen(false); // Đóng modal xóa
+      setIsUploadOpen(false); // Đóng modal upload
+    }
+  }, [loading, uploadLoading]);
 
   const fetchEntitiesData = async () => {
     setLoading(true);
@@ -103,46 +112,53 @@ export const ManagerEntity = ({
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    setLoading(true); // Kích hoạt loading
     try {
       await createEntity(formData);
       setFormData(fields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {}));
       fetchEntitiesData();
-      setIsOpen(false);
       toast.success(`Thêm ${entityType} thành công!`);
     } catch (error) {
       toast.error(`Có lỗi xảy ra khi thêm ${entityType}!`);
+    } finally {
+      setLoading(false); // Tắt loading
     }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setLoading(true); // Kích hoạt loading
     try {
       await updateEntity(editFormData[idField], editFormData);
       fetchEntitiesData();
-      setIsEditOpen(false);
       toast.info(`Cập nhật ${entityType} thành công!`);
     } catch (error) {
       toast.error(`Có lỗi xảy ra khi cập nhật ${entityType}!`);
+    } finally {
+      setLoading(false); // Tắt loading
     }
   };
 
   const handleDelete = async () => {
-    if (!deleteEntity) return; // Không làm gì nếu deleteEntity không được cung cấp
+    if (!deleteEntity) return;
+    setLoading(true); // Kích hoạt loading
     try {
       await deleteEntity(deleteId);
       fetchEntitiesData();
-      setIsDeleteOpen(false);
       toast.success(`Xóa ${entityType} thành công!`);
       if (paginatedEntities.length === 1 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
       }
     } catch (error) {
       toast.error(`Có lỗi xảy ra khi xóa ${entityType}!`);
+    } finally {
+      setLoading(false); // Tắt loading
     }
   };
 
   const handleToggleStatus = async (id, currentStatus) => {
     if (!id || !showStatusColumn) return;
+    setLoading(true); // Kích hoạt loading
     try {
       const newStatus = !currentStatus;
       await deactivateAccount(id, newStatus);
@@ -150,9 +166,10 @@ export const ManagerEntity = ({
       toast.success(`${newStatus ? "Kích hoạt" : "Vô hiệu hóa"} ${entityType} thành công!`);
     } catch (error) {
       toast.error(`Có lỗi xảy ra khi ${newStatus ? "kích hoạt" : "vô hiệu hóa"} ${entityType}!`);
+    } finally {
+      setLoading(false); // Tắt loading
     }
   };
-
   const openEditModal = (entity) => {
     const formattedData = fields.reduce((acc, field) => {
       let value = entity[field.name] ?? "";
@@ -162,16 +179,16 @@ export const ManagerEntity = ({
       } else if (field.name === "gender") {
         value = entity[field.name] === "true" || entity[field.name] === 1 || entity[field.name] === "Nam" ? true : false;
       } else if (field.name === "password") {
-        value = ""; // Đặt password thành chuỗi rỗng khi chỉnh sửa
+        value = "";
       }
       return { ...acc, [field.name]: value };
-    }, { [idField]: entity[idField] });
+    }, { [idField]: entity[idField] });  
     setEditFormData(formattedData);
     setIsEditOpen(true);
   };
 
   const openDeleteModal = (id) => {
-    if (!deleteEntity) return; // Không mở modal nếu deleteEntity không tồn tại
+    if (!deleteEntity) return;
     setDeleteId(id);
     setIsDeleteOpen(true);
   };
@@ -184,17 +201,16 @@ export const ManagerEntity = ({
       toast.error("Vui lòng chọn file Excel trước khi upload!");
       return;
     }
-    setUploadLoading(true);
+    setUploadLoading(true); // Kích hoạt uploadLoading
     try {
       await uploadEntities(selectedFile);
       fetchEntitiesData();
-      setIsUploadOpen(false);
       setSelectedFile(null);
       toast.success(`Thêm nhiều ${entityType.toLowerCase()} bằng file Excel thành công!`);
     } catch (error) {
       toast.error("Có lỗi xảy ra khi upload file Excel!");
     } finally {
-      setUploadLoading(false);
+      setUploadLoading(false); // Tắt uploadLoading
     }
   };
 
@@ -219,8 +235,6 @@ export const ManagerEntity = ({
               open={isOpen}
               onOpenChange={setIsOpen}
             />
-
-
             <ModalCustom
               title={`Upload danh sách ${entityType.toLowerCase()}`}
               triggerText={`Import danh sách ${entityType}`}
@@ -229,7 +243,7 @@ export const ManagerEntity = ({
               onOpenChange={(open) => {
                 setIsUploadOpen(open);
                 if (!open) {
-                  setSelectedFile(null); // Reset file khi đóng modal
+                  setSelectedFile(null);
                 }
               }}
               triggerIcon={<FaUpload />}
@@ -296,7 +310,6 @@ export const ManagerEntity = ({
                 </button>
               </form>
             </ModalCustom>
-
           </div>
         </div>
 
