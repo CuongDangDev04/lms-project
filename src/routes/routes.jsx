@@ -65,7 +65,8 @@ const AppRoutes = () => {
           <Route path="manager-courses" element={<CoursesManager />} />
           <Route path="manager-classes" element={<ClassesManager />} />
           <Route path="manager-assign" element={<AssignmentManager />} />
-
+          <Route path="manager-students" element={<StudentsManager />} />
+          <Route path="manager-instructors" element={<InstructorsManager />} />
           <Route
             path="manager-assign/unassigned-classrooms"
             element={<UnAssigmentManager />}
