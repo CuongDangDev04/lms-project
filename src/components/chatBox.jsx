@@ -381,7 +381,9 @@ const ChatBox = ({ userId }) => {
                         : "bg-white text-gray-800 border border-gray-200"
                     } shadow-md`}
                     onDoubleClick={() => {
-                      quickReply(msg, isCurrentUser);
+                      if (msg.status !== 0) {
+                        quickReply(msg, isCurrentUser);
+                      }
                     }}
                   >
                     <div className="flex flex-col">
