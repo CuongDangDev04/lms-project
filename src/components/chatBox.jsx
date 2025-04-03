@@ -188,21 +188,6 @@ const ChatBox = ({ userId }) => {
     }
   };
 
-  // Xóa tin nhắn
-  // const handleDeleteMessage = async (messageId) => {
-  //   try {
-  //     await deleteMessage(messageId);
-  //     setMessages((prev) =>
-  //       prev.map((msg) =>
-  //         msg.message_id === messageId ? { ...msg, status: 0 } : msg
-  //       )
-  //     );
-  //     setShowDeleteId(null);
-  //   } catch (error) {
-  //     console.error("Lỗi xóa tin nhắn:", error);
-  //   }
-  // };
-
   // Xử lý input
   const handleInputChange = (e) => {
     setNewMessage(e.target.value);
@@ -328,7 +313,7 @@ const ChatBox = ({ userId }) => {
       )}
       {/* Messages */}
       <div
-        className="flex-1 p-5 bg-gradient-to-b from-gray-50 to-gray-100 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent hidden-scrollbar"
+        className="flex-1 p-5 pt-[5rem] md:pt-[6rem] bg-gradient-to-b from-gray-50 to-gray-100 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent hidden-scrollbar"
         ref={chatBoxRef}
       >
         {messages.length === 0 ? (
