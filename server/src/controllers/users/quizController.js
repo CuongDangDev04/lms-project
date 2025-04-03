@@ -144,7 +144,18 @@ const getExamsByClassroom = async (req, res) => {
                 },
             ],
         });
-        res.json(exams);
+
+        const formattedExams = exams.map(exam => {
+            const examData = exam.toJSON();
+            examData.start_time = new Date(exam.start_time).toISOString().replace('Z', '+07:00'); // Chuẩn ISO
+            examData.deadline = new Date(exam.deadline).toISOString().replace('Z', '+07:00');     // Chuẩn ISO
+            examData.created_at = new Date(exam.created_at).toISOString().replace('Z', '+07:00'); // Chuẩn ISO
+            return examData;
+        });
+
+
+
+        res.json(formattedExams);
     } catch (error) {
         console.error('Error fetching exams:', error);
         res.status(500).json({ message: 'Error fetching exams', error: error.message });

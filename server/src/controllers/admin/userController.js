@@ -191,6 +191,100 @@ const createInstructorsFromExcel = async (req, res) => {
   }
 };
 
+const createEduAffairsFromExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an Excel file" });
+    }
+
+    const filePath = req.file.path;
+    const workbook = XLSX.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    let errors = [];
+    let newUsers = [];
+
+    const defaultPassword = "1111";
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+    for (let row of worksheet) {
+      const { username, email, fullname, birth, gender } = row;
+
+      if (!username || !email) {
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Missing required information (username or email)`);
+        continue;
+      }
+
+      const emailUser = await User.findOne({ where: { email } });
+      const userName = await User.findOne({ where: { username } });
+
+      if (emailUser) {
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Email ${email} already exists`);
+        continue;
+      }
+      if (userName) {
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Username ${username} already exists`);
+        continue;
+      }
+
+      let genderValue;
+      if (gender === 1 || gender === "1") {
+        genderValue = true;
+      } else if (gender === 0 || gender === "0") {
+        genderValue = false;
+      } else {
+        errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid gender value (${gender})`);
+        continue;
+      }
+
+      let birthValue = null;
+      if (birth) {
+        if (typeof birth === "number") {
+          const excelDate = XLSX.SSF.parse_date_code(birth);
+          birthValue = new Date(excelDate.y, excelDate.m - 1, excelDate.d);
+        } else {
+          const parsedDate = moment(birth, ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"], true);
+          if (parsedDate.isValid()) {
+            birthValue = parsedDate.toDate();
+          } else {
+            errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid birth date (${birth})`);
+            continue;
+          }
+        }
+      }
+
+      newUsers.push({
+        username,
+        password: hashedPassword,
+        email,
+        fullname,
+        gender: genderValue,
+        avt: "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
+        birth: birthValue,
+        role_id: 4,
+      });
+    }
+
+    if (errors.length > 0) {
+      console.log('Errors found:', errors);
+      await fsPromises.unlink(filePath).catch(err => console.error('Could not delete file:', err));
+      return res.status(400).json({ message: errors.join(", ") });
+    }
+
+    await User.bulkCreate(newUsers);
+    console.log('Instructors created successfully');
+    await fsPromises.unlink(filePath).catch(err => console.error('Could not delete file:', err));
+    res.status(201).json({ message: "Successfully added multiple instructors" });
+  } catch (err) {
+    console.error('Error in createInstructorsFromExcel:', err);
+    if (req.file && req.file.path) {
+      await fsPromises.unlink(req.file.path).catch(err => console.error('Could not delete file:', err));
+    }
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Hàm thêm nhiều sinh viên từ file Excel
 const createStudentsFromExcel = async (req, res) => {
   try {
@@ -360,6 +454,43 @@ const createInstructor = async (req, res) => {
   }
 };
 
+const createEduAffairs = async (req, res) => {
+  const { username, password, email, fullname, gender, avt, birth } = req.body;
+
+  let errors = [];
+  if (!username) errors.push("Username là bắt buộc");
+  if (!password) errors.push("Password là bắt buộc");
+  if (!email) errors.push("Email là bắt buộc");
+
+  let emailUser = await User.findOne({ where: { email } });
+  let userName = await User.findOne({ where: { username } });
+
+  if (emailUser) errors.push("Email đã tồn tại");
+  if (userName) errors.push("Username đã tồn tại");
+
+  if (errors.length > 0) {
+    return res.status(400).json({ message: errors.join(", ") });
+  }
+
+  let hashedPassword = await bcrypt.hash(password, 10);
+  try {
+    let user = new User({
+      username,
+      password: hashedPassword,
+      email,
+      fullname,
+      gender,
+      avt: avt || "https://i.ibb.co/jkftcHB2/1741877635358-user.webp",
+      birth,
+      role_id: 4,
+    });
+    await user.save();
+    res.status(201).json({ message: "Tạo giáo vụ thành công" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Cập nhật thông tin user
 const updateUserById = async (req, res) => {
   const user_id = req.params.id;
@@ -413,6 +544,17 @@ const getInstructors = async (req, res) => {
   }
 };
 
+// Lấy danh sách giảng viên
+const getEduAffairs = async (req, res) => {
+  try {
+    const users = await User.findAll({ where: { role_id: 4 } });
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 // Lấy thông tin user theo ID
 const getUserById = async (req, res) => {
   const user_id = req.params.id;
@@ -453,4 +595,7 @@ module.exports = {
   createStudentsFromExcel,
   createInstructorsFromExcel,
   uploadAvatar,
+  getEduAffairs,
+  createEduAffairs,
+  createEduAffairsFromExcel
 };
