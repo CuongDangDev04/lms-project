@@ -1,7 +1,7 @@
 const { Class } = require('../../models/index');
 const { validateId } = require('../../middlewares/validateID');
 const XLSX = require("xlsx");
-
+const fs = require('fs');
 const getClasses = async (req, res) => {
     try {
         const classes = await Class.findAll();

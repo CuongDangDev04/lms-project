@@ -201,61 +201,61 @@ const createStudentsFromExcel = async (req, res) => {
     const filePath = req.file.path;
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
-    const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
-      raw: false,
-    });
+    const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { raw: false });
 
     let errors = [];
     let newUsers = [];
-
     const defaultPassword = "1111";
     const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
-    for (let row of worksheet) {
+    for (let [index, row] of worksheet.entries()) {
       const { username, email, fullname, gender, avt, birth } = row;
+      const rowNum = index + 2; // Excel rows start from 2 (excluding header)
 
-      if (!username || !email) {
-        errors.push(`Row ${worksheet.indexOf(row) + 2}: Missing required information (username or email)`);
+      if (!username || !email || !fullname) {
+        errors.push(`Row ${rowNum}: Missing required fields (username, email, fullname)`);
         continue;
       }
 
       const emailUser = await User.findOne({ where: { email } });
       const userName = await User.findOne({ where: { username } });
-
       if (emailUser) {
-        errors.push(`Row ${worksheet.indexOf(row) + 2}: Email ${email} already exists`);
+        errors.push(`Row ${rowNum}: Email ${email} already exists`);
         continue;
       }
       if (userName) {
-        errors.push(`Row ${worksheet.indexOf(row) + 2}: Username ${username} already exists`);
+        errors.push(`Row ${rowNum}: Username ${username} already exists`);
         continue;
       }
 
-      let genderValue;
+      let genderValue = null;
       if (gender === 1 || gender === "1") {
         genderValue = true;
       } else if (gender === 0 || gender === "0") {
         genderValue = false;
       } else {
-        errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid gender value (${gender})`);
+        errors.push(`Row ${rowNum}: Invalid gender value (${gender})`);
         continue;
       }
 
       let birthValue = null;
       if (birth) {
         if (typeof birth === "number") {
+          // Nếu birth là kiểu số (Excel date number), chuyển đổi sang định dạng ngày tháng
           const excelDate = XLSX.SSF.parse_date_code(birth);
           birthValue = new Date(excelDate.y, excelDate.m - 1, excelDate.d);
         } else {
-          const parsedDate = moment(birth, ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"], true);
+          // Thử nhiều định dạng ngày tháng khác nhau
+          const parsedDate = moment(birth.trim(), ["D/M/YY", "D/M/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"], true);
           if (parsedDate.isValid()) {
             birthValue = parsedDate.toDate();
           } else {
-            errors.push(`Row ${worksheet.indexOf(row) + 2}: Invalid birth date (${birth})`);
+            errors.push(`Row ${rowNum}: Invalid birth date format (${birth})`);
             continue;
           }
         }
       }
+
 
       newUsers.push({
         username,
@@ -270,19 +270,19 @@ const createStudentsFromExcel = async (req, res) => {
     }
 
     if (errors.length > 0) {
-      console.log('Errors found:', errors);
-      await fsPromises.unlink(filePath).catch(err => console.error('Could not delete file:', err));
-      return res.status(400).json({ message: errors.join(", ") });
+      console.log("Errors found:", errors);
+      await fsPromises.unlink(filePath);  // Dùng fs.promises.unlink
+      return res.status(400).json({ message: errors });
     }
 
     await User.bulkCreate(newUsers);
-    console.log('Users created successfully');
-    await fsPromises.unlink(filePath).catch(err => console.error('Could not delete file:', err));
+    console.log("Users created successfully");
+    await fsPromises.unlink(filePath);  // Dùng fs.promises.unlink
     res.status(201).json({ message: "Successfully added multiple students" });
   } catch (err) {
-    console.error('Error in createStudentsFromExcel:', err);
+    console.error("Error in createStudentsFromExcel:", err);
     if (req.file && req.file.path) {
-      await fsPromises.unlink(req.file.path).catch(err => console.error('Could not delete file:', err));
+      await fsPromises.unlink(req.file.path).catch(err => console.error("Could not delete file:", err));
     }
     res.status(500).json({ error: err.message });
   }

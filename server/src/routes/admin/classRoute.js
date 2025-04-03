@@ -7,7 +7,7 @@ const upload = require('../../middlewares/upload');
 router.get('/', classController.getClasses);
 router.get("/:id", classController.getClassByID);
 router.post("/create", classController.createClass);
-router.post("/createByExcel", classController.createClassByExcel);
+router.post("/createByExcel",upload.single("file"), classController.createClassByExcel);
 router.put("/:id", classController.updateClass);
 router.delete('/:id', classController.deleteClassById);
 

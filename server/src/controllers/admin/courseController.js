@@ -3,34 +3,6 @@ const { validateId } = require('../../middlewares/validateID');
 const XLSX = require("xlsx");
 const upload = require("../../middlewares/upload");
 const fs = require('fs').promises;
-const getCourses = async (req, res) => {
-    try {
-        const courses = await Course.findAll();
-        res.status(200).json({
-            success: true,
-            message: "Lay khoa hoc thanh conng!",
-            data: courses
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-//Get COurseByID
-const getCourseByID = async (req, res) => {
-    try {
-        const course = await validateId(req.params.id, Course, 'courses');
-        if (!course) {
-            return res.status(404).json({ success: false, message: "Course not found" });
-        }
-
-        res.status(200).json({ success: true, message: "Get Course OK!", data: course });
-    } catch (error) {
-        console.error("Error fetching course:", error);
-        res.status(500).json({ success: false, message: "Internal server error" });
-    }
-}
-
 const createCourse = async (req, res) => {
     try {
         const { course_code, course_name, description } = req.body;
@@ -83,7 +55,6 @@ const createCourse = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 }
-
 const createCourseByExcel = async (req, res) => {
     try {
         if (!req.file) {
@@ -97,6 +68,15 @@ const createCourseByExcel = async (req, res) => {
 
         let errors = [];
         let dataNewCourses = [];
+
+        const courseImages = [
+            'img1',
+            'img2',
+            'img3',
+            'img4',
+            'img5',
+            'img6'
+        ];
 
         for (let row of workSheet) {
             const { course_code, course_name, description } = row;
@@ -113,39 +93,76 @@ const createCourseByExcel = async (req, res) => {
                 continue;
             }
 
+            // Tạo random index từ 1 đến 6 và chọn ảnh ngẫu nhiên
+            const randomIndex = Math.floor(Math.random() * 6) + 1;
+            const randomImage = courseImages[randomIndex - 1];
+
+
             dataNewCourses.push({
                 course_code,
                 course_name,
                 description: description || "",
+                course_img: randomImage // Thêm ảnh ngẫu nhiên vào dữ liệu
             });
         }
 
         // Nếu có lỗi, xóa file và trả về thông báo lỗi
         if (errors.length > 0) {
-            await fs.promises.unlink(filePath); // Sử dụng fs.promises để đồng bộ
+            await fs.unlink(filePath); // Sử dụng fs.promises để đồng bộ
             return res.status(400).json({ message: errors.join(", ") });
         }
 
         // Nếu không có khóa học hợp lệ để thêm
         if (dataNewCourses.length === 0) {
-            await fs.promises.unlink(filePath);
+            await fs.unlink(filePath);
             return res.status(400).json({ message: "Không có khóa học nào hợp lệ để thêm" });
         }
 
         // Thêm khóa học và xóa file sau khi thành công
         await Course.bulkCreate(dataNewCourses);
-        await fs.promises.unlink(filePath); // Xóa file ngay sau khi thêm thành công
+        await fs.unlink(filePath); // Xóa file ngay sau khi thêm thành công
 
         return res.status(201).json({ message: "Thêm nhiều khóa học thành công từ file Excel" });
 
     } catch (error) {
         // Xử lý lỗi và xóa file nếu tồn tại
         if (req.file && req.file.path) {
-            await fs.promises.unlink(req.file.path).catch(err => console.error('Không thể xóa file:', err));
+            await fs.unlink(req.file.path).catch(err => console.error('Không thể xóa file:', err));
         }
         return res.status(500).json({ error: error.message });
     }
 };
+const getCourses = async (req, res) => {
+    try {
+        const courses = await Course.findAll();
+        res.status(200).json({
+            success: true,
+            message: "Lay khoa hoc thanh conng!",
+            data: courses
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+//Get COurseByID
+const getCourseByID = async (req, res) => {
+    try {
+        const course = await validateId(req.params.id, Course, 'courses');
+        if (!course) {
+            return res.status(404).json({ success: false, message: "Course not found" });
+        }
+
+        res.status(200).json({ success: true, message: "Get Course OK!", data: course });
+    } catch (error) {
+        console.error("Error fetching course:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+}
+
+
+
+
 
 const updateCourse = async (req, res) => {
     try {
