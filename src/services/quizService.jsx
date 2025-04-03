@@ -36,6 +36,7 @@ export const createExamFromWord = async (formData) => {
 export const getExamsByClassroom = async (classroomId) => {
   try {
     const response = await api.get(`${URL_API}/exams/classrooms/${classroomId}`);
+    console.log(response.data)
     return response.data;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách bài thi:", error);

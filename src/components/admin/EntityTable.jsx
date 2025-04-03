@@ -54,9 +54,8 @@ export const EntityTable = ({
             {entities.map((entity, index) => (
               <tr
                 key={entity[idField]}
-                className={`transition-all duration-300 ${
-                  index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                } hover:bg-teal-50`}
+                className={`transition-all duration-300 ${index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  } hover:bg-teal-50`}
               >
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {entity[idField]}
@@ -129,26 +128,25 @@ export const EntityTable = ({
                 ))}
               {showStatusColumn && (
                 <p className="text-sm text-gray-700">
-                  <span className="font-medium">Trạng Thái:</span>{" "}
-                  {entity.user_status ? "Mở Đăng Ký" : "Đóng Đăng Ký"}
+
                 </p>
               )}
             </div>
             {/* Các nút hành động */}
-                <button
-                  onClick={() => onEdit(entity)}
-                  className="p-2 bg-yellow-100 text-yellow-600 rounded-full hover:bg-yellow-200 transition-all duration-300 transform hover:scale-110"
-                >
-                  <FaEdit size={16} />
-                </button>
-                {onDelete && (
-                  <button
-                    onClick={() => onDelete(entity[idField])}
-                    className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-all duration-300 transform hover:scale-110"
-                  >
-                    <FaTrash size={16} />
-                  </button>
-                )}
+            <button
+              onClick={() => onEdit(entity)}
+              className="p-2 bg-yellow-100 text-yellow-600 rounded-full hover:bg-yellow-200 transition-all duration-300 transform hover:scale-110"
+            >
+              <FaEdit size={16} />
+            </button>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(entity[idField])}
+                className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-all duration-300 transform hover:scale-110"
+              >
+                <FaTrash size={16} />
+              </button>
+            )}
           </div>
         ))}
       </div>

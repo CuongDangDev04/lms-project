@@ -42,6 +42,7 @@ import ExamResults from "../pages/instructor/ExamResults";
 import About from "../pages/about";
 import Blog from "../pages/blog";
 import BlogPostDetail from "../pages/BlogPostDetail";
+import { EduAffairsManager } from "../pages/admin/EduAffairsManager";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -55,6 +56,7 @@ const AppRoutes = () => {
           <Route index element={<Dashboard />} />
           <Route path="manager-students" element={<StudentsManager />} />
           <Route path="manager-instructors" element={<InstructorsManager />} />
+          <Route path="manager-eduaffairs" element={<EduAffairsManager />} />
         </Route>
       </Route>
 

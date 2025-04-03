@@ -81,6 +81,29 @@ export const createInstructor = async (instructorData) => {
         throw error;
     }
 };
+
+export const getEduAffairs = async () => {
+    try {
+        const response = await api.get(`${API_URL}/users/eduAffairs`);
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách giao vu:", error);
+        throw error;
+    }
+}
+
+
+export const createEduAffairs = async (EduAffairsData) => {
+    try {
+        const response = await api.post(`${API_URL}/users/eduAffairs`, EduAffairsData);
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi tạo giao vu:", error);
+        throw error;
+    }
+};
+
+
 // Thêm hàm upload file Excel
 export const uploadStudents = async (file) => {
     try {
@@ -97,6 +120,8 @@ export const uploadStudents = async (file) => {
         throw error;
     }
 };
+
+
 // Thêm hàm upload giảng viên
 export const uploadInstructors = async (file) => {
     try {
@@ -113,15 +138,49 @@ export const uploadInstructors = async (file) => {
         throw error;
     }
 };
+
+// Thêm hàm upload giảng viên
+export const uploadEduAffairs = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append("file", file); // "file" khớp với multer.single("file")
+        const response = await api.post(`${API_URL}/users/upload-giaovu`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi upload file Excel cho giảng viên:", error);
+        throw error;
+    }
+};
+
+export const upload = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append("file", file); // "file" khớp với multer.single("file")
+        const response = await api.post(`${API_URL}/users/uploadgv`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi upload file Excel cho giảng viên:", error);
+        throw error;
+    }
+};
+
 export const getProfile = async () => {
 
     const user = JSON.parse(localStorage.getItem("user"));
     const id_user = user.id;
-    try{
-        const response = await api.get(`${API_URL}/users/${id_user}` );
+    try {
+        const response = await api.get(`${API_URL}/users/${id_user}`);
         return response.data;
     }
-    catch(error){
+    catch (error) {
         console.error("Lỗi khi lấy thông tin user", error);
         throw error;
     }
@@ -135,7 +194,7 @@ export const uploadImage = async (file) => {
         const userId = user.id;
 
         const formData = new FormData();
-        formData.append("file", file); 
+        formData.append("file", file);
         const response = await api.post(`${API_URL}/users/${userId}/uploadimg`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",

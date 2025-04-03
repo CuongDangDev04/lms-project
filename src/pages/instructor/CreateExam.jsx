@@ -9,7 +9,7 @@ import ExamPreviewModal from '../../components/academicAffairs/ExamPreviewModal'
 import ExamList from '../../components/academicAffairs/ExamList';
 import useUserId from '../../hooks/useUserId';
 import NotificationService from '../../services/notificationService';
-import LoadingBar from '../../components/users/LoadingBar'; // Import LoadingBar (đảm bảo đường dẫn đúng)
+import LoadingBar from '../../components/users/LoadingBar';
 
 const modalStyles = `
   .file-upload-container {
@@ -66,17 +66,10 @@ const CreateExam = () => {
 
   const teacherId = useUserId();
 
+  // Hàm lấy thời gian Việt Nam ở định dạng ISO 8601
   const getVietnamTime = () => {
-    return new Intl.DateTimeFormat('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).format(new Date());
+    const vietnamTime = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+    return new Date(vietnamTime).toISOString().replace('Z', '+07:00'); // Ví dụ: "2025-04-03T14:30:00+07:00"
   };
 
   useEffect(() => {
@@ -157,7 +150,12 @@ const CreateExam = () => {
       toast.error('Thời gian làm bài phải là số nguyên lớn hơn hoặc bằng 1 phút!');
       return;
     }
-    if (new Date(deadline) <= new Date(startTime || new Date())) {
+
+    const startTimeValue = startTime ? new Date(startTime).toISOString().replace('Z', '+07:00') : getVietnamTime();
+    const deadlineValue = new Date(deadline).toISOString().replace('Z', '+07:00');
+    const currentTime = getVietnamTime();
+
+    if (new Date(deadlineValue) <= new Date(startTimeValue || currentTime)) {
       toast.error('Hạn chót phải sau thời gian bắt đầu!');
       return;
     }
@@ -165,8 +163,8 @@ const CreateExam = () => {
       toast.error('Vui lòng thêm ít nhất một câu hỏi!');
       return;
     }
-    const hasValidOptions = questions.every(q => 
-      q.options.some(opt => opt.is_correct) && 
+    const hasValidOptions = questions.every(q =>
+      q.options.some(opt => opt.is_correct) &&
       q.options.every(opt => opt.content.trim() !== '')
     );
     if (!hasValidOptions) {
@@ -180,10 +178,11 @@ const CreateExam = () => {
         classroom_id: parseInt(classroomId),
         questions,
         duration: parsedDuration,
-        start_time: startTime || getVietnamTime(),
-        deadline,
+        start_time: startTimeValue,
+        deadline: deadlineValue,
         hide_results: Boolean(hideResults),
       };
+      console.log('Dữ liệu gửi đi:', examData); // Log để kiểm tra
       const response = await createExam(examData);
       const notificationData = {
         classroom_id: classroomId,
@@ -221,7 +220,12 @@ const CreateExam = () => {
       toast.error('Thời gian làm bài phải là số nguyên lớn hơn hoặc bằng 1 phút!');
       return;
     }
-    if (new Date(deadline) <= new Date(startTime || new Date())) {
+
+    const startTimeValue = startTime ? new Date(startTime).toISOString().replace('Z', '+07:00') : getVietnamTime();
+    const deadlineValue = new Date(deadline).toISOString().replace('Z', '+07:00');
+    const currentTime = getVietnamTime();
+
+    if (new Date(deadlineValue) <= new Date(startTimeValue || currentTime)) {
       toast.error('Hạn chót phải sau thời gian bắt đầu!');
       return;
     }
@@ -232,9 +236,10 @@ const CreateExam = () => {
       formData.append('classroom_id', parseInt(classroomId));
       formData.append('file', file);
       formData.append('duration', parsedDuration);
-      formData.append('start_time', startTime || getVietnamTime());
-      formData.append('deadline', deadline);
+      formData.append('start_time', startTimeValue);
+      formData.append('deadline', deadlineValue);
       formData.append('hide_results', hideResults.toString());
+      console.log('Dữ liệu gửi đi (FormData):', { title, classroomId, duration, startTimeValue, deadlineValue }); // Log để kiểm tra
       const response = await createExamFromWord(formData);
       const notificationData = {
         classroom_id: classroomId,
@@ -254,6 +259,8 @@ const CreateExam = () => {
         hide_results: response.exam.hide_results,
         exam_id: response.exam.exam_id,
       };
+
+      console.log(examData)
       setCreatedExam(examData);
       setIsPreviewOpen(true);
       setTitle('');
@@ -282,9 +289,7 @@ const CreateExam = () => {
   return (
     <div className="bg-gray-50 p-4 sm:p-6 lg:p-10">
       <div className="max-w-full mx-auto">
-        {/* Thêm LoadingBar */}
         <LoadingBar isLoading={loading} />
-
         <style>{modalStyles}</style>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-10 gap-4 sm:gap-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-800 tracking-tight text-center sm:text-left">
@@ -312,13 +317,6 @@ const CreateExam = () => {
           </div>
         </div>
 
-        {/* Xóa thanh loading cũ */}
-        {/* {loading && (
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-            <div className="bg-teal-500 h-2.5 rounded-full animate-pulse" style={{ width: '50%' }}></div>
-          </div>
-        )} */}
-
         <ExamFormModal
           title={title}
           setTitle={setTitle}
@@ -337,7 +335,7 @@ const CreateExam = () => {
           loading={loading}
           handleSubmit={handleSubmit}
           addQuestion={addQuestion}
-          isOpen={isExamFormOpen && !loading} // Tắt modal khi loading
+          isOpen={isExamFormOpen && !loading}
           setIsOpen={setIsExamFormOpen}
           classRoomId={classroomId}
         />
@@ -362,7 +360,7 @@ const CreateExam = () => {
           handleFileSubmit={handleFileSubmit}
           handleFileChange={handleFileChange}
           handleRemoveFile={handleRemoveFile}
-          isUploadOpen={isUploadOpen && !loading} // Tắt modal khi loading
+          isUploadOpen={isUploadOpen && !loading}
           setIsUploadOpen={setIsUploadOpen}
           showButton={showButton}
           classRoomId={classroomId}
@@ -370,13 +368,13 @@ const CreateExam = () => {
 
         <ExamPreviewModal
           exam={createdExam}
-          open={isPreviewOpen && !loading} // Tắt modal khi loading
+          open={isPreviewOpen && !loading}
           onOpenChange={setIsPreviewOpen}
         />
         <ExamList exams={exams} examLoading={examLoading} handleExamClick={handleExamClick} />
         <ExamPreviewModal
           exam={selectedExam}
-          open={isExamPreviewOpen && !loading} // Tắt modal khi loading
+          open={isExamPreviewOpen && !loading}
           onOpenChange={setIsExamPreviewOpen}
         />
 
