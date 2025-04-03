@@ -17,20 +17,16 @@ export const getAssignments = async () => {
 // Tải file bài tập
 export const downloadAssignment = async (assignmentId, fileIndex = null) => {
   try {
-    const response = await api.get(`${URL_API}/download/${assignmentId}${fileIndex !== null ? `?fileIndex=${fileIndex}` : ""}`, {
-      responseType: "blob",
-    });
-
-    const fileUrl = window.URL.createObjectURL(new Blob([response.data]));
-    const contentDisposition = response.headers["content-disposition"];
-    let filename = `assignment_${assignmentId}${fileIndex !== null ? `_${fileIndex}` : ""}.file`;
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-      if (filenameMatch && filenameMatch[1]) {
-        filename = filenameMatch[1];
-      }
-    }
-    return { fileUrl, filename };
+    const response = await api.get(`${URL_API}/download/${assignmentId}${fileIndex !== null ? `?fileIndex=${fileIndex}` : ""}`);
+    const { signedUrl } = response.data;
+    const filename = `assignment_${assignmentId}_${fileIndex || 0}`; // Tạm thời, có thể lấy từ file_path nếu cần
+    const link = document.createElement("a");
+    link.href = signedUrl;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    return { fileUrl: signedUrl, filename };
   } catch (error) {
     console.error("Lỗi khi tải file:", error);
     throw error;
@@ -117,3 +113,12 @@ export const deleteAssignment = async (assignmentId) => {
 };
 
 
+export const getPendingAssignments = async (userId) => {
+  try {
+    const response = await api.get(`${URL_API}/pending`);
+    return response.data.assignments;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách bài tập chưa làm:", error);
+    throw error;
+  }
+};

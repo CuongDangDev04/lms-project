@@ -11,7 +11,7 @@ export const Header = ({ toggleSidebar }) => {
         try {
             await logout();
             toast.success('Đăng xuất thành công!')
-            navigate('/login');
+            navigate('/dashboard');
         } catch (error) {
             console.error('Đăng xuất thất bại:', error);
         }

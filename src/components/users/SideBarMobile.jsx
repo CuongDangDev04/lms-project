@@ -60,11 +60,10 @@ const SideBarMobile = () => {
       {menuItemsMobile.map((item) => (
         <button
           key={item.name}
-          className={`flex flex-col items-center p-2 ${
-            getActiveItem() === item.path
-              ? "text-red-600 font-semibold"
-              : "text-gray-600"
-          }`}
+          className={`flex flex-col items-center p-2 ${getActiveItem() === item.path
+            ? "text-red-600 font-semibold"
+            : "text-gray-600"
+            }`}
           onClick={() => navigate(item.path)}
         >
           {item.icon}

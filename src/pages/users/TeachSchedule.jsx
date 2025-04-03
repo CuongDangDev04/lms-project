@@ -65,7 +65,7 @@ const TeachSchedule = () => {
                 <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 w-full sm:w-auto">
                     <button
                         onClick={handleToday}
-                        className="px-3 py-1 sm:px-4 sm:py-1.5 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 text-xs sm:text-sm font-semibold whitespace-nowrap"
+                        className="px-3 py-1 sm:px-4 sm:py-1.5 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 text-xs sm:text-sm font-semibold whitespace-nowrap"
                     >
                         Hôm Nay
                     </button>
@@ -115,7 +115,7 @@ const TeachSchedule = () => {
 
                         {/* Table Header */}
                         <thead>
-                            <tr className="bg-blue-600 text-white">
+                            <tr className="bg-gradient-to-r from-blue-400 to-blue-600 text-white">
                                 <th className="border-b border-blue-700 p-2 sm:p-3 text-center font-semibold text-sm sm:text-base">
                                     Ca Học
                                 </th>
@@ -187,7 +187,7 @@ const TeachSchedule = () => {
                                                                 bgColor = "bg-blue-50";
                                                                 textColor = "text-blue-900";
                                                                 borderColor = "border-blue-200";
-                                                                tagBgColor = "bg-blue-600";
+                                                                tagBgColor = "bg-gradient-to-r from-blue-400 to-blue-600";
                                                                 tagText = "Bù";
                                                             } else if (isNormalExam) {
                                                                 bgColor = "bg-yellow-50";
@@ -205,7 +205,7 @@ const TeachSchedule = () => {
                                                                 bgColor = "bg-green-50";
                                                                 textColor = "text-blue-900";
                                                                 borderColor = "border-blue-200";
-                                                                tagBgColor = "bg-blue-600";
+                                                                tagBgColor = "bg-gradient-to-r from-blue-400 to-blue-600";
                                                                 tagText = "Thi (Bù)";
                                                             }
 

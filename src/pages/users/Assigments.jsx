@@ -12,7 +12,8 @@ import { toast, ToastContainer } from "react-toastify";
 import Submission from "./Submission";
 import NotificationService from "../../services/notificationService";
 import { ModalCustom } from "../../components/admin/ui/ModalCustom";
-
+import LoadingBar from "../../components/users/LoadingBar";
+import imgNoAssignment from "../../assets/user/no-assignments.png"
 export default function Assignments() {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +36,8 @@ export default function Assignments() {
   const [editEndDate, setEditEndDate] = useState("");
   const [existingFiles, setExistingFiles] = useState([]);
   const [removeFileIndices, setRemoveFileIndices] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(""); // Thêm state cho tìm kiếm
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
 
   // Lấy thông tin user từ localStorage
@@ -77,9 +79,9 @@ export default function Assignments() {
     assignment.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDownload = async (assignmentId) => {
+  const handleDownload = async (assignmentId, fileIndex) => {
     try {
-      const { fileUrl, filename } = await downloadAssignment(assignmentId);
+      const { fileUrl, filename } = await downloadAssignment(assignmentId, fileIndex);
       const link = document.createElement("a");
       link.href = fileUrl;
       link.setAttribute("download", filename);
@@ -98,6 +100,7 @@ export default function Assignments() {
       toast.error("Vui lòng nhập đầy đủ tiêu đề, deadline và file!");
       return;
     }
+    setIsUploading(true);
     try {
       const response = await uploadAssignment(
         userParticipationId,
@@ -133,6 +136,9 @@ export default function Assignments() {
       setEndDate("");
     } catch (error) {
       toast.error("Lỗi khi tạo bài tập.");
+
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -165,6 +171,7 @@ export default function Assignments() {
       toast.error("Tiêu đề và deadline là bắt buộc!");
       return;
     }
+    setIsUploading(true);
     try {
       const data = {
         title: editTitle,
@@ -201,6 +208,8 @@ export default function Assignments() {
       const errorMessage =
         error.response?.data?.message || "Lỗi khi cập nhật bài tập.";
       toast.error(errorMessage);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -213,6 +222,7 @@ export default function Assignments() {
   // Xử lý xác nhận xóa bài tập
   const handleDelete = async () => {
     if (!assignmentToDelete) return;
+    setIsUploading(true);
     try {
       await deleteAssignment(assignmentToDelete);
       setAssignments((prev) =>
@@ -229,6 +239,7 @@ export default function Assignments() {
     } catch (error) {
       toast.error("Lỗi khi xóa bài tập.");
     } finally {
+      setIsUploading(false);
       setDeleteModalOpen(false);
       setAssignmentToDelete(null);
     }
@@ -253,7 +264,7 @@ export default function Assignments() {
         {userRole === "teacher" && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg transition-colors"
+            className="w-full md:w-auto bg-gradient-to-r from-blue-400 to-blue-600 hover:bg-gray-200  text-white py-2 px-6 rounded-lg transition-colors"
           >
             Tạo bài tập mới
           </button>
@@ -261,7 +272,7 @@ export default function Assignments() {
       </div>
 
       {/* Modal Tạo bài tập */}
-      {isModalOpen && (
+      {isModalOpen && !isUploading && (
         <ModalCustom
           title="Tải lên bài tập mới"
           open={isModalOpen}
@@ -338,7 +349,7 @@ export default function Assignments() {
       )}
 
       {/* Modal Sửa bài tập */}
-      {editAssignment && (
+      {editAssignment && !isUploading && (
         <ModalCustom
           title="Chỉnh sửa bài tập"
           open={!!editAssignment}
@@ -485,77 +496,58 @@ export default function Assignments() {
           </span>
         </div>
       ) : filteredAssignments.length === 0 ? (
-        <p className="text-center text-gray-500 text-lg sm:text-xl py-8 sm:py-12 bg-white rounded-2xl shadow-md">
-          Không tìm thấy bài tập nào.
-        </p>
+        <div className="flex  w-full flex-col h-[400px] items-center py-8 sm:py-12 bg-gray-50  ">
+          <img
+            src={imgNoAssignment} // Đặt ảnh trong thư mục public/images/
+            alt="Không tìm thấy bài tập"
+            className="w-full h-[300px] sm:w-full sm:h-[300px] object-contain"
+          />
+          
+        </div>
       ) : (
         <div className="space-y-4 sm:space-y-6">
           {filteredAssignments.map((assignment) => {
             const isPastDue = new Date(assignment.end_assignment) < new Date();
+            let filePaths = [];
+            try {
+              filePaths = assignment.file_path ? JSON.parse(assignment.file_path) : [];
+            } catch (error) {
+              filePaths = [];
+            }
             return (
-              <div
-                key={assignment.assignment_id}
-                className="bg-white p-4 sm:p-6 rounded-md shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <div
-                  className="flex flex-col sm:flex-row justify-between items-start cursor-pointer"
-                  onClick={() =>
-                    setOpenAssignmentId(
-                      openAssignmentId === assignment.assignment_id
-                        ? null
-                        : assignment.assignment_id
-                    )
-                  }
-                >
+              <div key={assignment.assignment_id} className="bg-white p-4 sm:p-6 rounded-md shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="flex flex-col sm:flex-row justify-between items-start cursor-pointer" onClick={() => setOpenAssignmentId(openAssignmentId === assignment.assignment_id ? null : assignment.assignment_id)}>
                   <div className="flex-1">
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
-                      {assignment.title}
-                    </h3>
-                    <p className="text-gray-600 mt-1 sm:mt-2 text-xs sm:text-sm">
-                      {assignment.description || "Không có mô tả"}
-                    </p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800">{assignment.title}</h3>
+                    <p className="text-gray-600 mt-1 sm:mt-2 text-xs sm:text-sm">{assignment.description || "Không có mô tả"}</p>
                     <p className="text-xs sm:text-sm mt-2 sm:mt-3 flex items-center">
-                      <span className="text-gray-500 font-medium">
-                        Deadline:
-                      </span>
-                      <span
-                        className={`ml-2 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium ${isPastDue
-                            ? "bg-red-100 text-red-500"
-                            : "bg-green-100 text-green-500"
-                          }`}
-                      >
+                      <span className="text-gray-500 font-medium">Deadline:</span>
+                      <span className={`ml-2 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium ${isPastDue ? "bg-red-100 text-red-500" : "bg-green-100 text-green-500"}`}>
                         {new Date(assignment.end_assignment).toLocaleString()}
                       </span>
                     </p>
+                    {/* Hiển thị danh sách file */}
+                    {filePaths.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-gray-600 font-medium">Tệp đính kèm:</p>
+                        <ul className="list-disc pl-5">
+                          {filePaths.map((filePath, index) => (
+                            <li key={index} className="text-blue-500 hover:underline cursor-pointer" onClick={(e) => { e.stopPropagation(); handleDownload(assignment.assignment_id, index); }}>
+                              {filePath.split('/').pop()}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
+                  {/* Nút hành động */}
                   <div className="flex flex-wrap gap-2 sm:space-x-3 mt-3 sm:mt-0 w-full sm:w-auto">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(assignment.assignment_id);
-                      }}
-                      className="px-3 py-1 sm:px-4 sm:py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all duration-300 shadow-md transform hover:scale-105 text-sm sm:text-base"
-                    >
-                      Tải file
-                    </button>
                     {userRole === "teacher" && (
                       <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(assignment);
-                          }}
-                          className="px-3 py-1 sm:px-4 sm:py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all duration-300 shadow-md transform hover:scale-105 text-sm sm:text-base"
-                        >
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(assignment); }} className="px-3 py-1 sm:px-4 sm:py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all duration-300 shadow-md transform hover:scale-105 text-sm sm:text-base">
                           Sửa
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClick(assignment.assignment_id);
-                          }}
-                          className="px-3 py-1 sm:px-4 sm:py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all duration-300 shadow-md transform hover:scale-105 text-sm sm:text-base"
-                        >
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(assignment.assignment_id); }} className="px-3 py-1 sm:px-4 sm:py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all duration-300 shadow-md transform hover:scale-105 text-sm sm:text-base">
                           Xóa
                         </button>
                       </>
@@ -564,13 +556,7 @@ export default function Assignments() {
                 </div>
                 {openAssignmentId === assignment.assignment_id && (
                   <div className="mt-4 sm:mt-6 border-t border-gray-200 pt-4 sm:pt-6 animate-fade-in">
-                    <Submission
-                      assignmentId={assignment.assignment_id}
-                      userId={userId}
-                      userRole={userRole}
-                      deadline={assignment.end_assignment}
-                      assignmentTitle={assignment.title}
-                    />
+                    <Submission assignmentId={assignment.assignment_id} userId={userId} userRole={userRole} deadline={assignment.end_assignment} assignmentTitle={assignment.title} />
                   </div>
                 )}
               </div>

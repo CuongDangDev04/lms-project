@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { ModalCustom } from '../../components/admin/ui/ModalCustom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FaUserPlus, FaFileExcel, FaTrash, FaEye } from 'react-icons/fa';
+import { FaUserPlus, FaFileExcel, FaTrash, FaEye, FaPlus } from 'react-icons/fa';
 import useClassroomData from '../../hooks/useClassroomData';
 import ClassroomTable from '../../components/admin/ClassroomTable';
 import Pagination from '../../components/admin/Pagination';
@@ -10,6 +10,7 @@ import {
     getStudentsByClassroom,
     addStudentToClassroom,
     importStudentsToClassroom,
+    removeStudentFromClassroom
 } from '../../services/classRoomServices';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,11 +18,14 @@ const AddStudentToClass = () => {
     const [isViewStudentsOpen, setIsViewStudentsOpen] = useState(false);
     const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
     const [isImportStudentsOpen, setIsImportStudentsOpen] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [currentClassroom, setCurrentClassroom] = useState(null);
     const [currentClassroomStudents, setCurrentClassroomStudents] = useState([]);
+    const [selectedStudents, setSelectedStudents] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
-    const [addStudentFormData, setAddStudentFormData] = useState({ student_id: '' });
+    const [searchAvailable, setSearchAvailable] = useState('');
+    const [searchSelected, setSearchSelected] = useState('');
     const [importFile, setImportFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
@@ -54,36 +58,42 @@ const AddStudentToClass = () => {
         }
     };
 
-    const handleAddStudent = async (e) => {
-        e.preventDefault();
-        if (!addStudentFormData.student_id) return toast.error('Vui lòng chọn sinh viên!');
+    const handleAddStudentToSelected = (student) => {
+        setSelectedStudents((prev) => [...prev, student]);
+    };
 
+    const handleRemoveStudentFromSelected = (studentId) => {
+        setSelectedStudents((prev) => prev.filter((s) => s.username !== studentId));
+    };
+
+    const handleSaveStudents = async () => {
+        if (selectedStudents.length === 0) {
+            toast.error('Vui lòng chọn ít nhất một sinh viên!');
+            return;
+        }
+        setIsConfirmOpen(true);
+    };
+
+    const confirmSaveStudents = async () => {
         try {
-            console.log('Student ID trước khi gửi:', addStudentFormData.student_id);
-
-            const studentId = parseInt(addStudentFormData.student_id, 10);
-            if (isNaN(studentId)) {
-                throw { status: 400, message: 'ID sinh viên không hợp lệ! Vui lòng kiểm tra dữ liệu sinh viên.' };
+            for (const student of selectedStudents) {
+                const studentId = parseInt(student.username, 10);
+                if (isNaN(studentId)) {
+                    throw new Error(`ID sinh viên không hợp lệ: ${student.username}`);
+                }
+                await addStudentToClassroom(currentClassroom.classroom_id, studentId);
             }
-
-            await addStudentToClassroom(currentClassroom.classroom_id, studentId);
             fetchClassroomStudents(currentClassroom.classroom_id);
             fetchData();
             setIsAddStudentOpen(false);
-            setAddStudentFormData({ student_id: '' });
+            setIsConfirmOpen(false);
+            setSelectedStudents([]);
             toast.success('Thêm sinh viên thành công!');
         } catch (error) {
-            console.error('Lỗi khi thêm sinh viên:', error);
-
-            if (error.status === 400) {
-                toast.warning(error.message);
-            } else {
-                toast.error(error.message || 'Lỗi không xác định khi thêm sinh viên!');
-            }
+            console.error('Lỗi khi lưu sinh viên:', error);
+            toast.error(error.message || 'Lỗi khi thêm sinh viên!');
         }
     };
-
-
 
     const handleImportStudents = async (e) => {
         e.preventDefault();
@@ -117,6 +127,17 @@ const AddStudentToClass = () => {
         setImportFile(null);
     };
 
+    const handleRemoveStudent = async (studentId) => {
+        try {
+            await removeStudentFromClassroom(currentClassroom.classroom_id, studentId);
+            setCurrentClassroomStudents((prev) => prev.filter((student) => student.id !== studentId));
+            toast.success('Xóa sinh viên thành công!');
+        } catch (error) {
+            console.error('Lỗi khi xóa sinh viên:', error);
+            toast.error('Lỗi khi xóa sinh viên!');
+        }
+    };
+
     const columns = [
         { label: 'ID', key: 'classroom_id', render: (c) => c.classroom_id || 'N/A' },
         {
@@ -139,7 +160,9 @@ const AddStudentToClass = () => {
         if (type === 'viewStudents') {
             fetchClassroomStudents(classroom.classroom_id);
         } else if (type === 'addStudent') {
-            setAddStudentFormData({ student_id: '' });
+            setSelectedStudents([]);
+            setSearchAvailable('');
+            setSearchSelected('');
             setIsAddStudentOpen(true);
         } else if (type === 'importStudents') {
             setImportFile(null);
@@ -151,51 +174,29 @@ const AddStudentToClass = () => {
     const availableStudents = useMemo(() => {
         if (!Array.isArray(students) || !Array.isArray(currentClassroomStudents)) return [];
         const currentStudentIds = new Set(currentClassroomStudents.map((student) => student.id));
-        const filteredStudents = students.filter((student) => !currentStudentIds.has(student.id));
-
-        // Debug dữ liệu availableStudents
-        console.log('Available Students:', filteredStudents);
-
-        return filteredStudents;
+        return students.filter((student) => !currentStudentIds.has(student.id));
     }, [students, currentClassroomStudents]);
+
+    // Lọc sinh viên chưa thêm theo search
+    const filteredAvailableStudents = useMemo(() => {
+        return availableStudents.filter((student) =>
+            (student.fullname || '').toLowerCase().includes(searchAvailable.toLowerCase()) ||
+            (student.username || '').toLowerCase().includes(searchAvailable.toLowerCase())
+        );
+    }, [availableStudents, searchAvailable]);
+
+    // Lọc sinh viên đã chọn theo search
+    const filteredSelectedStudents = useMemo(() => {
+        return selectedStudents.filter((student) =>
+            (student.fullname || '').toLowerCase().includes(searchSelected.toLowerCase()) ||
+            (student.username || '').toLowerCase().includes(searchSelected.toLowerCase())
+        );
+    }, [selectedStudents, searchSelected]);
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-10">
-            <nav className="mb-6">
-                <ol className="flex items-center space-x-2 text-sm text-gray-500">
-                    <li>
-                        <button
-                            onClick={() => navigate('/admin')}
-                            className="hover:text-teal-600 transition-colors duration-200"
-                        >
-                            Trang chủ
-                        </button>
-                    </li>
-                    <li>
-                        <span className="mx-1">/</span>
-                        <button
-                            onClick={() => navigate('/admin/manager-assign')}
-                            className="hover:text-teal-600 transition-colors duration-200"
-                        >
-                            Giảng dạy và phân công
-                        </button>
-                    </li>
-                    <li>
-                        <span className="mx-1">/</span>
-                        <span className="text-teal-600 font-medium">
-                            Thêm sinh viên vào lớp học phần
-                        </span>
-                    </li>
-                </ol>
-            </nav>
-            <div className="max-w-7xl mx-auto">
-                <div className="flex flex-col mt-12 sm:flex-row justify-between items-center mb-6 sm:mb-10 gap-4 sm:gap-6">
-                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-600 tracking-tight text-center sm:text-left">
-                        Thêm sinh viên vào lớp học phần
-                    </h2>
-                </div>
-                <style>
-                    {`
+            <style>
+                {`
                     .file-upload-container {
                         border: 2px dashed #d1d5db;
                         border-radius: 0.5rem;
@@ -262,7 +263,32 @@ const AddStudentToClass = () => {
                         }
                     }
                     `}
-                </style>
+            </style>
+            <nav className="mb-6">
+                <ol className="flex items-center space-x-2 text-sm text-gray-500">
+                    <li>
+                        <button onClick={() => navigate('/eduAffair')} className="hover:text-teal-600 transition-colors duration-200">
+                            Trang chủ
+                        </button>
+                    </li>
+                    <li>
+                        <span className="mx-1">/</span>
+                        <button onClick={() => navigate('/eduAffair/manager-assign')} className="hover:text-teal-600 transition-colors duration-200">
+                            Giảng dạy và phân công
+                        </button>
+                    </li>
+                    <li>
+                        <span className="mx-1">/</span>
+                        <span className="text-teal-600 font-medium">Thêm sinh viên vào lớp học phần</span>
+                    </li>
+                </ol>
+            </nav>
+            <div className="max-w-7xl mx-auto">
+                <div className="flex flex-col mt-12 sm:flex-row justify-between items-center mb-6 sm:mb-10 gap-4 sm:gap-6">
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-600 tracking-tight text-center sm:text-left">
+                        Thêm sinh viên vào lớp học phần
+                    </h2>
+                </div>
                 <div className="mb-6">
                     <input
                         type="text"
@@ -284,11 +310,12 @@ const AddStudentToClass = () => {
                     </>
                 )}
 
+                {/* Modal Danh Sách Sinh Viên */}
                 <ModalCustom
                     title="Danh Sách Sinh Viên"
                     open={isViewStudentsOpen}
                     onOpenChange={setIsViewStudentsOpen}
-                    className="min-w-[450px] max-w-[600px] min-h-[500px] bg-white rounded-lg shadow-lg"
+                    className="min-w-[700px] max-w-[900px] min-h-[500px] bg-white rounded-lg shadow-lg"
                 >
                     <div className="space-y-6 mt-6 p-6">
                         <div className="flex justify-end space-x-2 mb-4">
@@ -308,71 +335,163 @@ const AddStudentToClass = () => {
                             </button>
                         </div>
                         {currentClassroomStudents.length > 0 ? (
-                            <div className="max-h-96 overflow-y-auto">
+                            <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
                                 <table className="min-w-full border-collapse">
-                                    <thead>
-                                        <tr className="bg-gray-200">
+                                    <thead className="sticky top-0 bg-gray-200 z-10">
+                                        <tr>
                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">ID</th>
                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Mã Sinh Viên</th>
                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Họ và Tên</th>
                                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Email</th>
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-600">Hành Động</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {currentClassroomStudents.map((student) => (
-                                            <tr key={student.id} className="border-b">
+                                            <tr key={student.id} className="border-b hover:bg-gray-50 transition-colors">
                                                 <td className="px-4 py-2 text-sm text-gray-700">{student.id || 'N/A'}</td>
                                                 <td className="px-4 py-2 text-sm text-gray-700">{student.student_code || 'N/A'}</td>
                                                 <td className="px-4 py-2 text-sm text-gray-700">{student.fullname || 'N/A'}</td>
                                                 <td className="px-4 py-2 text-sm text-gray-700">{student.email || 'N/A'}</td>
+                                                <td className="px-4 py-2 text-sm text-gray-700">
+                                                    <button
+                                                        onClick={() => handleRemoveStudent(student.id)}
+                                                        className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all duration-200"
+                                                        title="Xóa sinh viên"
+                                                    >
+                                                        <FaTrash size={12} />
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-500">Chưa có sinh viên nào trong lớp học phần này.</p>
+                            <p className="text-sm text-gray-500 text-center">Chưa có sinh viên nào trong lớp học phần này.</p>
                         )}
                     </div>
                 </ModalCustom>
 
-                <ModalCustom title="Thêm Sinh Viên" open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
-                    <form onSubmit={handleAddStudent} className="space-y-4 mt-4">
-                        <select
-                            value={addStudentFormData.student_id}
-                            onChange={(e) => {
-                                const selectedValue = e.target.value;
-                                console.log('Giá trị được chọn:', selectedValue);
-                                // Kiểm tra xem giá trị có phải là số không
-                                if (!isNaN(parseInt(selectedValue, 10))) {
-                                    setAddStudentFormData({ ...addStudentFormData, student_id: selectedValue });
-                                } else {
-                                    toast.error('Giá trị ID sinh viên không hợp lệ!');
-                                }
-                            }}
-                            className="w-full p-2 border border-gray-300 rounded-lg"
-                            required
-                        >
-                            <option value="">Chọn sinh viên</option>
-                            {availableStudents.length > 0 ? (
-                                availableStudents.map((student) => (
-                                    <option key={student.username} value={student.username}>
-                                        {student.fullname || 'N/A'} (Mã SV: {student.username || 'N/A'})
-                                    </option>
-                                ))
-                            ) : (
-                                <option value="" disabled>Không có sinh viên nào để thêm</option>
-                            )}
-                        </select>
+                {/* Modal Thêm Sinh Viên */}
+                <ModalCustom
+                    title="Thêm Sinh Viên"
+                    open={isAddStudentOpen}
+                    onOpenChange={(open) => {
+                        setIsAddStudentOpen(open);
+                        if (!open) {
+                            setSelectedStudents([]);
+                            setSearchAvailable('');
+                            setSearchSelected('');
+                        }
+                    }}
+                    className="min-w-[600px] max-w-[800px] bg-white rounded-lg shadow-lg"
+                >
+                    <div className="flex space-x-4 p-6">
+                        {/* Danh sách sinh viên có thể thêm */}
+                        <div className="w-1/2">
+                            <h3 className="text-lg font-semibold mb-2">Sinh viên có thể thêm</h3>
+                            <input
+                                type="text"
+                                value={searchAvailable}
+                                onChange={(e) => setSearchAvailable(e.target.value)}
+                                placeholder="Tìm theo tên hoặc mã SV..."
+                                className="w-full p-2 mb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-400"
+                            />
+                            <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                                {filteredAvailableStudents.length > 0 ? (
+                                    filteredAvailableStudents.map((student) => (
+                                        <div
+                                            key={student.username}
+                                            className="flex justify-between items-center p-2 hover:bg-gray-100 border-b"
+                                        >
+                                            <span>{student.fullname || 'N/A'} (Mã SV: {student.username || 'N/A'})</span>
+                                            <button
+                                                onClick={() => handleAddStudentToSelected(student)}
+                                                className="p-1 bg-green-500 text-white rounded-full hover:bg-green-600 transition-all duration-200"
+                                                disabled={selectedStudents.some((s) => s.username === student.username)}
+                                            >
+                                                <FaPlus size={12} />
+                                            </button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="p-2 text-gray-500">Không có sinh viên nào để thêm</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Danh sách sinh viên đã chọn */}
+                        <div className="w-1/2">
+                            <h3 className="text-lg font-semibold mb-2">Sinh viên đã chọn</h3>
+                            <input
+                                type="text"
+                                value={searchSelected}
+                                onChange={(e) => setSearchSelected(e.target.value)}
+                                placeholder="Tìm theo tên hoặc mã SV..."
+                                className="w-full p-2 mb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-400"
+                            />
+                            <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                                {filteredSelectedStudents.length > 0 ? (
+                                    filteredSelectedStudents.map((student) => (
+                                        <div
+                                            key={student.username}
+                                            className="flex justify-between items-center p-2 hover:bg-gray-100 border-b"
+                                        >
+                                            <span>{student.fullname || 'N/A'} (Mã SV: {student.username || 'N/A'})</span>
+                                            <button
+                                                onClick={() => handleRemoveStudentFromSelected(student.username)}
+                                                className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all duration-200"
+                                            >
+                                                <FaTrash size={12} />
+                                            </button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="p-2 text-gray-500">Chưa có sinh viên nào được chọn</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-6 pt-0">
                         <button
-                            type="submit"
-                            className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-2 rounded-lg hover:from-blue-700 hover:to-blue-900"
+                            onClick={handleSaveStudents}
+                            className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-2 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300"
                         >
-                            Thêm Sinh Viên
+                            Lưu
                         </button>
-                    </form>
+                    </div>
                 </ModalCustom>
 
+                {/* Modal Xác Nhận */}
+                <ModalCustom
+                    title="Xác Nhận Thêm Sinh Viên"
+                    open={isConfirmOpen}
+                    onOpenChange={setIsConfirmOpen}
+                    className="min-w-[400px] max-w-[500px] bg-white rounded-lg shadow-lg"
+                >
+                    <div className="p-6">
+                        <p className="text-gray-700 mb-4">
+                            Bạn có chắc chắn muốn thêm {selectedStudents.length} sinh viên vào lớp học phần này không?
+                        </p>
+                        <div className="flex space-x-4">
+                            <button
+                                onClick={confirmSaveStudents}
+                                className="w-1/2 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300"
+                            >
+                                Xác Nhận
+                            </button>
+                            <button
+                                onClick={() => setIsConfirmOpen(false)}
+                                className="w-1/2 bg-gradient-to-r from-red-500 to-red-600 text-white py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300"
+                            >
+                                Hủy
+                            </button>
+                        </div>
+                    </div>
+                </ModalCustom>
+
+                {/* Modal Nhập Sinh Viên Từ Excel */}
                 <ModalCustom
                     title="Nhập Sinh Viên Từ File Excel"
                     open={isImportStudentsOpen}

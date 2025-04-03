@@ -6,10 +6,10 @@ export const SideBar = ({ isMobileSidebarOpen, toggleMobileSidebar, isDesktopCol
         <nav className={`flex-1 bg-gradient-to-b from-blue-50 to-white text-gray-800 pt-4 ${isDesktopCollapsed ? 'text-center' : ''}`}>
             <ul className="mt-20 space-y-2 px-2 py-2">
                 {[
-                    { title: "Dashboard", path: "/admin", icon: "M3 12l9-9 9 9v10a2 2 0 01-2 2H5a2 2 0 01-2-2V12z" },
-                    { title: "Giảng viên", path: "/admin/manager-instructors", icon: "M12 4c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-6 10h12v8H6v-8zm2 2h8v2H8v-2z" },
-                    { title: "Học viên", path: "/admin/manager-students", icon: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-3.31 0-6 2.69-6 6v2h12v-2c0-3.31-2.69-6-6-6z" },
-
+                    { title: "Dashboard", path: "/eduAffair", icon: "M3 12l9-9 9 9v10a2 2 0 01-2 2H5a2 2 0 01-2-2V12z" },
+                    { title: "Khóa học", path: "/eduAffair/manager-courses", icon: "M3 6h18v12H3V6zm9 0v12" },
+                    { title: "Quản lý lớp", path: "/eduAffair/manager-classes", icon: "M5 5h14v4H5V5zm0 6h14v4H5v-4zm0 6h14v4H5v-4z" },
+                    { title: "Giảng Dạy", path: "/eduAffair/manager-assign", icon: "M12 4v6m-6 4h12m-9 4h6" },
                 ].map((item, index) => (
                     <li key={index}>
                         <Link

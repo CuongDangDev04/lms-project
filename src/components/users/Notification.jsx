@@ -215,8 +215,10 @@ const Notifications = () => {
         return;
       }
       const regex = message.match(/lớp\s(.+?)(,| vui lòng|$)/);
+      
       const courseName = regex ? regex[1] : null;
       if (courseName) {
+
         let courses = await fetchStudentCourses();
         let course = courses.find(
           (c) => c.Classroom.Course.course_name === courseName
@@ -230,6 +232,12 @@ const Notifications = () => {
         } else if (/bài giảng\s(.+?)\s(của|lên)/.test(message)) {
           if (course) {
             navigate(`/courseDetail/${course.classroom_id}/lectures`);
+          } else {
+            console.error(`Không tìm thấy khóa học với tên: ${courseName}`);
+          }
+        }else if (/bài thi\s(.+?)\s/.test(message)){
+          if (course) {
+            navigate(`/courseDetail/${course.classroom_id}/list-exam`);
           } else {
             console.error(`Không tìm thấy khóa học với tên: ${courseName}`);
           }

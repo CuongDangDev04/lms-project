@@ -18,11 +18,11 @@ import GradeSubmission from "../pages/instructor/GradeSubmission";
 
 import { StudentsManager } from "../pages/admin/StudentsManager";
 import { InstructorsManager } from "../pages/admin/InstructorsManager";
-import { CoursesManager } from "../pages/admin/CoursesManager";
-import { ClassesManager } from "../pages/admin/ClassesManager";
-import { AssignmentManager } from "../pages/admin/AssignmentManager";
-import UnAssigmentManager from "../pages/admin/UnAssigmentManager";
-import AssignedClassroomManager from "../pages/admin/AssignedClassroomManager";
+import { CoursesManager } from "../pages/academicAffairs/CoursesManager";
+import { ClassesManager } from "../pages/academicAffairs/ClassesManager";
+import { AssignmentManager } from "../pages/academicAffairs/AssignmentManager";
+import UnAssigmentManager from "../pages/academicAffairs/UnAssigmentManager";
+import AssignedClassroomManager from "../pages/academicAffairs/AssignedClassroomManager";
 
 import { Profile } from "../pages/users/Profile";
 import TeachSchedule from "../pages/users/TeachSchedule";
@@ -30,19 +30,42 @@ import Classroom from "../components/users/Classroom";
 import Subject from "../pages/instructor/Subjects";
 import AddStudentToClass from "../pages/academicAffairs/addStudentToClass";
 import { NotFound } from "../pages/errors/NotFound";
+import EduAffairLayout from "../layouts/EduAffairLayout";
+import GradeManagement from "../pages/instructor/GradeManagement";
+import TakeExamPage from "../pages/users/TakeExamPage";
+import ExamResultPage from "../pages/users/ExamResultPage";
+import ListExams from "../pages/users/ListExams";
+import Landing from "../pages/landingpage";
 
+import CreateExam from "../pages/instructor/CreateExam";
+import ExamResults from "../pages/instructor/ExamResults";
+import About from "../pages/about";
+import Blog from "../pages/blog";
+import BlogPostDetail from "../pages/BlogPostDetail";
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/dashboard" element={<Landing />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogPostDetail />} />
       {/* Route cho Admin */}
       <Route path="/admin" element={<PrivateRoute allowedRoles={[3]} />}>
         <Route element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="manager-students" element={<StudentsManager />} />
           <Route path="manager-instructors" element={<InstructorsManager />} />
+        </Route>
+      </Route>
+
+      {/**Route cho giáo vụ */}
+      <Route path="/eduAffair" element={<PrivateRoute allowedRoles={[4]} />}>
+        <Route element={<EduAffairLayout />}>
+          <Route index element={<Dashboard />} />
           <Route path="manager-courses" element={<CoursesManager />} />
           <Route path="manager-classes" element={<ClassesManager />} />
           <Route path="manager-assign" element={<AssignmentManager />} />
+
           <Route
             path="manager-assign/unassigned-classrooms"
             element={<UnAssigmentManager />}
@@ -73,9 +96,15 @@ const AppRoutes = () => {
             <Route path="members" element={<Member />} />
             <Route path="assignments" element={<Assigments />} />
             <Route path="lectures" element={<Lectures />} />
+            <Route path="grades" element={<GradeManagement />} />
+            <Route path="list-exam" element={<ListExams />} />
+            <Route path="create-exam" element={<CreateExam />} />
+            <Route path="exam-results" element={<ExamResults />} />
+            <Route path="exam-results/:examId" element={<ExamResults />} />
           </Route>
+          <Route path="exam/:examId" element={<TakeExamPage />} />
+          <Route path="exam/:examId/result" element={<ExamResultPage />} />
           <Route path="/profile" element={<Profile />} />
-          {/* Route mới cho GradeSubmission */}
           <Route
             path="/assignments/:assignmentId/grade"
             element={<GradeSubmission />}
