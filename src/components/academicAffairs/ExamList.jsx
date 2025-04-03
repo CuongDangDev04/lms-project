@@ -24,17 +24,21 @@ const ExamList = ({ exams, examLoading, handleExamClick }) => {
   };
 
   // Hàm định dạng thời gian với date-fns
-  const formatVietnamTime = (dateString) => {
-    const date = new Date(dateString);
-    const formatted = format(date, 'dd/MM/yyyy, HH:mm', { locale: vi });
-    console.log(`Định dạng thời gian (${dateString}):`, {
-      raw: dateString,
-      parsed: date.toISOString(),
-      formatted: formatted,
+  const formatVietnamTime = (utcString) => {
+    const utcDate = new Date(utcString); // Thời gian UTC từ DB
+    const vietnamDate = new Date(utcDate.getTime() + (7 * 60 * 60 * 1000)); // Cộng 7 giờ sang GMT+7
+    console.log('Thời gian UTC từ DB:', utcDate.toISOString());
+    console.log('Thời gian sau khi chuyển sang GMT+7:', vietnamDate.toISOString());
+    return vietnamDate.toLocaleString('vi-VN', { 
+      timeZone: 'Asia/Ho_Chi_Minh',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false // Định dạng 24 giờ
     });
-    return formatted;
   };
-
   return (
     <div className="mt-10">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 tracking-tight">
@@ -100,7 +104,7 @@ const ExamList = ({ exams, examLoading, handleExamClick }) => {
                         onClick={() => handleExamClick(exam)}
                         className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-4 py-1 rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 flex items-center gap-1"
                       >
-                        <FaEye /> Làm bài
+                        <FaEye /> Xem trước
                       </button>
                     </td>
                   </tr>

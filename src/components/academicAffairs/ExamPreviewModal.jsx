@@ -4,8 +4,23 @@ import { ModalCustom } from '../admin/ui/ModalCustom';
 
 const ExamPreviewModal = ({ exam, open, onOpenChange }) => {
   const navigate = useNavigate();
+  const { classroomId } = useParams();
   const questions = exam?.questions || exam?.Questions || [];
-  const {classroomId} = useParams()
+
+  // Hàm định dạng thời gian từ UTC sang GMT+7
+  const formatVietnamTime = (utcString) => {
+    const utcDate = new Date(utcString); // Thời gian UTC từ DB
+    const vietnamDate = new Date(utcDate.getTime() + (7 * 60 * 60 * 1000)); // Cộng 7 giờ sang GMT+7
+    return vietnamDate.toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false // Định dạng 24 giờ
+    });
+  };
+
   const handleViewResults = () => {
     if (exam?.exam_id) {
       navigate(`/courseDetail/${classroomId}/exam-results/${exam.exam_id}`);
@@ -26,10 +41,10 @@ const ExamPreviewModal = ({ exam, open, onOpenChange }) => {
             <h3 className="text-lg font-semibold text-gray-700">Tiêu đề: {exam.title}</h3>
             <p className="text-sm text-gray-600">Thời gian: {exam.duration} phút</p>
             <p className="text-sm text-gray-600">
-              Thời gian bắt đầu: {new Date(exam.start_time).toLocaleString()}
+              Thời gian bắt đầu: {formatVietnamTime(exam.start_time)}
             </p>
             <p className="text-sm text-gray-600">
-              Hạn chót: {new Date(exam.deadline).toLocaleString()} {/* Hiển thị deadline */}
+              Hạn chót: {formatVietnamTime(exam.deadline)}
             </p>
             <p className="text-sm text-gray-600">Ẩn kết quả: {exam.hide_results ? "Có" : "Không"}</p>
           </div>

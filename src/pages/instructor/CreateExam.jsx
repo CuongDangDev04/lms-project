@@ -145,32 +145,28 @@ const CreateExam = () => {
       toast.error('Vui lòng nhập tiêu đề, thời gian làm bài và hạn chót!');
       return;
     }
+
     const parsedDuration = parseInt(duration);
     if (isNaN(parsedDuration) || parsedDuration < 1) {
       toast.error('Thời gian làm bài phải là số nguyên lớn hơn hoặc bằng 1 phút!');
       return;
     }
 
-    const startTimeValue = startTime ? new Date(startTime).toISOString().replace('Z', '+07:00') : getVietnamTime();
-    const deadlineValue = new Date(deadline).toISOString().replace('Z', '+07:00');
-    const currentTime = getVietnamTime();
+    // Lấy thời gian từ input (giờ cục bộ GMT+7)
+    const startTimeLocal = startTime ? new Date(startTime) : new Date();
+    const deadlineLocal = deadline ? new Date(deadline) : new Date();
 
-    if (new Date(deadlineValue) <= new Date(startTimeValue || currentTime)) {
+    // Chuyển từ GMT+7 sang UTC (trừ 7 giờ)
+    const startTimeUTC = new Date(startTimeLocal.getTime() - (7 * 60 * 60 * 1000)).toISOString();
+    const deadlineUTC = new Date(deadlineLocal.getTime() - (7 * 60 * 60 * 1000)).toISOString();
+
+    if (new Date(deadlineUTC) <= new Date(startTimeUTC)) {
       toast.error('Hạn chót phải sau thời gian bắt đầu!');
       return;
     }
-    if (questions.length === 0 || questions.every(q => !q.content)) {
-      toast.error('Vui lòng thêm ít nhất một câu hỏi!');
-      return;
-    }
-    const hasValidOptions = questions.every(q =>
-      q.options.some(opt => opt.is_correct) &&
-      q.options.every(opt => opt.content.trim() !== '')
-    );
-    if (!hasValidOptions) {
-      toast.error('Mỗi câu hỏi phải có ít nhất một lựa chọn đúng và các lựa chọn không được để trống!');
-      return;
-    }
+
+    console.log('Dữ liệu gửi đi:', { startTime: startTimeLocal, startTimeUTC, deadline: deadlineLocal, deadlineUTC });
+
     setLoading(true);
     try {
       const examData = {
@@ -178,19 +174,11 @@ const CreateExam = () => {
         classroom_id: parseInt(classroomId),
         questions,
         duration: parsedDuration,
-        start_time: startTimeValue,
-        deadline: deadlineValue,
+        start_time: startTimeUTC,
+        deadline: deadlineUTC,
         hide_results: Boolean(hideResults),
       };
-      console.log('Dữ liệu gửi đi:', examData); // Log để kiểm tra
       const response = await createExam(examData);
-      const notificationData = {
-        classroom_id: classroomId,
-        notificationType: "classroom",
-        examTitle: examData.title,
-        action: 7,
-      };
-      await NotificationService.sendNotificationToCourseUsers(notificationData);
       toast.success('Tạo bài thi thành công!');
       setCreatedExam(response.exam);
       setIsPreviewOpen(true);
@@ -208,7 +196,6 @@ const CreateExam = () => {
       setLoading(false);
     }
   };
-
   const handleFileSubmit = async (e) => {
     e.preventDefault();
     if (!title || !classroomId || !file || !duration || !deadline) {

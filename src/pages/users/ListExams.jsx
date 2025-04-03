@@ -12,11 +12,30 @@ const ListExams = () => {
   const { classroomId } = useParams();
   const navigate = useNavigate();
 
+  // Hàm định dạng thời gian từ UTC sang GMT+7
+  const formatVietnamTime = (utcString) => {
+    const utcDate = new Date(utcString); // Thời gian UTC từ DB
+    const vietnamDate = new Date(utcDate.getTime() + (7 * 60 * 60 * 1000)); // Cộng 7 giờ sang GMT+7
+    return vietnamDate.toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false // Định dạng 24 giờ
+    });
+  };
+
   useEffect(() => {
     const fetchExams = async () => {
       try {
         const data = await getExamsByClassroomSimple(classroomId);
-        setExams(Array.isArray(data) ? data : []);
+        const formattedExams = Array.isArray(data) ? data.map(exam => ({
+          ...exam,
+          start_time_display: formatVietnamTime(exam.start_time),
+          deadline_display: formatVietnamTime(exam.deadline),
+        })) : [];
+        setExams(formattedExams);
         setCurrentPage(1);
       } catch (err) {
         setError("Không thể tải danh sách bài thi. Vui lòng thử lại sau.");
@@ -76,7 +95,7 @@ const ListExams = () => {
                     <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Tiêu đề bài thi</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Thời gian</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Bắt đầu</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Hạn chót</th> {/* Thêm cột Hạn chót */}
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Hạn chót</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Hành động</th>
                   </tr>
                 </thead>
@@ -89,18 +108,8 @@ const ListExams = () => {
                       <td className="px-4 py-3 text-sm text-gray-900">{startIndex + index + 1}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 truncate max-w-xs">{exam.title}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{exam.duration} phút</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {new Date(exam.start_time).toLocaleString("vi-VN", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {new Date(exam.deadline).toLocaleString("vi-VN", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{exam.start_time_display}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{exam.deadline_display}</td>
                       <td className="px-4 py-3 text-sm">
                         <button
                           onClick={() => handleExamClick(exam.exam_id)}
