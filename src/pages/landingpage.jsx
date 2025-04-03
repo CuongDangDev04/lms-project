@@ -316,7 +316,6 @@ const Landing = () => {
                 </Swiper>
             </section>
 
-            {/* Call to Action Section */}
             <section className="container mx-auto my-16 sm:my-20 px-4 sm:px-6 py-12 bg-blue-600 text-white rounded-xl">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="w-full md:w-1/2 text-center md:text-left p-6" data-aos="fade-up">
