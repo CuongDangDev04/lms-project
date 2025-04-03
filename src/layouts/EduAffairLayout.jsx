@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { Outlet } from "react-router-dom";
 import { Header } from "../components/admin/Header";
-import { SideBar } from "../components/eduAffairs/Sidebar";
 import LoadingBar from "../components/users/LoadingBar";
 import { ToastContainer } from "react-toastify";
+import { SideBar } from "../components/academicAffairs/Sidebar";
 const EduAffairLayout = () => {
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
