@@ -1,4 +1,6 @@
-# Project Frontend + Backend
+# Project Frontend + Backend 
+
+Website quản lý học tập hỗ trợ giảng viên và sinh viên tích hợp nhắn tin nhóm. Website phát triển với ReactJS (frontend), ExpressJS (backend) và MySQL (database), tích hợp JWT để xác thực và phân quyền (Admin, Giảng viên, Sinh viên). Cung cấp tính năng thi trắc nghiệm, quản lý tài liệu học tập và giao bài tập giữa giảng viên và sinh viên.
 
 ## Cấu trúc thư mục
 
