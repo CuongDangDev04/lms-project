@@ -5,10 +5,10 @@ Website quản lý học tập hỗ trợ giảng viên và sinh viên tích h�
 ## Cấu trúc thư mục
 
   
-/client # Frontend React + Vite  
-/server # Backend Express  
-package.json # Script tổng chạy FE và BE  
-README.md
+- `/client` # Frontend React + Vite  
+- `/server` # Backend Express  
+- `package.json` # Script tổng chạy FE và BE  
+- `README.md`
 
 ---
 
