@@ -35,7 +35,7 @@ app.use("/api/admin", adminRoute);
 app.use("/api", userRoute);
 app.use("/api/chat", chatRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Import tất cả các model
 require("./models/index");
